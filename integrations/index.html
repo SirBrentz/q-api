@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-WGKMC7NC');</script>
+
+<title>Integration Setup Wizard — Qualiphy API</title>
+<meta name="description" content="Answer a few questions about your clinic's needs and we'll generate a custom integration plan for the Qualiphy API. Email it to your dev team or share with your developer.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://docs.qualiphy.me/integrations/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Integration Setup Wizard — Qualiphy API">
+<meta property="og:description" content="Get a custom Qualiphy API integration plan in 2 minutes. Tailored endpoints, sample code, and a checklist your dev team can run with.">
+<meta property="og:url" content="https://docs.qualiphy.me/integrations/">
+<meta property="og:image" content="https://quidget.qualiphy.me/og.png">
+
+<link rel="icon" href="../favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<meta name="theme-color" content="#4D3D71">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+
+<style>
+@font-face{font-family:'Gilroy';src:url('../assets/fonts/Gilroy-SemiBold.woff2') format('woff2'),url('../assets/fonts/Gilroy-SemiBold.ttf') format('truetype');font-weight:600 800;font-style:normal;font-display:swap}
+
+:root{
+  --indigo:#4D3D71;--indigo-hover:#5D4B87;--indigo-deep:#362A52;
+  --violet:#9F92BF;--lavender:#CEC8FE;--lavender-soft:#E4DFEF;--lavender-mist:#F0ECFA;
+  --surface:#F8F6FB;--surface-warm:#FBF9F5;--paper:#FDFCFA;
+  --ink:#141216;--ink-soft:#1F1A26;--text:#141216;--text-mid:#4C4454;--text-lt:#5F5868;--text-vlt:#A8A3B0;
+  --border:#ECE8F0;--border-lt:#F3F0F5;--border-mid:#DDD7E4;
+  --emerald:#047857;--emerald-bg:#D1FAE5;--amber:#D97706;--rose:#DC2626;
+  --font-h:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  --font-d:'Gilroy','Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  --font-b:'DM Sans',system-ui,-apple-system,sans-serif;
+  --font-m:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;scroll-padding-top:88px}
+body{font-family:var(--font-b);font-size:15.5px;line-height:1.65;color:var(--text);background:var(--paper);overflow-x:hidden;min-height:100vh}
+img,svg{display:block;max-width:100%}
+a{color:var(--indigo);text-decoration:none;transition:color .15s}
+a:hover{color:var(--indigo-hover)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+ul,ol{list-style:none}
+h1,h2{font-family:var(--font-d);font-weight:700;line-height:1.1;letter-spacing:-.025em;color:var(--ink)}
+h3,h4{font-family:var(--font-h);font-weight:700;line-height:1.2;letter-spacing:-.02em;color:var(--ink)}
+strong{font-weight:600;color:var(--text)}
+code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);color:var(--indigo);padding:2px 7px;border-radius:5px;border:1px solid rgba(77,61,113,.08)}
+
+.kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-m);font-size:11px;font-weight:500;color:var(--indigo);letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;background:rgba(77,61,113,.07);border-radius:100px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-h);font-weight:600;font-size:14px;padding:11px 20px;border-radius:10px;transition:all .25s var(--ease);white-space:nowrap;cursor:pointer;text-decoration:none}
+.btn-primary{background:var(--indigo);color:#fff;box-shadow:0 1px 3px rgba(77,61,113,.3)}
+.btn-primary:hover{background:var(--indigo-hover);transform:translateY(-1px);box-shadow:0 8px 22px rgba(77,61,113,.25);color:#fff}
+.btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border-mid)}
+.btn-outline:hover{border-color:var(--indigo);color:var(--indigo);background:#fff}
+.btn-ghost{background:transparent;color:var(--text-mid)}
+.btn-ghost:hover{color:var(--ink);background:rgba(77,61,113,.05)}
+.btn-sm{padding:8px 14px;font-size:13px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* ============ TOP NAV ============ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(253,252,250,.85);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:1440px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem)}
+.logo{display:flex;align-items:center;gap:11px;font-family:var(--font-d);font-weight:800;font-size:1.1rem;color:var(--ink);text-decoration:none}
+.logo-mark{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:0 4px 14px rgba(77,61,113,.18)}
+.logo-mark img{width:100%;height:100%;object-fit:cover}
+.logo-text{display:flex;flex-direction:column;line-height:1.15}
+.logo-sub{font-family:var(--font-m);font-size:9px;font-weight:500;color:var(--text-lt);margin-top:3px;letter-spacing:.04em;text-transform:uppercase}
+.nav-links{display:flex;gap:2px;align-items:center}
+.nav-link{font-family:var(--font-h);font-size:13.5px;font-weight:500;color:var(--text-mid);padding:7px 12px;border-radius:8px;transition:all .15s;text-decoration:none}
+.nav-link:hover{color:var(--ink);background:rgba(77,61,113,.06)}
+.nav-link.active{color:var(--indigo);background:rgba(77,61,113,.08)}
+.nav-actions{display:flex;align-items:center;gap:8px}
+.hamburger{display:none;width:36px;height:36px;border-radius:8px;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .25s}
+
+/* ============ WIZARD SHELL ============ */
+.shell{max-width:760px;margin:0 auto;padding:96px 24px 80px;min-height:100vh}
+
+.intro{text-align:center;margin-bottom:36px}
+.intro .kicker{margin-bottom:18px}
+.intro h1{font-size:clamp(1.85rem,3.4vw,2.45rem);font-weight:800;letter-spacing:-.025em;margin-bottom:12px}
+.intro p{color:var(--text-mid);font-size:16px;max-width:520px;margin:0 auto;line-height:1.6}
+.intro-aside{font-size:13.5px;color:var(--text-lt);margin-top:14px}
+.intro-aside a{font-weight:600}
+
+/* PROGRESS */
+.pbar{display:flex;align-items:center;margin:32px 0 36px;padding:0 4px}
+.pstep{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.pstep:not(:last-child)::after{content:'';flex:1;height:2px;background:var(--border);margin:0 8px;transition:background .35s var(--ease);border-radius:1px}
+.pstep:not(:last-child).done::after{background:var(--indigo)}
+.pdot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-size:12px;font-weight:700;border:2px solid var(--border);color:var(--text-vlt);background:#fff;transition:all .3s var(--ease);flex-shrink:0}
+.pstep.active .pdot{border-color:var(--indigo);color:var(--indigo);background:var(--lavender-mist);box-shadow:0 0 0 4px rgba(77,61,113,.08)}
+.pstep.done .pdot{border-color:var(--indigo);background:var(--indigo);color:#fff}
+.plbl{font-family:var(--font-h);font-size:11.5px;color:var(--text-lt);font-weight:600;display:none;letter-spacing:.01em}
+.pstep.active .plbl{color:var(--indigo)}
+.pstep.done .plbl{color:var(--text-mid)}
+@media(min-width:720px){.plbl{display:block}}
+
+/* CARD */
+.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:36px;box-shadow:0 4px 20px rgba(77,61,113,.04);animation:fade-up .35s var(--ease)}
+@keyframes fade-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card.hidden{display:none}
+.card h2{font-family:var(--font-d);font-size:1.5rem;letter-spacing:-.02em;margin-bottom:6px}
+.card .sub{color:var(--text-mid);font-size:14.5px;margin-bottom:24px;line-height:1.55}
+
+/* FIELDS */
+.fg{margin-bottom:20px}
+.fl{display:block;font-family:var(--font-h);font-size:13.5px;font-weight:600;margin-bottom:7px;color:var(--ink)}
+.fh{font-size:12.5px;color:var(--text-lt);margin-bottom:8px;line-height:1.5}
+.fh code{font-size:.92em}
+.fi{width:100%;padding:11px 14px;background:#fff;border:1.5px solid var(--border-mid);border-radius:10px;font-size:14.5px;color:var(--text);outline:none;font-family:var(--font-b);transition:all .15s}
+.fi:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
+.fi::placeholder{color:var(--text-vlt)}
+.fr{display:flex;gap:12px}
+.fr>.fg{flex:1;margin-bottom:0}
+
+/* OPTION CARDS (single + multi) */
+.og{display:flex;flex-direction:column;gap:10px}
+.oc{padding:18px 20px;border:1.5px solid var(--border-mid);border-radius:12px;cursor:pointer;transition:all .15s;position:relative;padding-right:54px;background:#fff}
+.oc:hover{border-color:var(--violet);background:var(--lavender-mist)}
+.oc.sel{border-color:var(--indigo);background:var(--lavender-mist);box-shadow:0 0 0 3px rgba(77,61,113,.08)}
+.oc .ot{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--ink)}
+.oc .od{font-size:13px;color:var(--text-mid);line-height:1.55}
+.oc .od code{font-size:.92em}
+.otag{font-family:var(--font-m);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:5px;display:inline-block}
+.otag-rec{background:var(--emerald-bg);color:var(--emerald)}
+.otag-req{background:#FFF0E1;color:var(--amber)}
+.orad{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff}
+.oc.sel .orad{border-color:var(--indigo)}
+.oc.sel .orad::after{content:'';width:11px;height:11px;border-radius:50%;background:var(--indigo)}
+.oc-multi .orad{border-radius:6px}
+.oc-multi.sel .orad::after{border-radius:3px;width:11px;height:11px}
+
+/* CHECKBOX ROW (used in step 3) */
+.ci{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .12s;margin-bottom:6px}
+.ci:hover{background:var(--lavender-mist)}
+.ci.on{background:var(--lavender-mist)}
+.cbox{width:20px;height:20px;border-radius:6px;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;font-size:12px;font-weight:700;color:#fff;background:#fff}
+.ci.on .cbox{border-color:var(--indigo);background:var(--indigo)}
+.cl{font-family:var(--font-h);font-size:14.5px;font-weight:600;line-height:1.4;color:var(--ink)}
+.cs{font-size:12.5px;color:var(--text-lt);margin-top:2px;line-height:1.5}
+
+/* CALLOUTS */
+.cb{display:flex;gap:12px;padding:14px 16px;border-radius:11px;margin-bottom:18px;font-size:13.5px;line-height:1.55;align-items:flex-start}
+.cb-icon{flex-shrink:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:11px;font-weight:700;margin-top:1px}
+.cb-info{background:var(--lavender-mist);border:1px solid rgba(77,61,113,.1)}
+.cb-info .cb-icon{background:var(--indigo);color:#fff}
+.cb-warn{background:#FFF8EE;border:1px solid rgba(217,119,6,.18)}
+.cb-warn .cb-icon{background:var(--amber);color:#fff}
+.cb-success{background:var(--emerald-bg);border:1px solid rgba(4,120,87,.15)}
+.cb-success .cb-icon{background:var(--emerald);color:#fff}
+.cb-body{flex:1;color:var(--text-mid)}
+.cb-body strong{color:var(--ink)}
+.cb-body code{background:rgba(255,255,255,.6)}
+.cb-body a{font-weight:600}
+
+/* STATE GRID */
+.state-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-family:var(--font-h);font-size:12.5px}
+.state-toggle{font-weight:600;color:var(--indigo);cursor:pointer;padding:6px 12px;border-radius:7px;transition:background .12s}
+.state-toggle:hover{background:var(--lavender-mist)}
+.state-count{color:var(--text-lt);font-family:var(--font-m);font-size:11.5px}
+.state-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;padding:10px;background:var(--surface-warm);border-radius:10px;border:1px solid var(--border-lt);max-height:280px;overflow-y:auto}
+.sc{display:flex;align-items:center;justify-content:center;padding:8px 4px;border:1.5px solid var(--border-mid);background:#fff;border-radius:8px;font-family:var(--font-m);font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer;transition:all .12s;user-select:none}
+.sc:hover{border-color:var(--violet)}
+.sc.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+/* ROW EXAM ID INPUTS */
+.exam-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.exam-row .fi{flex:1}
+.exam-x{width:38px;height:42px;border:1.5px solid var(--border-mid);border-radius:10px;background:#fff;color:var(--text-lt);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:var(--font-b);flex-shrink:0}
+.exam-x:hover{border-color:var(--rose);color:var(--rose)}
+.add-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:8px;border:1.5px dashed var(--border-mid);background:transparent;color:var(--indigo);font-family:var(--font-h);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:6px}
+.add-btn:hover{border-color:var(--indigo);background:var(--lavender-mist)}
+
+/* NAV BAR INSIDE CARD */
+.cnav{display:flex;justify-content:space-between;align-items:center;margin-top:32px;gap:12px}
+.cnav .lhs{display:flex;gap:8px}
+.cnav .rhs{display:flex;gap:8px}
+.section-sep{height:1px;background:var(--border-lt);margin:28px 0}
+
+/* ============ RESULT PAGE ============ */
+.result-hero{text-align:center;margin-bottom:28px}
+.result-hero-icon{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:var(--emerald-bg);color:var(--emerald);margin-bottom:14px;font-size:28px;font-weight:700}
+.result-hero h1{font-family:var(--font-d);font-size:1.85rem;font-weight:800;letter-spacing:-.025em;margin-bottom:8px}
+.result-hero p{color:var(--text-mid);font-size:15px;max-width:480px;margin:0 auto;line-height:1.6}
+
+.result-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 auto 28px;max-width:520px}
+
+/* SUMMARY GRID */
+.summary{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px}
+.summary-h{font-family:var(--font-h);font-size:11.5px;font-weight:600;color:var(--text-lt);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.summary-i{display:flex;flex-direction:column;gap:3px}
+.summary-l{font-family:var(--font-m);font-size:10.5px;color:var(--text-lt);letter-spacing:.04em;text-transform:uppercase}
+.summary-v{font-family:var(--font-h);font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.4;word-break:break-word}
+
+/* RESULT SECTIONS */
+.rs{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:14px}
+.rs-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rs-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-size:12px;font-weight:700}
+.rs-t{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--ink);margin:0}
+.rs-d{font-size:13.5px;color:var(--text-mid);line-height:1.6}
+.rs-d code{font-size:.92em}
+.rs-d a{font-weight:600}
+
+/* EP CHIPS */
+.ep-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.ep-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--lavender-mist);border:1px solid rgba(77,61,113,.12);border-radius:7px;font-family:var(--font-m);font-size:11.5px;font-weight:500;color:var(--indigo);text-decoration:none;transition:all .15s}
+.ep-chip:hover{background:#fff;border-color:var(--indigo);color:var(--indigo-hover)}
+.ep-chip.webhook{color:var(--emerald);background:var(--emerald-bg);border-color:rgba(4,120,87,.18)}
+.ep-chip.webhook:hover{background:#fff;color:var(--emerald)}
+
+/* CHECKLIST */
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-mid);padding:6px 0;line-height:1.55}
+.chk-box{flex-shrink:0;width:18px;height:18px;border:1.5px solid var(--indigo);border-radius:5px;margin-top:2px}
+
+/* CODE BLOCK */
+.codeblock{background:#0F0D14;border-radius:11px;overflow:hidden;margin:14px 0 0;border:1px solid #1f1b29}
+.codeblock-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#1A161F;border-bottom:1px solid #2a2434;font-family:var(--font-m);font-size:11.5px;color:rgba(255,255,255,.6);letter-spacing:.04em}
+.codeblock-meta{display:flex;align-items:center;gap:10px}
+.method-pill{font-family:var(--font-m);font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase;background:rgba(126,217,87,.18);color:#7ED957}
+.copy-btn{background:transparent;color:rgba(255,255,255,.65);font-family:var(--font-m);font-size:11px;font-weight:600;padding:4px 10px;border:1px solid rgba(255,255,255,.14);border-radius:6px;cursor:pointer;transition:all .15s;letter-spacing:.04em}
+.copy-btn:hover{color:#fff;border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.04)}
+.copy-btn.copied{color:#7ED957;border-color:#7ED957}
+.codeblock-body{padding:16px 18px;font-family:var(--font-m);font-size:12.5px;line-height:1.65;color:#E4DFEF;overflow-x:auto;white-space:pre}
+
+/* RESTART */
+.restart-row{text-align:center;margin-top:24px;color:var(--text-lt);font-size:13px}
+.restart-row button{font-family:var(--font-h);color:var(--indigo);font-weight:600;text-decoration:underline;cursor:pointer}
+
+/* MOBILE */
+@media(max-width:720px){
+  .shell{padding:88px 16px 60px}
+  .card{padding:26px 22px}
+  .fr{flex-direction:column;gap:0}
+  .fr>.fg{margin-bottom:20px}
+  .nav-links{display:none}
+  .nav-actions .btn-outline{display:none}
+  .hamburger{display:flex}
+  .summary-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .result-actions{flex-direction:column;align-items:stretch}
+  .result-actions .btn{width:100%}
+}
+</style>
+<!-- jsPDF for one-click "Download as PDF" -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WGKMC7NC" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<!-- ============ TOP NAV ============ -->
+<nav class="nav" role="navigation" aria-label="Main">
+  <div class="nav-inner">
+    <a href="../" class="logo" aria-label="Qualiphy API docs home">
+      <div class="logo-mark"><img src="../favicon-76.png" alt="Qualiphy" width="34" height="34"></div>
+      <div class="logo-text"><span>Qualiphy API</span><span class="logo-sub">Developer Docs</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="../" class="nav-link">Documentation</a>
+      <a href="./" class="nav-link active">Setup wizard</a>
+      <a href="https://api-docs.qualiphy.me" target="_blank" rel="noopener" class="nav-link">Reference ↗</a>
+    </div>
+    <div class="nav-actions">
+      <a href="../" class="btn btn-outline btn-sm">Browse docs</a>
+      <a href="https://app.qualiphy.me/signup" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get API access →</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+
+<div class="intro">
+  <span class="kicker">Setup wizard · 5 steps · ~2 min</span>
+  <h1>Tell us about your clinic. We'll build the plan.</h1>
+  <p>Answer a few questions and we'll generate a tailored Qualiphy API integration plan: the right endpoints, a working sample call, and a checklist your dev team can run with.</p>
+  <div class="intro-aside">Already know what you need? <a href="../">Browse the API docs &rarr;</a></div>
+</div>
+
+<div class="pbar" id="pbar" aria-label="Progress"></div>
+
+<!-- STEP 0: ABOUT YOU -->
+<div class="card" id="s0">
+  <h2>First, tell us about you</h2>
+  <p class="sub">We'll personalize your plan with your company details. Nothing leaves this page until you ask it to.</p>
+  <div class="fg">
+    <label class="fl" for="f-co">Company / clinic name</label>
+    <input class="fi" id="f-co" placeholder="e.g. Glow Med Spa" maxlength="100" autocomplete="organization">
+  </div>
+  <div class="fr">
+    <div class="fg">
+      <label class="fl" for="f-nm">Your name</label>
+      <input class="fi" id="f-nm" placeholder="e.g. Sarah Chen" maxlength="100" autocomplete="name">
+    </div>
+    <div class="fg">
+      <label class="fl" for="f-em">Your email</label>
+      <input class="fi" id="f-em" type="email" placeholder="e.g. sarah@glow.com" maxlength="150" autocomplete="email">
+    </div>
+  </div>
+  <div class="cnav">
+    <div></div>
+    <button class="btn btn-primary" id="bn0" onclick="goNext()" disabled>Continue &rarr;</button>
+  </div>
+</div>
+
+<!-- STEP 1: SERVICES -->
+<div class="card hidden" id="s1">
+  <h2>What services will you offer?</h2>
+  <p class="sub">Pick all that apply. You can run any combination through a single Qualiphy account.</p>
+
+  <div class="og" id="g-useCase">
+    <div class="oc oc-multi" data-v="gfe" onclick="pickMulti('useCase',this)">
+      <div class="ot">Good Faith Exam (GFE) <span class="otag otag-rec">Most common</span></div>
+      <div class="od">A licensed provider clears the patient for an in-clinic procedure. Common for Botox, fillers, IV therapy, and other aesthetic services. <strong>No prescription is dispensed.</strong></div>
+      <div class="orad"></div>
+    </div>
+    <div class="oc oc-multi" data-v="rx" onclick="pickMulti('useCase',this)">
+      <div class="ot">Prescription (Rx)</div>
+      <div class="od">Provider evaluates and, if appropriate, writes a prescription. Common for GLP-1 weight loss, hormone therapy, and ongoing treatments. Medication ships to the patient or to a pharmacy.</div>
+      <div class="orad"></div>
+    </div>
+    <div class="oc oc-multi" data-v="urgent" onclick="pickMulti('useCase',this)">
+      <div class="ot">Urgent Care</div>
+      <div class="od">Same-day consults for UTI, pink eye, cold sores, acne, and similar acute conditions. Prescriptions go to a retail pharmacy of the patient's choice.</div>
+      <div class="orad"></div>
+    </div>
+  </div>
+
+  <!-- Conditional pharmacy section -->
+  <div id="rx-section" class="hidden">
+    <div class="section-sep"></div>
+    <h2 style="font-size:1.18rem;margin-bottom:6px">How should prescriptions be handled?</h2>
+    <p class="sub">For Rx and Urgent Care exams, choose how the patient gets their medication.</p>
+
+    <div class="og" id="g-pharmacy">
+      <div class="oc" data-v="partner" onclick="pickSingle('pharmacy',this)">
+        <div class="ot">Qualiphy partner pharmacy <span class="otag otag-rec" id="rec-rx">Recommended for Rx programs</span></div>
+        <div class="od">Pre-vetted compounding pharmacies, bundled all-inclusive pricing. Qualiphy ships directly to the patient. Ideal for GLP-1, peptides, hormone therapy.</div>
+        <div class="orad"></div>
+      </div>
+      <div class="oc" data-v="custom" onclick="pickSingle('pharmacy',this)">
+        <div class="ot">Custom pharmacy (CVS, Walgreens, etc.) <span class="otag otag-req" id="req-uc" style="display:none">Required for Urgent Care</span></div>
+        <div class="od">Send the prescription to a specific retail or compounding pharmacy. Patient picks up or has it shipped. Best when patients have a preferred local pharmacy.</div>
+        <div class="orad"></div>
+      </div>
+      <div class="oc" data-v="provider-choice" onclick="pickSingle('pharmacy',this)">
+        <div class="ot">Let the provider decide</div>
+        <div class="od">The licensed provider picks the best pharmacy and prescription set during the consultation, based on the patient's needs. Most flexible.</div>
+        <div class="orad"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cnav">
+    <button class="btn btn-ghost" onclick="goPrev()">&larr; Back</button>
+    <button class="btn btn-primary" id="bn1" onclick="goNext()" disabled>Continue &rarr;</button>
+  </div>
+</div>
+
+<!-- STEP 2: DETAILS -->
+<div class="card hidden" id="s2">
+  <h2>A few setup details</h2>
+  <p class="sub">Your developer will need most of these. If you don't know one, leave it blank and we'll flag it in the plan.</p>
+
+  <div class="cb cb-info">
+    <div class="cb-icon">i</div>
+    <div class="cb-body"><strong>Not technical?</strong> Skip what you don't know. The plan will note any blanks so your dev can fill them in. Most teams send the result straight to engineering and let them handle it.</div>
+  </div>
+
+  <div class="fg">
+    <label class="fl">Exam ID(s)</label>
+    <div class="fh">Each treatment in Qualiphy has a numeric ID. Find them in your <a href="https://app.qualiphy.me" target="_blank" rel="noopener">Qualiphy portal</a> under <strong>Exam List</strong>, or call <a href="../#ep-exam-list"><code>/exam_list</code></a>. Leave blank if not yet configured.</div>
+    <div id="exam-list">
+      <div class="exam-row"><input class="fi" type="text" inputmode="numeric" placeholder="e.g. 4226" maxlength="10"></div>
+    </div>
+    <button class="add-btn" onclick="addExamRow()" type="button">+ Add another exam</button>
+  </div>
+
+  <div class="fg">
+    <label class="fl">Which states will your patients be in?</label>
+    <div class="fh">Select all states your clinic will serve. Qualiphy supports 48 states + D.C. (Alabama and Mississippi excluded).</div>
+    <div class="state-actions">
+      <span class="state-toggle" id="state-all" onclick="toggleAllStates()">Select all</span>
+      <span class="state-count" id="state-count">0 selected</span>
+    </div>
+    <div class="state-grid" id="state-grid"></div>
+    <div class="cb cb-warn" style="margin-top:14px;margin-bottom:0">
+      <div class="cb-icon">!</div>
+      <div class="cb-body"><strong>Pass the patient's state in <code>tele_state</code></strong>, not your clinic's state. This matches the right providers and pharmacies. <a href="../#states">More on this &rarr;</a></div>
+    </div>
+  </div>
+
+  <div class="section-sep"></div>
+
+  <div class="fg">
+    <label class="fl">Patient invite delivery</label>
+    <div class="og" id="g-invite">
+      <div class="oc" data-v="qualiphy" onclick="pickSingle('invite',this)">
+        <div class="ot">Qualiphy sends invites <span class="otag otag-rec">Default</span></div>
+        <div class="od">We email and text the patient automatically with their meeting link. No setup on your side.</div>
+        <div class="orad"></div>
+      </div>
+      <div class="oc" data-v="custom" onclick="pickSingle('invite',this)">
+        <div class="ot">We send invites from our own system</div>
+        <div class="od">Use the <code>meeting_url</code> from the API response in your branded email or SMS. <em>Requires us to disable Qualiphy's default invites for your account.</em></div>
+        <div class="orad"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fg">
+    <label class="fl" for="f-wh">Webhook URL</label>
+    <div class="fh">Where Qualiphy will POST exam results. Optional but strongly recommended &mdash; without it, your system has no way to know when an exam completes.</div>
+    <input class="fi" id="f-wh" placeholder="https://api.yoursite.com/webhooks/qualiphy" maxlength="500">
+  </div>
+
+  <div class="cnav">
+    <button class="btn btn-ghost" onclick="goPrev()">&larr; Back</button>
+    <button class="btn btn-primary" id="bn2" onclick="goNext()">Continue &rarr;</button>
+  </div>
+</div>
+
+<!-- STEP 3: OPTIONAL FEATURES -->
+<div class="card hidden" id="s3">
+  <h2>Any of these sound useful?</h2>
+  <p class="sub">All optional. Most teams ship the basics first and add these later.</p>
+
+  <div class="ci" id="ck-prefill" onclick="toggleCheck(this)">
+    <div class="cbox">&check;</div>
+    <div>
+      <div class="cl">Pre-fill patient screening answers from our intake form</div>
+      <div class="cs">If you already collect health info on your site, pass it through so patients don't answer twice. Uses <code>/exam_questions</code> + <code>/exam_submit_answers</code>.</div>
+    </div>
+  </div>
+
+  <div class="ci" id="ck-attach" onclick="toggleCheck(this)">
+    <div class="cbox">&check;</div>
+    <div>
+      <div class="cl">Upload patient documents to Qualiphy automatically</div>
+      <div class="cs">Send lab results, ID photos, or prior records via the API so the provider has them during the screening. Uses <code>/exam_upload_attachment</code>.</div>
+    </div>
+  </div>
+
+  <div class="ci" id="ck-redirect" onclick="toggleCheck(this)">
+    <div class="cl-wrap"><div class="cbox">&check;</div></div>
+    <div>
+      <div class="cl">Redirect patients back to our site after the screening</div>
+      <div class="cs">Send patients to your own confirmation page (or a different one based on outcome). Uses the <code>redirect_*</code> fields on <code>/exam_invite</code>.</div>
+    </div>
+  </div>
+
+  <div class="cnav">
+    <button class="btn btn-ghost" onclick="goPrev()">&larr; Back</button>
+    <button class="btn btn-primary" onclick="goNext()">Generate my plan &rarr;</button>
+  </div>
+</div>
+
+<!-- STEP 4: RESULT -->
+<div class="hidden" id="s4"></div>
+
+<div class="restart-row" id="restart-row" style="display:none">
+  <button onclick="restart()">Start over with a fresh plan</button>
+</div>
+
+</div>
+
+<script>
+/* ===== STATE ===== */
+const US_STATES=['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+const STATE_NAMES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'D.C.',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+const LABELS=['About you','Services','Details','Options','Plan'];
+
+let step=0;
+let useCases=new Set();
+let pharmacy='';
+let invite='qualiphy';
+let states=new Set();
+let opts={prefill:false,attach:false,redirect:false};
+
+const $=id=>document.getElementById(id);
+const gv=id=>{const e=$(id);return e?e.value.trim():''};
+
+/* ===== PROGRESS BAR ===== */
+function renderPbar(){
+  $('pbar').innerHTML=LABELS.map((l,i)=>{
+    const c=i<step?'done':i===step?'active':'';
+    const inner=i<step?'&check;':(i+1);
+    return `<div class="pstep ${c}"><div class="pdot">${inner}</div><span class="plbl">${l}</span></div>`;
+  }).join('');
+}
+
+function showStep(){
+  for(let i=0;i<5;i++){const el=$('s'+i);if(el)el.classList.toggle('hidden',i!==step);}
+  $('restart-row').style.display=step===4?'':'none';
+  if(step===4) buildResult();
+  renderPbar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function canContinue(){
+  if(step===0) return gv('f-co')&&gv('f-nm')&&gv('f-em');
+  if(step===1){
+    if(useCases.size===0) return false;
+    const needsPharmacy=useCases.has('rx')||useCases.has('urgent');
+    if(needsPharmacy && !pharmacy) return false;
+    return true;
+  }
+  return true;
+}
+
+function validate(){const b=$('bn'+step);if(b)b.disabled=!canContinue();}
+
+function goNext(){if(!canContinue())return;step++;showStep();}
+function goPrev(){if(step>0){step--;showStep();}}
+
+/* ===== STEP 0: about you ===== */
+['f-co','f-nm','f-em'].forEach(id=>{const e=$(id);if(e)e.addEventListener('input',validate);});
+
+/* ===== STEP 1: services ===== */
+function pickMulti(group,el){
+  const v=el.dataset.v;
+  if(group==='useCase'){
+    if(useCases.has(v))useCases.delete(v); else useCases.add(v);
+    el.classList.toggle('sel',useCases.has(v));
+    updateRxSection();
+  }
+  validate();
+}
+function pickSingle(group,el){
+  const v=el.dataset.v;
+  el.parentElement.querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  if(group==='pharmacy') pharmacy=v;
+  if(group==='invite') invite=v;
+  validate();
+}
+function updateRxSection(){
+  const need=useCases.has('rx')||useCases.has('urgent');
+  $('rx-section').classList.toggle('hidden',!need);
+  $('req-uc').style.display=useCases.has('urgent')?'':'none';
+  if(!need){pharmacy='';$('g-pharmacy').querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));}
+}
+
+/* ===== STEP 2 ===== */
+function addExamRow(){
+  const list=$('exam-list');
+  const row=document.createElement('div');
+  row.className='exam-row';
+  row.innerHTML='<input class="fi" type="text" inputmode="numeric" placeholder="e.g. 4226" maxlength="10"><button class="exam-x" onclick="this.parentElement.remove()" type="button" aria-label="Remove">&times;</button>';
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+function getExamIds(){
+  return Array.from($('exam-list').querySelectorAll('input')).map(i=>i.value.trim()).filter(Boolean);
+}
+
+function buildStateGrid(){
+  $('state-grid').innerHTML=US_STATES.map(s=>`<div class="sc" data-s="${s}" onclick="toggleState(this)" title="${STATE_NAMES[s]}">${s}</div>`).join('');
+}
+function toggleState(el){
+  const s=el.dataset.s;
+  if(states.has(s))states.delete(s); else states.add(s);
+  el.classList.toggle('on',states.has(s));
+  updateStateCount();
+}
+function toggleAllStates(){
+  if(states.size===US_STATES.length){states.clear();}
+  else {US_STATES.forEach(s=>states.add(s));}
+  document.querySelectorAll('.sc').forEach(el=>el.classList.toggle('on',states.has(el.dataset.s)));
+  updateStateCount();
+}
+function updateStateCount(){
+  $('state-count').textContent=states.size===US_STATES.length?'All 49 selected':`${states.size} selected`;
+  $('state-all').textContent=states.size===US_STATES.length?'Clear all':'Select all';
+}
+
+/* ===== STEP 3 ===== */
+function toggleCheck(el){
+  const id=el.id.slice(3);
+  opts[id==='attach'?'attach':id==='redirect'?'redirect':'prefill']=!opts[id==='attach'?'attach':id==='redirect'?'redirect':'prefill'];
+  const map={prefill:'prefill',attach:'attach',redirect:'redirect'};
+  const k=map[id]||id;
+  opts[k]=!opts[k];
+  // Simpler: derive directly from class
+  el.classList.toggle('on');
+  // resync from class
+  opts.prefill=$('ck-prefill').classList.contains('on');
+  opts.attach=$('ck-attach').classList.contains('on');
+  opts.redirect=$('ck-redirect').classList.contains('on');
+}
+
+/* ===== STEP 4: result ===== */
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function buildResult(){
+  const co=gv('f-co'), nm=gv('f-nm'), em=gv('f-em');
+  const isGfe=useCases.has('gfe'), isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
+  const needsRx=isRx||isUrg;
+  const wh=gv('f-wh');
+  const examIds=getExamIds();
+  const stateArr=Array.from(states).sort();
+
+  // Endpoints to call
+  const eps=new Set();
+  if(pharmacy==='partner'){eps.add('partner_pharmacy_list');eps.add('partner_pharmacy_treatment_packages');}
+  if(pharmacy==='custom'){eps.add('custom_pharmacy_search');}
+  if(opts.prefill){eps.add('exam_questions');eps.add('exam_submit_answers');}
+  if(opts.attach){eps.add('exam_upload_attachment');}
+  eps.add('exam_invite');
+  const epWebhook=true;
+
+  // Service labels
+  const ucLabels=[];
+  if(isGfe)ucLabels.push('GFE');
+  if(isRx)ucLabels.push('Rx');
+  if(isUrg)ucLabels.push('Urgent Care');
+
+  const phLabels={partner:'Partner pharmacy',custom:'Custom pharmacy','provider-choice':'Provider chooses'};
+  const phLabel=needsRx?(phLabels[pharmacy]||'Not selected'):'N/A (no Rx)';
+
+  const inviteLabel=invite==='qualiphy'?'Qualiphy default (email + SMS)':'Custom (we send our own)';
+
+  // Recipe match - which docs recipe is closest?
+  let recipeAnchor='recipe-gfe';
+  if(isRx && pharmacy==='partner') recipeAnchor='recipe-glp1';
+  else if(isUrg) recipeAnchor='recipe-urgent';
+  else if(opts.prefill) recipeAnchor='recipe-prefill';
+  else if(invite==='custom') recipeAnchor='recipe-custom-invite';
+
+  // Sample payload
+  const examFirst = examIds[0] || 'YOUR_EXAM_ID';
+  const teleState = stateArr[0] || 'NY';
+  const payload = {
+    api_key: 'YOUR_API_KEY',
+    exams: examIds.length ? examIds.map(x=>parseInt(x,10)||x) : ['YOUR_EXAM_ID'],
+    first_name: 'Test',
+    last_name: 'Approve',
+    email: 'test@yourclinic.com',
+    dob: '1990-06-30',
+    phone_number: '+15551234567',
+    tele_state: teleState
+  };
+  if(wh) payload.webhook_url = wh;
+  else payload.webhook_url = 'YOUR_WEBHOOK_URL';
+  if(opts.redirect){payload.redirect_approve='https://yoursite.com/cleared';payload.redirect_reject='https://yoursite.com/needs-followup';}
+  if(pharmacy==='partner'){payload.pharmacy_id='PHARMACY_ID';payload.exam_pos_id='PACKAGE_ID';}
+  if(pharmacy==='custom'){payload.custom_pharmacy=1;payload.ncpdpid='PHARMACY_NCPDPID';payload.pharmacy_name='Pharmacy Name';payload.pharmacy_state=teleState;}
+  if(pharmacy==='provider-choice'){payload.provider_pos_selection=3;}
+
+  const payloadStr = JSON.stringify(payload, null, 2);
+  const curlSample = `curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \\\n  -H "Content-Type: application/json" \\\n  -d '${payloadStr}'`;
+
+  // Portal checklist
+  const portal=['Sign in to the Qualiphy portal at app.qualiphy.me','Retrieve your API key from Settings → API','Confirm your exams are configured under Exam List'];
+  if(needsRx) portal.push('Sign Prescriptive Services agreement (one-time)');
+  if(invite==='custom') portal.push('Email your Qualiphy rep to disable default invite emails');
+  portal.push('Verify your provider network covers the selected states');
+
+  // Endpoint chip mapping → docs anchor
+  const docsAnchor = {
+    exam_invite:'ep-exam-invite',
+    exam_list:'ep-exam-list',
+    exam_questions:'ep-exam-questions',
+    exam_submit_answers:'ep-exam-submit',
+    exam_upload_attachment:'ep-exam-upload',
+    exam_invite_resend:'ep-exam-resend',
+    partner_pharmacy_list:'ep-pharmacy-list',
+    partner_pharmacy_treatment_packages:'ep-pharmacy-packages',
+    custom_pharmacy_search:'ep-pharmacy-search'
+  };
+
+  // States summary
+  let stateSum;
+  if(stateArr.length===0) stateSum='Not yet selected';
+  else if(stateArr.length===US_STATES.length) stateSum='All 49 supported jurisdictions';
+  else if(stateArr.length<=6) stateSum=stateArr.join(', ');
+  else stateSum=`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3})`;
+
+  // Email body
+  const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payload, opts);
+
+  // Render
+  const c = $('s4');
+  c.classList.remove('hidden');
+  c.innerHTML = `
+    <div class="result-hero">
+      <div class="result-hero-icon">&check;</div>
+      <h1>Your integration plan is ready</h1>
+      <p>Below is everything ${esc(co||'your team')} needs to integrate Qualiphy. Send it to your dev team or copy the whole thing and review later.</p>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="downloadPdf()" id="pdf-btn">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M5 8l5 5 5-5M3 17h14"/></svg>
+        Download as PDF
+      </button>
+      <button class="btn btn-outline" onclick="copyPlan()">Copy full plan</button>
+      <a href="../" class="btn btn-ghost">Browse full docs</a>
+    </div>
+
+    <div class="summary">
+      <div class="summary-h">Summary</div>
+      <div class="summary-grid">
+        <div class="summary-i"><div class="summary-l">Company</div><div class="summary-v">${esc(co||'—')}</div></div>
+        <div class="summary-i"><div class="summary-l">Services</div><div class="summary-v">${esc(ucLabels.join(', '))}</div></div>
+        <div class="summary-i"><div class="summary-l">Pharmacy</div><div class="summary-v">${esc(phLabel)}</div></div>
+        <div class="summary-i"><div class="summary-l">Invite delivery</div><div class="summary-v">${esc(inviteLabel)}</div></div>
+        <div class="summary-i"><div class="summary-l">Exam IDs</div><div class="summary-v">${examIds.length?esc(examIds.join(', ')):'<span style="color:var(--text-lt);font-weight:500">Not yet configured</span>'}</div></div>
+        <div class="summary-i"><div class="summary-l">States</div><div class="summary-v">${esc(stateSum)}</div></div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="rs-h"><div class="rs-num">1</div><h3 class="rs-t">Set up your Qualiphy account</h3></div>
+      <p class="rs-d">Complete these in the <a href="https://app.qualiphy.me" target="_blank" rel="noopener">Qualiphy portal</a> before your dev team starts coding.</p>
+      <div style="margin-top:10px">
+        ${portal.map(t=>`<div class="chk"><div class="chk-box"></div><div>${esc(t)}</div></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="rs-h"><div class="rs-num">2</div><h3 class="rs-t">Endpoints your integration will use</h3></div>
+      <p class="rs-d">Click any endpoint to jump to its detailed reference in the docs.</p>
+      <div class="ep-chips">
+        ${Array.from(eps).map(e=>`<a href="../#${docsAnchor[e]||''}" class="ep-chip">/${e}</a>`).join('')}
+        ${epWebhook?`<a href="../#ep-exam-webhook" class="ep-chip webhook">webhook handler</a>`:''}
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="rs-h"><div class="rs-num">3</div><h3 class="rs-t">Sample API call</h3></div>
+      <p class="rs-d">This is a sandbox-ready <code>/exam_invite</code> using the magic name <code>Test Approve</code> so a real provider auto-approves your test. Replace placeholder values with real data when you go to production.</p>
+      <div class="codeblock">
+        <div class="codeblock-head">
+          <div class="codeblock-meta"><span class="method-pill">POST</span><span>sandbox-api.qualiphy.me/api/exam_invite</span></div>
+          <button class="copy-btn" onclick="copyCurl(this)">Copy</button>
+        </div>
+        <div class="codeblock-body" id="curl-body">${esc(curlSample)}</div>
+      </div>
+      <div class="cb cb-warn" style="margin-top:14px;margin-bottom:0">
+        <div class="cb-icon">!</div>
+        <div class="cb-body">Use the <strong>patient's</strong> state in <code>tele_state</code>, not your clinic's. <a href="../#states">Why this matters &rarr;</a></div>
+      </div>
+    </div>
+
+    <div class="rs">
+      <div class="rs-h"><div class="rs-num">4</div><h3 class="rs-t">Test before going live</h3></div>
+      <p class="rs-d">Sandbox uses real providers reviewing test patients. The API path is identical to production &mdash; just a different base URL.</p>
+      <ul style="margin:8px 0 0;padding-left:0;list-style:none">
+        <li class="chk"><div class="chk-box"></div><div>Use <code>https://sandbox-api.qualiphy.me/</code> as the base URL</div></li>
+        <li class="chk"><div class="chk-box"></div><div>Set <code>tele_state</code> to <code>"TE"</code> in test payloads</div></li>
+        <li class="chk"><div class="chk-box"></div><div>Use magic names: <code>Test Approve</code> / <code>Test Reject</code>${needsRx?' / <code>Test Prescription Approve</code>':''}</div></li>
+        <li class="chk"><div class="chk-box"></div><div>Approvals process in 2&ndash;24 hours on weekdays. <a href="../#sandbox">Sandbox details &rarr;</a></div></li>
+      </ul>
+    </div>
+
+    <div class="rs">
+      <div class="rs-h"><div class="rs-num">5</div><h3 class="rs-t">Receiving results</h3></div>
+      <p class="rs-d">When a provider completes the exam, Qualiphy POSTs the result to your <code>webhook_url</code>. Your handler should respond with <code>200</code> immediately and process the payload asynchronously to avoid retries.</p>
+      <p class="rs-d" style="margin-top:8px">${needsRx?'For Rx exams, the payload includes prescription details and tracking info. ':''}Full payload schema and best practices: <a href="../#ep-exam-webhook">webhook reference &rarr;</a> &middot; <a href="../#webhooks-best">webhook best practices &rarr;</a></p>
+    </div>
+
+    ${recipeAnchor?`<div class="cb cb-info" style="margin-top:14px">
+      <div class="cb-icon">i</div>
+      <div class="cb-body"><strong>Closest matching recipe in our docs:</strong> <a href="../#${recipeAnchor}">${recipeName(recipeAnchor)} &rarr;</a> Walks through this exact use case end-to-end.</div>
+    </div>`:''}
+  `;
+
+  // Stash the email body for copy-plan
+  window._planText = planText;
+  window._curlText = curlSample;
+}
+
+function recipeName(a){
+  return ({
+    'recipe-gfe':'GFE for an Aesthetic Treatment',
+    'recipe-glp1':'GLP-1 Weight Loss Program',
+    'recipe-urgent':'Urgent Care Visit',
+    'recipe-prefill':'Pre-fill Patient Answers',
+    'recipe-custom-invite':'Custom Invite Delivery'
+  })[a]||'Recipes';
+}
+
+function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payload,opts){
+  const stateSum=stateArr.length===0?'Not yet selected':(stateArr.length===US_STATES.length?'All 49 supported jurisdictions':(stateArr.length<=6?stateArr.join(', '):`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3} more)`));
+  const epList=Array.from(eps).map(e=>`  - /${e}`).join('\n');
+
+  return `Hi,
+
+${nm} just generated this Qualiphy API integration plan for ${co}. Sending it your way so you can scope and start the build.
+
+============================================================
+SUMMARY
+============================================================
+Company:         ${co}
+Services:        ${ucLabels.join(', ')}
+Pharmacy:        ${phLabel}
+Invite delivery: ${inviteLabel}
+Exam IDs:        ${examIds.length?examIds.join(', '):'Not yet configured'}
+States:          ${stateSum}
+Webhook URL:     ${wh||'Not yet set'}
+
+============================================================
+1. PORTAL SETUP
+============================================================
+Complete in the Qualiphy portal at https://app.qualiphy.me
+
+  - Retrieve API key from Settings → API
+  - Confirm exams are configured under Exam List
+  - Sign agreements (GFE, plus Prescriptive Services if Rx)
+  - Verify provider network covers selected states
+${invite==='custom'?'  - Email Qualiphy rep to disable default invite emails\n':''}
+============================================================
+2. ENDPOINTS YOU WILL USE
+============================================================
+Full docs at https://docs.qualiphy.me/
+
+${epList}
+  - webhook handler (POST endpoint on YOUR side that Qualiphy will call)
+
+============================================================
+3. SAMPLE /exam_invite CALL (SANDBOX)
+============================================================
+Uses magic name "Test Approve" so a real provider auto-approves
+your test. The pipeline is identical to production -- just swap
+sandbox-api.qualiphy.me for api.qualiphy.me.
+
+curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(payload,null,2)}'
+
+IMPORTANT: tele_state must be the PATIENT's state, not the
+clinic's. This is the #1 most common integration bug.
+
+============================================================
+4. TESTING
+============================================================
+Base URL:       https://sandbox-api.qualiphy.me/
+tele_state:     "TE"
+Magic names:    Test Approve / Test Reject${needsRxBool()?' / Test Prescription Approve':''}
+Turnaround:     2-24 hours on weekdays (real providers review)
+
+============================================================
+5. RECEIVING RESULTS
+============================================================
+Qualiphy POSTs exam results to your webhook_url. Your handler
+should respond 200 immediately and process asynchronously.
+Schema: https://docs.qualiphy.me/#ep-exam-webhook
+Best practices: https://docs.qualiphy.me/#webhooks-best
+
+============================================================
+LINKS
+============================================================
+API docs:       https://docs.qualiphy.me/
+Canonical API:  https://api-docs.qualiphy.me/
+Portal:         https://app.qualiphy.me/
+Postman:        https://api-docs.qualiphy.me/postman/qualiphy-api-collection.json
+
+Questions? Reply to this email or contact ${nm}.
+
+Generated by the Qualiphy API Integration Setup Wizard.
+https://docs.qualiphy.me/integrations/`;
+}
+
+function needsRxBool(){return useCases.has('rx')||useCases.has('urgent');}
+
+function copyCurl(btn){
+  navigator.clipboard.writeText(window._curlText||'').then(()=>{
+    const o=btn.textContent;btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied');},1600);
+  });
+}
+function copyPlan(){
+  navigator.clipboard.writeText(window._planText||'').then(()=>{
+    const btns=document.querySelectorAll('.btn-outline');
+    btns.forEach(b=>{if(b.textContent.includes('Copy')){const o=b.textContent;b.textContent='Copied!';setTimeout(()=>{b.textContent=o;},1800);}});
+  });
+}
+
+function downloadPdf(){
+  if (typeof window.jspdf === 'undefined') {
+    alert('PDF library is still loading. Please try again in a moment.');
+    return;
+  }
+  const btn = document.getElementById('pdf-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = 'Generating…';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+
+    // Page geometry
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 50;
+    const contentW = pageW - margin * 2;
+    let y = margin;
+
+    // Color palette (matching site theme)
+    const C = {
+      indigo: [77, 61, 113],
+      ink: [20, 18, 22],
+      mid: [76, 68, 84],
+      lt: [95, 88, 104],
+      vlt: [168, 163, 176],
+      border: [221, 215, 228],
+      bg: [248, 246, 251],
+      lavender: [240, 236, 250],
+      green: [4, 120, 87],
+      greenBg: [209, 250, 229],
+      amber: [217, 119, 6],
+      amberBg: [255, 248, 238]
+    };
+
+    // Helpers
+    const newPageIfNeeded = (need) => {
+      if (y + need > pageH - margin) {
+        doc.addPage();
+        y = margin;
+      }
+    };
+    const text = (str, opts = {}) => {
+      const { size = 10, font = 'helvetica', style = 'normal', color = C.ink, x = margin, lineHeight = 1.4, indent = 0 } = opts;
+      doc.setFont(font, style);
+      doc.setFontSize(size);
+      doc.setTextColor(...color);
+      const wrapped = doc.splitTextToSize(String(str), contentW - indent);
+      const lh = size * lineHeight;
+      newPageIfNeeded(wrapped.length * lh);
+      doc.text(wrapped, x + indent, y);
+      y += wrapped.length * lh;
+    };
+    const space = (h) => { y += h; };
+    const rule = (color = C.border) => {
+      newPageIfNeeded(8);
+      doc.setDrawColor(...color);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, pageW - margin, y);
+      y += 6;
+    };
+    const sectionHeader = (label, num) => {
+      newPageIfNeeded(40);
+      space(12);
+      // Indigo circle with number
+      doc.setFillColor(...C.indigo);
+      doc.circle(margin + 9, y - 1, 9, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(num), margin + 9, y + 3, { align: 'center' });
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(...C.ink);
+      doc.text(label, margin + 26, y + 4);
+      y += 22;
+    };
+    const kvRow = (label, value) => {
+      newPageIfNeeded(22);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...C.lt);
+      doc.text(label.toUpperCase(), margin, y);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...C.ink);
+      const wrapped = doc.splitTextToSize(String(value || '—'), contentW);
+      doc.text(wrapped, margin, y + 12);
+      y += 12 + wrapped.length * 12 + 6;
+    };
+    const bullet = (str, level = 0) => {
+      const indent = 14 + level * 14;
+      newPageIfNeeded(16);
+      doc.setFillColor(...C.indigo);
+      doc.circle(margin + indent - 8, y - 3, 1.6, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...C.mid);
+      const wrapped = doc.splitTextToSize(String(str), contentW - indent);
+      doc.text(wrapped, margin + indent, y);
+      y += wrapped.length * 13 + 2;
+    };
+    const checkbox = (str) => {
+      newPageIfNeeded(18);
+      doc.setDrawColor(...C.indigo);
+      doc.setLineWidth(0.8);
+      doc.rect(margin + 4, y - 8, 9, 9);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...C.mid);
+      const wrapped = doc.splitTextToSize(String(str), contentW - 24);
+      doc.text(wrapped, margin + 20, y);
+      y += wrapped.length * 13 + 4;
+    };
+    const codeBlock = (codeStr, label) => {
+      const lines = String(codeStr).split('\n');
+      const lineH = 11;
+      const pad = 10;
+      const headH = 18;
+      // Width is full content width
+      const blockW = contentW;
+      // Compute height needed
+      const blockH = headH + pad * 2 + lines.length * lineH;
+      newPageIfNeeded(blockH + 6);
+      // Header strip
+      doc.setFillColor(245, 243, 248);
+      doc.setDrawColor(...C.border);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, y, blockW, headH, 4, 4, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...C.indigo);
+      doc.text((label || 'CODE').toUpperCase(), margin + pad, y + 12);
+      // Body
+      doc.setFillColor(252, 251, 254);
+      doc.setDrawColor(...C.border);
+      doc.rect(margin, y + headH, blockW, blockH - headH, 'FD');
+      // Code text (handle long lines by splitting per available width)
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...C.ink);
+      let codeY = y + headH + pad + 4;
+      for (const line of lines) {
+        const wrapped = doc.splitTextToSize(line || ' ', blockW - pad * 2);
+        for (const w of wrapped) {
+          // If we'd overflow this page mid-block, draw rest on next page
+          if (codeY > pageH - margin - 6) {
+            doc.addPage();
+            y = margin;
+            codeY = y + 4;
+          }
+          doc.text(w, margin + pad, codeY);
+          codeY += lineH;
+        }
+      }
+      y = codeY + 6;
+    };
+    const callout = (msg, kind = 'warn') => {
+      const colors = {
+        warn: { bg: C.amberBg, border: [240, 200, 140], icon: C.amber },
+        info: { bg: C.lavender, border: C.border, icon: C.indigo },
+        success: { bg: C.greenBg, border: [160, 210, 180], icon: C.green }
+      };
+      const c = colors[kind] || colors.info;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      const wrapped = doc.splitTextToSize(msg, contentW - 28);
+      const blockH = wrapped.length * 12 + 14;
+      newPageIfNeeded(blockH + 6);
+      doc.setFillColor(...c.bg);
+      doc.setDrawColor(...c.border);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, y, contentW, blockH, 4, 4, 'FD');
+      // Icon dot
+      doc.setFillColor(...c.icon);
+      doc.circle(margin + 12, y + 11, 4, 'F');
+      doc.setTextColor(...C.ink);
+      doc.text(wrapped, margin + 24, y + 13);
+      y += blockH + 6;
+    };
+
+    // --- BUILD CONTENT FROM THE LIVE PAGE STATE ---
+    const co = gv('f-co'), nm = gv('f-nm'), em = gv('f-em'), wh = gv('f-wh');
+    const isGfe = useCases.has('gfe'), isRx = useCases.has('rx'), isUrg = useCases.has('urgent');
+    const needsRx = isRx || isUrg;
+    const examIds = getExamIds();
+    const stateArr = Array.from(states).sort();
+    const ucLabels = []; if (isGfe) ucLabels.push('GFE'); if (isRx) ucLabels.push('Rx'); if (isUrg) ucLabels.push('Urgent Care');
+    const phLabels = { partner: 'Partner pharmacy', custom: 'Custom pharmacy', 'provider-choice': 'Provider chooses' };
+    const phLabel = needsRx ? (phLabels[pharmacy] || 'Not selected') : 'N/A (no Rx)';
+    const inviteLabel = invite === 'qualiphy' ? 'Qualiphy default (email + SMS)' : 'Custom (we send our own)';
+    const stateSum = stateArr.length === 0 ? 'Not yet selected' : (stateArr.length === US_STATES.length ? 'All 49 supported jurisdictions' : (stateArr.length <= 6 ? stateArr.join(', ') : `${stateArr.length} states (${stateArr.slice(0, 3).join(', ')}, +${stateArr.length - 3} more)`));
+
+    // Endpoints used
+    const eps = new Set();
+    if (pharmacy === 'partner') { eps.add('partner_pharmacy_list'); eps.add('partner_pharmacy_treatment_packages'); }
+    if (pharmacy === 'custom') eps.add('custom_pharmacy_search');
+    if (opts.prefill) { eps.add('exam_questions'); eps.add('exam_submit_answers'); }
+    if (opts.attach) eps.add('exam_upload_attachment');
+    eps.add('exam_invite');
+
+    // ===== HEADER =====
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...C.indigo);
+    doc.text('QUALIPHY API - INTEGRATION PLAN', margin, y);
+    y += 6;
+    rule(C.indigo);
+    space(6);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(...C.ink);
+    doc.text('Your integration plan', margin, y + 16);
+    y += 28;
+    text(`Below is everything ${co || 'your team'} needs to integrate Qualiphy. Built ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`, { size: 10.5, color: C.mid });
+    space(8);
+
+    // ===== SUMMARY =====
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...C.lt);
+    doc.text('SUMMARY', margin, y);
+    y += 4;
+    rule();
+    space(4);
+
+    kvRow('Company', co);
+    kvRow('Contact', `${nm}${em ? ' - ' + em : ''}`);
+    kvRow('Services', ucLabels.join(', ') || '-');
+    kvRow('Pharmacy routing', phLabel);
+    kvRow('Invite delivery', inviteLabel);
+    kvRow('Exam IDs', examIds.length ? examIds.join(', ') : 'Not yet configured');
+    kvRow('States', stateSum);
+    kvRow('Webhook URL', wh || 'Not yet set');
+
+    // ===== SECTION 1: Portal setup =====
+    sectionHeader('Set up your Qualiphy account', 1);
+    text('Complete these in the Qualiphy portal at app.qualiphy.me before development begins.', { size: 10, color: C.mid });
+    space(4);
+
+    const portal = ['Sign in to the Qualiphy portal at app.qualiphy.me',
+                    'Retrieve your API key from Settings -> API',
+                    'Confirm your exams are configured under Exam List'];
+    if (needsRx) portal.push('Sign Prescriptive Services agreement (one-time)');
+    if (invite === 'custom') portal.push('Email your Qualiphy rep to disable default invite emails');
+    portal.push('Verify your provider network covers the selected states');
+    portal.forEach(checkbox);
+
+    // ===== SECTION 2: Endpoints =====
+    sectionHeader('Endpoints your integration will use', 2);
+    text('Reference these in the API docs at docs.qualiphy.me.', { size: 10, color: C.mid });
+    space(2);
+    Array.from(eps).forEach(e => bullet(`/${e}`));
+    bullet('webhook handler (POST endpoint on YOUR side that Qualiphy calls)');
+
+    // ===== SECTION 3: Sample call =====
+    sectionHeader('Sample API call', 3);
+    text('Sandbox-ready /exam_invite using the magic name "Test Approve" so a real provider auto-approves your test. Switch sandbox-api.qualiphy.me to api.qualiphy.me when going to production.', { size: 10, color: C.mid });
+    space(4);
+
+    // Build the same payload the on-screen sample shows
+    const examFirst = examIds[0] || 'YOUR_EXAM_ID';
+    const teleState = stateArr[0] || 'NY';
+    const payload = {
+      api_key: 'YOUR_API_KEY',
+      exams: examIds.length ? examIds.map(x => parseInt(x, 10) || x) : ['YOUR_EXAM_ID'],
+      first_name: 'Test',
+      last_name: 'Approve',
+      email: 'test@yourclinic.com',
+      dob: '1990-06-30',
+      phone_number: '+15551234567',
+      tele_state: teleState,
+      webhook_url: wh || 'YOUR_WEBHOOK_URL'
+    };
+    if (opts.redirect) { payload.redirect_approve = 'https://yoursite.com/cleared'; payload.redirect_reject = 'https://yoursite.com/needs-followup'; }
+    if (pharmacy === 'partner') { payload.pharmacy_id = 'PHARMACY_ID'; payload.exam_pos_id = 'PACKAGE_ID'; }
+    if (pharmacy === 'custom') { payload.custom_pharmacy = 1; payload.ncpdpid = 'PHARMACY_NCPDPID'; payload.pharmacy_name = 'Pharmacy Name'; payload.pharmacy_state = teleState; }
+    if (pharmacy === 'provider-choice') payload.provider_pos_selection = 3;
+    const curl = `curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(payload, null, 2)}'`;
+
+    codeBlock(curl, 'POST sandbox-api.qualiphy.me/api/exam_invite');
+    callout('Important: tele_state must be the PATIENT\'s state, not your clinic\'s. This is the most common integration bug.', 'warn');
+
+    // ===== SECTION 4: Testing =====
+    sectionHeader('Test before going live', 4);
+    text('Sandbox uses real providers reviewing test patients. The pipeline is identical to production, just a different base URL.', { size: 10, color: C.mid });
+    space(4);
+    checkbox('Use https://sandbox-api.qualiphy.me/ as the base URL');
+    checkbox('Set tele_state to "TE" in test payloads');
+    checkbox(`Use magic names: Test Approve / Test Reject${needsRx ? ' / Test Prescription Approve' : ''}`);
+    checkbox('Approvals process in 2-24 hours on weekdays (real providers review)');
+
+    // ===== SECTION 5: Webhooks =====
+    sectionHeader('Receiving results', 5);
+    text('Qualiphy POSTs exam results to your webhook_url at three lifecycle moments. Your handler must dispatch on the "event" field.', { size: 10, color: C.mid });
+    space(4);
+    bullet('Event 1: Consultation Complete (every exam)');
+    bullet('Event 2: Prescription Confirmed (Rx exams only - full prescription schema)');
+    bullet('Event 3: Prescription Tracking (carrier, tracking number)');
+    space(4);
+    text('Your handler should respond 200 immediately and process the payload asynchronously to avoid retries.', { size: 10, color: C.mid });
+
+    // ===== LINKS =====
+    space(14);
+    rule();
+    space(4);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...C.lt);
+    doc.text('LINKS', margin, y);
+    y += 12;
+    text('API docs:    https://docs.qualiphy.me/', { size: 9.5, color: C.mid });
+    text('Reference:   https://api-docs.qualiphy.me/', { size: 9.5, color: C.mid });
+    text('Portal:      https://app.qualiphy.me/', { size: 9.5, color: C.mid });
+    text('Postman:     https://api-docs.qualiphy.me/postman/qualiphy-api-collection.json', { size: 9.5, color: C.mid });
+
+    // Footer (every page)
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...C.vlt);
+      doc.text(`Generated by the Qualiphy API Integration Setup Wizard - docs.qualiphy.me/integrations`, margin, pageH - 24);
+      doc.text(`Page ${i} of ${pageCount}`, pageW - margin, pageH - 24, { align: 'right' });
+    }
+
+    // Save
+    const cleanedCo = (co || 'plan').trim().replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 40) || 'plan';
+    doc.save(`Qualiphy-API-integration-plan-${cleanedCo}.pdf`);
+
+    btn.innerHTML = '✓ Downloaded';
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2200);
+  } catch (err) {
+    console.error('PDF generation failed:', err);
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    alert('Sorry, something went wrong generating the PDF. Try the "Copy full plan" option instead.');
+  }
+}
+
+function restart(){
+  step=0;useCases.clear();states.clear();pharmacy='';invite='qualiphy';
+  opts={prefill:false,attach:false,redirect:false};
+  ['f-co','f-nm','f-em','f-wh'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  document.querySelectorAll('.oc.sel').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('.ci.on').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('.sc.on').forEach(c=>c.classList.remove('on'));
+  $('exam-list').innerHTML='<div class="exam-row"><input class="fi" type="text" inputmode="numeric" placeholder="e.g. 4226" maxlength="10"></div>';
+  updateStateCount();
+  // Default invite preselect
+  document.querySelectorAll('#g-invite .oc').forEach(c=>{if(c.dataset.v==='qualiphy')c.classList.add('sel');});
+  invite='qualiphy';
+  showStep();
+  validate();
+}
+
+/* INIT */
+buildStateGrid();
+updateStateCount();
+// Default invite preselect (qualiphy)
+document.querySelectorAll('#g-invite .oc').forEach(c=>{if(c.dataset.v==='qualiphy')c.classList.add('sel');});
+showStep();
+
+// Hamburger
+$('hamburger')?.addEventListener('click',()=>{document.querySelector('.nav-links').style.display=document.querySelector('.nav-links').style.display==='flex'?'':'flex';});
+</script>
+
+</body>
+</html>
