@@ -276,7 +276,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
     <div class="nav-links">
       <a href="../" class="nav-link">Documentation</a>
       <a href="./" class="nav-link active">Quick start</a>
-      <a href="https://api-docs.qualiphy.me" target="_blank" rel="noopener" class="nav-link">Reference ↗</a>
     </div>
     <div class="nav-actions">
       <a href="../" class="btn btn-outline btn-sm">Browse docs</a>
@@ -330,17 +329,17 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
   <div class="og" id="g-useCase">
     <div class="oc oc-multi" data-v="gfe" onclick="pickMulti('useCase',this)">
       <div class="ot">Good Faith Exam (GFE) <span class="otag otag-rec">Most common</span></div>
-      <div class="od">A licensed provider clears the patient for an in-clinic procedure. Common for Botox, fillers, IV therapy, and other aesthetic services. <strong>No prescription is dispensed.</strong></div>
+      <div class="od">A licensed provider clears the patient for an in-clinic procedure. Common for Botox, fillers, IV therapy, and other aesthetic services. <strong>No treatment is dispensed.</strong></div>
       <div class="orad"></div>
     </div>
     <div class="oc oc-multi" data-v="rx" onclick="pickMulti('useCase',this)">
-      <div class="ot">Prescription (Rx)</div>
-      <div class="od">Provider evaluates and, if appropriate, writes a prescription. Common for GLP-1 weight loss, hormone therapy, and ongoing treatments. Medication ships to the patient or to a pharmacy.</div>
+      <div class="ot">Rx Treatment</div>
+      <div class="od">Provider evaluates and, if appropriate, issues a treatment order. Common for GLP-1 weight loss, hormone therapy, and ongoing treatments. Medication ships to the patient or to a pharmacy.</div>
       <div class="orad"></div>
     </div>
     <div class="oc oc-multi" data-v="urgent" onclick="pickMulti('useCase',this)">
       <div class="ot">Urgent Care</div>
-      <div class="od">Same-day consults for UTI, pink eye, cold sores, acne, and similar acute conditions. Prescriptions go to a retail pharmacy of the patient's choice.</div>
+      <div class="od">Same-day consults for UTI, pink eye, cold sores, acne, and similar acute conditions. Treatments are sent to a retail pharmacy of the patient's choice.</div>
       <div class="orad"></div>
     </div>
   </div>
@@ -348,7 +347,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
   <!-- Conditional pharmacy section -->
   <div id="rx-section" class="hidden">
     <div class="section-sep"></div>
-    <h2 style="font-size:1.18rem;margin-bottom:6px">How should prescriptions be handled?</h2>
+    <h2 style="font-size:1.18rem;margin-bottom:6px">How should treatments be fulfilled?</h2>
     <p class="sub">For Rx and Urgent Care exams, choose how the patient gets their medication.</p>
 
     <div class="og" id="g-pharmacy">
@@ -359,12 +358,12 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
       </div>
       <div class="oc" data-v="custom" onclick="pickSingle('pharmacy',this)">
         <div class="ot">Custom pharmacy (CVS, Walgreens, etc.) <span class="otag otag-req" id="req-uc" style="display:none">Required for Urgent Care</span></div>
-        <div class="od">Send the prescription to a specific retail or compounding pharmacy. Patient picks up or has it shipped. Best when patients have a preferred local pharmacy.</div>
+        <div class="od">Send the treatment order to a specific retail or compounding pharmacy. Patient picks up or has it shipped. Best when patients have a preferred local pharmacy.</div>
         <div class="orad"></div>
       </div>
       <div class="oc" data-v="provider-choice" onclick="pickSingle('pharmacy',this)">
         <div class="ot">Let the provider decide</div>
-        <div class="od">The licensed provider picks the best pharmacy and prescription set during the consultation, based on the patient's needs. Most flexible.</div>
+        <div class="od">The licensed provider picks the best pharmacy and treatment plan during the consultation, based on the patient's needs. Most flexible.</div>
         <div class="orad"></div>
       </div>
     </div>
@@ -524,7 +523,7 @@ function showStep(){
 }
 
 function canContinue(){
-  if(step===0) return gv('f-co')&&gv('f-nm')&&isEmail(gv('f-em'));
+  if(step===0) return gv('f-co')&&gv('f-nm')&&gv('f-em');
   if(step===1){
     if(useCases.size===0) return false;
     const needsPharmacy=useCases.has('rx')||useCases.has('urgent');
@@ -544,34 +543,47 @@ function isEmail(v){
 
 function validate(){const b=$('bn'+step);if(b)b.disabled=!canContinue();}
 
-function goNext(){if(!canContinue())return;step++;showStep();}
+function goNext(){
+  if(!canContinue())return;
+  // On step 0, validate email format here (not on blur) so the error only
+  // surfaces when the user actually tries to continue with bad input.
+  if(step===0 && !checkStep0Email()) return;
+  step++;showStep();
+}
 function goPrev(){if(step>0){step--;showStep();}}
 
 /* ===== STEP 0: about you ===== */
 ['f-co','f-nm','f-em'].forEach(id=>{const e=$(id);if(e)e.addEventListener('input',validate);});
 
-// Email blur validation: show error when user leaves the field with bad input
+// Email validation: only flag the error when the user actually tries to continue
+// with a malformed email. Clear it automatically as they type a valid one.
 (function(){
   const emEl=$('f-em'); const errEl=$('f-em-err');
   if(!emEl||!errEl) return;
-  emEl.addEventListener('blur',()=>{
-    const v=emEl.value.trim();
-    if(v && !isEmail(v)){
-      emEl.classList.add('invalid');
-      errEl.hidden=false;
-    } else {
-      emEl.classList.remove('invalid');
-      errEl.hidden=true;
-    }
-  });
   emEl.addEventListener('input',()=>{
-    // Clear error state as soon as the user starts fixing it
     if(emEl.classList.contains('invalid') && isEmail(emEl.value.trim())){
       emEl.classList.remove('invalid');
       errEl.hidden=true;
     }
   });
 })();
+
+// Called by Continue on step 0 (only). Shows the email error if the user
+// tried to advance with an invalid value. Returns true if validation passed.
+function checkStep0Email(){
+  const emEl=$('f-em'); const errEl=$('f-em-err');
+  if(!emEl||!errEl) return true;
+  const v=emEl.value.trim();
+  if(!v || !isEmail(v)){
+    emEl.classList.add('invalid');
+    errEl.hidden=false;
+    emEl.focus();
+    return false;
+  }
+  emEl.classList.remove('invalid');
+  errEl.hidden=true;
+  return true;
+}
 
 /* ===== STEP 1: services ===== */
 function pickMulti(group,el){
@@ -813,7 +825,7 @@ function buildResult(){
     <div class="rs">
       <div class="rs-h"><div class="rs-num">5</div><h3 class="rs-t">Receiving results</h3></div>
       <p class="rs-d">When a provider completes the exam, Qualiphy POSTs the result to your <code>webhook_url</code>. Your handler should respond with <code>200</code> immediately and process the payload asynchronously to avoid retries.</p>
-      <p class="rs-d" style="margin-top:8px">${needsRx?'For Rx exams, the payload includes prescription details and tracking info. ':''}Full payload schema and best practices: <a href="../#ep-exam-webhook">webhook reference &rarr;</a> &middot; <a href="../#webhooks-best">webhook best practices &rarr;</a></p>
+      <p class="rs-d" style="margin-top:8px">${needsRx?'For Rx exams, the payload includes treatment details and tracking info. ':''}Full payload schema and best practices: <a href="../#ep-exam-webhook">webhook reference &rarr;</a> &middot; <a href="../#webhooks-best">webhook best practices &rarr;</a></p>
     </div>
 
     ${recipeAnchor?`<div class="cb cb-info" style="margin-top:14px">
@@ -908,7 +920,6 @@ Best practices: https://docs.qualiphy.me/#webhooks-best
 LINKS
 ============================================================
 API docs:       https://docs.qualiphy.me/
-Canonical API:  https://api-docs.qualiphy.me/
 Portal:         https://app.qualiphy.me/
 Postman:        https://api-docs.qualiphy.me/postman/qualiphy-api-collection.json
 
@@ -1249,7 +1260,6 @@ function downloadPdf(){
     doc.text('LINKS', margin, y);
     y += 12;
     text('API docs:    https://docs.qualiphy.me/', { size: 9.5, color: C.mid });
-    text('Reference:   https://api-docs.qualiphy.me/', { size: 9.5, color: C.mid });
     text('Portal:      https://app.qualiphy.me/', { size: 9.5, color: C.mid });
     text('Postman:     https://api-docs.qualiphy.me/postman/qualiphy-api-collection.json', { size: 9.5, color: C.mid });
 

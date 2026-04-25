@@ -71,6 +71,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border-mid)}
 .btn-outline:hover{border-color:var(--indigo);color:var(--indigo);background:#fff}
 .btn-sm{padding:8px 14px;font-size:13px}
+.btn-lg{padding:14px 24px;font-size:15.5px;border-radius:12px}
 
 /* ============ TOP NAV ============ */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(253,252,250,.85);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);border-bottom:1px solid var(--border)}
@@ -120,6 +121,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .docs-hero h1{margin-bottom:14px}
 .docs-hero p{font-size:17px;color:var(--text-mid);max-width:62ch;line-height:1.6}
 .docs-hero-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+.docs-hero-aside{font-size:13px;color:var(--text-lt);margin-top:14px;max-width:62ch;line-height:1.55}
 
 /* SECTION */
 .docs-section{margin-bottom:56px;scroll-margin-top:88px}
@@ -212,15 +214,21 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .endpoint-method.get{background:rgba(77,61,113,.1);color:var(--indigo);border:1px solid rgba(77,61,113,.2)}
 .endpoint-path{font-family:var(--font-m);font-size:14.5px;font-weight:600;color:var(--ink);background:var(--surface-warm);padding:4px 10px;border-radius:6px;border:1px solid var(--border-lt)}
 .endpoint-actions{margin-left:auto;display:flex;gap:8px}
-.canonical-link{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-h);font-size:12px;font-weight:600;color:var(--indigo);padding:5px 10px;border-radius:6px;border:1px solid var(--border);transition:all .15s}
-.canonical-link:hover{background:var(--lavender-mist);border-color:var(--indigo)}
 
 /* TABLE OF CONTENTS (mobile only - reading hint) */
 .toc-mobile{display:none}
 
 /* FOOTER */
 .docs-foot{background:var(--ink);color:rgba(255,255,255,.7);padding:48px 0 28px;margin-top:60px}
-.docs-foot-inner{max-width:1240px;margin:0 auto;padding:0 clamp(1.25rem,4vw,2.5rem);display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
+.docs-foot-inner{max-width:1240px;margin:0 auto;padding:0 clamp(1.25rem,4vw,2.5rem)}
+.docs-foot-promo{background:linear-gradient(135deg,rgba(206,200,254,.08),rgba(77,61,113,.18));border:1px solid rgba(206,200,254,.16);border-radius:14px;padding:24px 28px;margin-bottom:36px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.docs-foot-promo-side{flex:1;min-width:280px}
+.docs-foot-promo-kicker{font-family:var(--font-m);font-size:10.5px;font-weight:600;color:var(--lavender);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.docs-foot-promo-h{font-family:var(--font-d);font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:-.015em;margin-bottom:6px;line-height:1.2}
+.docs-foot-promo-p{color:rgba(255,255,255,.72);font-size:13.5px;line-height:1.55;margin:0;max-width:48ch}
+.docs-foot-promo-cta{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--lavender);color:var(--ink-soft);border-radius:9px;font-family:var(--font-h);font-size:13.5px;font-weight:700;transition:all .18s var(--ease);flex-shrink:0;text-decoration:none}
+.docs-foot-promo-cta:hover{background:#fff;transform:translateX(2px);color:var(--indigo-deep)}
+.docs-foot-cols{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
 .docs-foot .logo{color:#fff}
 .docs-foot .logo-sub{color:rgba(255,255,255,.6)}
 .docs-foot-brand p{color:rgba(255,255,255,.65);font-size:13px;max-width:300px;margin:14px 0 0;line-height:1.6}
@@ -238,12 +246,14 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
   .hamburger{display:flex}
   .nav-links{display:none}
   .nav-actions .btn-outline{display:none}
-  .docs-foot-inner{grid-template-columns:1fr 1fr}
+  .docs-foot-cols{grid-template-columns:1fr 1fr}
   .docs-foot-brand{grid-column:1 / -1}
+  .docs-foot-promo{flex-direction:column;align-items:flex-start;text-align:left}
+  .docs-foot-promo-cta{width:auto}
 }
 @media (max-width:560px){
   .param-row{grid-template-columns:1fr;gap:8px}
-  .docs-foot-inner{grid-template-columns:1fr}
+  .docs-foot-cols{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -261,7 +271,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
     <div class="nav-links">
       <a href="./" class="nav-link active">Documentation</a>
       <a href="quick-start/" class="nav-link">Quick start</a>
-      <a href="https://api-docs.qualiphy.me" target="_blank" rel="noopener" class="nav-link">Reference ↗</a>
     </div>
     <div class="nav-actions">
       <a href="quick-start/" class="btn btn-outline btn-sm">Run quick start</a>
@@ -345,11 +354,11 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 <header class="docs-hero">
   <div class="kicker">Qualiphy API · v1</div>
   <h1>Build telehealth into anything you ship.</h1>
-  <p>The Qualiphy API lets clinics, medspas, and software teams launch licensed provider consultations, prescriptions, and pharmacy fulfillment under their own brand. Programmatic access to the same network that powers Qualiphy's products. This is the comprehensive guide. The five-minute version is below.</p>
+  <p>The Qualiphy API lets clinics, medspas, and software teams launch licensed provider consultations, treatments, and pharmacy fulfillment under their own brand. Programmatic access to the same network that powers Qualiphy's products. Comprehensive reference below.</p>
   <div class="docs-hero-actions">
-    <a href="quick-start/" class="btn btn-primary">Quick start →</a>
-    <a href="#walkthrough" class="btn btn-outline">Or skim the code walkthrough</a>
+    <a href="quick-start/" class="btn btn-primary btn-lg">Get a tailored API plan for your team →</a>
   </div>
+  <p class="docs-hero-aside">Answer 5 quick questions, get a custom integration plan with the exact endpoints, sample call, and checklist your dev team needs.</p>
 </header>
 
 <!-- ============ GETTING STARTED ============ -->
@@ -497,7 +506,7 @@ meeting_url = data['meeting_url']</div></div>
 
 <section class="docs-section" id="sandbox">
   <h2>Sandbox &amp; Testing</h2>
-  <p>The sandbox environment uses real Qualiphy providers reviewing fake patients. This means your integration runs against the actual production code path, but no real prescription is dispensed and no real shipping happens.</p>
+  <p>The sandbox environment uses real Qualiphy providers reviewing fake patients. This means your integration runs against the actual production code path, but no real treatment is dispensed and no real shipping happens.</p>
 
   <h3>Using the sandbox</h3>
   <ol>
@@ -520,7 +529,7 @@ meeting_url = data['meeting_url']</div></div>
     </div>
     <div class="param-row">
       <div class="param-name"><code>Test Prescription Approve</code></div>
-      <div class="param-desc">Approves an Rx exam with a prescription attached. Use for testing pharmacy fulfillment workflows.</div>
+      <div class="param-desc">Approves an Rx exam with a treatment attached. Use for testing pharmacy fulfillment workflows.</div>
     </div>
   </div>
 
@@ -543,7 +552,7 @@ meeting_url = data['meeting_url']</div></div>
     </div>
     <div class="param-row">
       <div class="param-name">Production</div>
-      <div class="param-desc"><code>https://api.qualiphy.me/</code><br><span style="font-size:13px;color:var(--text-lt)">Real patients, real prescriptions, real shipping. Use only after sandbox validation.</span></div>
+      <div class="param-desc"><code>https://api.qualiphy.me/</code><br><span style="font-size:13px;color:var(--text-lt)">Real patients, real treatments, real shipping. Use only after sandbox validation.</span></div>
     </div>
   </div>
 
@@ -578,7 +587,7 @@ meeting_url = data['meeting_url']</div></div>
     </div>
     <div class="recipe-step">
       <div class="recipe-step-n">4</div>
-      <div class="recipe-step-body"><strong>The provider makes a decision</strong>: approve, reject, or defer. For Rx exams, an approval includes a prescription that routes to your selected pharmacy.</div>
+      <div class="recipe-step-body"><strong>The provider makes a decision</strong>: approve, reject, or defer. For Rx exams, an approval includes a treatment order that routes to your selected pharmacy.</div>
     </div>
     <div class="recipe-step">
       <div class="recipe-step-n">5</div>
@@ -605,15 +614,15 @@ meeting_url = data['meeting_url']</div></div>
       <div class="fcard-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
       </div>
-      <h4>Prescription (Rx)</h4>
-      <p>Provider evaluates the patient and, if appropriate, writes a prescription. Common for GLP-1 weight loss programs, hormone therapy, and other ongoing treatments. Medication routes to a partner or custom pharmacy.</p>
+      <h4>Rx Treatment</h4>
+      <p>Provider evaluates the patient and, if appropriate, issues a treatment order. Common for GLP-1 weight loss programs, hormone therapy, and other ongoing treatments. Medication routes to a partner or custom pharmacy.</p>
     </div>
     <div class="fcard">
       <div class="fcard-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
       </div>
       <h4>Urgent Care</h4>
-      <p>On-demand consultations for acute conditions: UTI, pink eye, cold sores, acne, nausea. Prescriptions route to a retail pharmacy of the patient's choice.</p>
+      <p>On-demand consultations for acute conditions: UTI, pink eye, cold sores, acne, nausea. Treatments are sent to a retail pharmacy of the patient's choice.</p>
     </div>
   </div>
 
@@ -631,7 +640,7 @@ meeting_url = data['meeting_url']</div></div>
   <p>Telehealth in the U.S. is regulated state-by-state. Qualiphy uses the <code>tele_state</code> field on every <code>/exam_invite</code> call to match patients with providers licensed in their location.</p>
 
   <h3>Always pass the patient's state</h3>
-  <p>Not your clinic's state. The patient's state determines which providers can serve them and which pharmacies can fulfill prescriptions. A clinic in Texas with a patient in California sends <code>"tele_state": "CA"</code>.</p>
+  <p>Not your clinic's state. The patient's state determines which providers can serve them and which pharmacies can fulfill treatments. A clinic in Texas with a patient in California sends <code>"tele_state": "CA"</code>.</p>
 
   <div class="cb cb-warn">
     <div class="cb-icon">!</div>
@@ -647,14 +656,14 @@ meeting_url = data['meeting_url']</div></div>
 
 <section class="docs-section" id="pharmacy-routing">
   <h2>Pharmacy Routing</h2>
-  <p>For Rx exams, you choose how prescriptions get from the provider to the patient. There are three patterns. Pick whichever fits your business model.</p>
+  <p>For Rx exams, you choose how treatments get from the provider to the patient. There are three patterns. Pick whichever fits your business model.</p>
 
   <h3>Partner pharmacy (recommended for Rx programs)</h3>
   <p>Use Qualiphy's pre-vetted compounding pharmacy network. Bundled, all-inclusive pricing. Qualiphy handles fulfillment and ships directly to the patient. Best for GLP-1, peptide, and other recurring Rx programs.</p>
   <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> to get an <code>exam_pos_id</code> for a specific dosage. Pass both into your <code>/exam_invite</code> payload.</p>
 
   <h3>Custom pharmacy</h3>
-  <p>Send the prescription to a specific retail or compounding pharmacy. Required for Urgent Care exams (the patient picks a pharmacy near them). Best when the patient already has a preferred pharmacy.</p>
+  <p>Send the treatment order to a specific retail or compounding pharmacy. Required for Urgent Care exams (the patient picks a pharmacy near them). Best when the patient already has a preferred pharmacy.</p>
   <p>Workflow: call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to find a pharmacy by name or ZIP, then pass the resulting <code>ncpdpid</code> and address fields into your <code>/exam_invite</code> payload.</p>
 
   <h3>Provider's choice</h3>
@@ -775,7 +784,7 @@ meeting_url = data['meeting_url']</div></div>
 
 <section class="docs-section" id="recipe-glp1">
   <h2>Recipe: GLP-1 Weight Loss Program</h2>
-  <p>Subscription-based weight loss is the highest-volume Rx use case. Patient signs up monthly; each month requires a fresh consultation and a prescription routed to a compounding pharmacy.</p>
+  <p>Subscription-based weight loss is the highest-volume Rx use case. Patient signs up monthly; each month requires a fresh consultation and a treatment routed to a compounding pharmacy.</p>
 
   <div class="recipe">
     <div class="recipe-head">
@@ -805,7 +814,7 @@ meeting_url = data['meeting_url']</div></div>
 
 <section class="docs-section" id="recipe-urgent">
   <h2>Recipe: Urgent Care Visit</h2>
-  <p>Patient has a UTI on a Sunday night. They need a same-day prescription sent to their local pharmacy.</p>
+  <p>Patient has a UTI on a Sunday night. They need a same-day treatment sent to their local pharmacy.</p>
 
   <div class="recipe">
     <div class="recipe-head">
@@ -813,7 +822,7 @@ meeting_url = data['meeting_url']</div></div>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
       </div>
       <div>
-        <h3 class="recipe-h">Same-day prescription to a retail pharmacy</h3>
+        <h3 class="recipe-h">Same-day treatment to a retail pharmacy</h3>
         <div class="recipe-sub">~20 min implementation · 2 endpoints + 1 webhook</div>
       </div>
     </div>
@@ -821,7 +830,7 @@ meeting_url = data['meeting_url']</div></div>
       <div class="recipe-steps">
         <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">On checkout, ask the patient which pharmacy they want to use. Call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to look up nearby pharmacies by name or ZIP.</div></div>
         <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Submit <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the urgent-care exam ID, the patient's chosen pharmacy details, and <code>custom_pharmacy: 1</code>.</div></div>
-        <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Patient joins the screening, talks to the provider. If approved, the prescription is faxed to the chosen pharmacy.</div></div>
+        <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Patient joins the screening, talks to the provider. If approved, the treatment order is sent to the chosen pharmacy.</div></div>
         <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires. Notify the patient that their script is ready for pickup at their pharmacy.</div></div>
       </div>
     </div>
@@ -887,12 +896,7 @@ meeting_url = data['meeting_url']</div></div>
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_list</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-list" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Lists every exam configured on your account, including its ID, name, type (GFE/Rx/Urgent), and required questions.</p>
   <h4>Common parameters</h4>
   <div class="param-table">
@@ -904,12 +908,7 @@ meeting_url = data['meeting_url']</div></div>
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_invite</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-invite" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>The core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. Most integrations only call this one endpoint.</p>
 
   <h4>Four official presets</h4>
@@ -940,7 +939,7 @@ meeting_url = data['meeting_url']</div></div>
     <div class="param-row"><div class="param-name"><code>gender</code><div class="param-meta"><span class="param-type">integer</span><span class="param-opt">Optional</span></div></div><div class="param-desc"><code>1</code>=Male, <code>2</code>=Female, <code>3</code>=Prefer not to say. Integer, not a string.</div></div>
     <div class="param-row"><div class="param-name"><code>dmv_license_number</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Patient's DMV license number for ID verification.</div></div>
     <div class="param-row"><div class="param-name"><code>address_line_1</code> <code>address_line_2</code> <code>city</code> <code>state</code> <code>zip_code</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Patient's home address. Note <code>state</code> here is the address field; provider matching uses <code>tele_state</code>.</div></div>
-    <div class="param-row"><div class="param-name"><code>shipping_address_line_1</code> <code>shipping_address_line_2</code> <code>shipping_city</code> <code>shipping_state</code> <code>shipping_zip_code</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Where to ship Rx prescriptions. Different from home address when shipping to clinic, P.O. box, or alternate location.</div></div>
+    <div class="param-row"><div class="param-name"><code>shipping_address_line_1</code> <code>shipping_address_line_2</code> <code>shipping_city</code> <code>shipping_state</code> <code>shipping_zip_code</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Where to ship Rx treatments. Different from home address when shipping to clinic, P.O. box, or alternate location.</div></div>
   </div>
 
   <h4>Pharmacy routing parameters</h4>
@@ -993,17 +992,12 @@ meeting_url = data['meeting_url']</div></div>
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">your <code style="background:none;padding:0;color:inherit">webhook_url</code></span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-webhook" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Inbound webhook fired by Qualiphy at three lifecycle moments. Your handler dispatches on the <code>event</code> field. Respond <code>200</code> immediately and process asynchronously to avoid retries.</p>
 
   <div class="cb cb-warn">
     <div class="cb-icon">!</div>
-    <div class="cb-body"><strong>This is the most common integration mistake.</strong> Treating the webhook as a single payload type means missing prescription details and tracking updates. Always switch on <code>event</code>.</div>
+    <div class="cb-body"><strong>This is the most common integration mistake.</strong> Treating the webhook as a single payload type means missing treatment details and tracking updates. Always switch on <code>event</code>.</div>
   </div>
 
   <h4>Event 1 &mdash; Consultation Complete</h4>
@@ -1032,7 +1026,7 @@ meeting_url = data['meeting_url']</div></div>
   <p style="margin-top:10px"><strong>Status values:</strong> <code>Approved</code>, <code>Rejected</code>, <code>Deferred to Medical Director</code>, <code>NA</code>, <code>Missed</code>. The <code>exam_url</code> is a CloudFront-hosted PDF of the consultation record. URLs include a signed-expiration query param &mdash; mirror the file to your own storage if you need long-term access.</p>
 
   <h4 style="margin-top:24px">Event 2 &mdash; Prescription Confirmed</h4>
-  <p>Fires only for Rx exams, after Event 1, when the prescription has been written and confirmed at the pharmacy. Carries the full prescription schema.</p>
+  <p>Fires only for Rx exams, after Event 1, when the treatment order has been written and confirmed at the pharmacy. Carries the full schema below.</p>
   <div class="codeblock">
     <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>event: 2 &middot; Prescription Confirmed</span></div><button class="copy-btn" onclick="copyCode(this,'wh-e2')">Copy</button></div>
     <div class="codeblock-pane active" id="wh-e2"><div class="codeblock-body">{
@@ -1078,10 +1072,10 @@ meeting_url = data['meeting_url']</div></div>
   "questions_answers": [ /* same shape as event 1 */ ]
 }</div></div>
   </div>
-  <p style="margin-top:10px"><code>prescription</code> is an array; an exam may include multiple prescriptions. <code>schedule_code</code> reflects DEA controlled-substance schedule when applicable. Storage of these fields is regulated &mdash; design your DB schema with that in mind.</p>
+  <p style="margin-top:10px"><code>prescription</code> is an array; an exam may include multiple treatment items. <code>schedule_code</code> reflects DEA controlled-substance schedule when applicable. Storage of these fields is regulated &mdash; design your DB schema with that in mind.</p>
 
   <h4 style="margin-top:24px">Event 3 &mdash; Prescription Tracking</h4>
-  <p>Fires when the pharmacy ships the prescription. Use this to surface tracking info to the patient or your operations team.</p>
+  <p>Fires when the pharmacy ships the treatment. Use this to surface tracking info to the patient or your operations team.</p>
   <div class="codeblock">
     <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>event: 3 &middot; Prescription Tracking</span></div><button class="copy-btn" onclick="copyCode(this,'wh-e3')">Copy</button></div>
     <div class="codeblock-pane active" id="wh-e3"><div class="codeblock-body">{
@@ -1145,12 +1139,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_upload_attachment</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-upload-attachment" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Attach a document to a patient exam: ID photos, lab results, prior records. The provider sees attachments during the screening.</p>
 </section>
 
@@ -1158,12 +1147,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_questions</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-questions-&-answers" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Returns the screening question schema for a given exam ID. Use to build pre-fill UI on your own intake form, or to map your existing intake fields onto the Qualiphy question set.</p>
 </section>
 
@@ -1171,12 +1155,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_submit_answers</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-submit-answers" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Submits answers on behalf of the patient. Pair with <a href="#ep-exam-questions"><code>/exam_questions</code></a> to pre-fill the screening from your own intake data, so patients aren't answering the same questions twice.</p>
 </section>
 
@@ -1184,12 +1163,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_invite_resend</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/exam-invite-resend" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Re-sends the invite email and SMS to the patient. Use when a patient says they didn't receive their original invite.</p>
 </section>
 
@@ -1197,12 +1171,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/exam_invite_cancel</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/cancel-exam-invite" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Cancel a previously created patient exam invite. Useful when a patient cancels their order or you need to clean up a duplicate invite. Cancellation is only valid before the provider has acted on the exam.</p>
 
   <h4>Parameters</h4>
@@ -1240,12 +1209,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/partner_pharmacy_list</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/partner-pharmacy-list" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Lists Qualiphy's partner compounding pharmacies available for your account. Returns each pharmacy's <code>pharmacy_id</code>, which you'll pass into <code>/exam_invite</code> for Rx programs.</p>
 </section>
 
@@ -1253,12 +1217,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/partner_pharmacy_treatment_packages</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/partner-pharmacy-treatment-packages" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Lists treatment packages (drug + dosage combinations + pricing) available at a specific partner pharmacy. Returns <code>exam_pos_id</code> values for use with <code>/exam_invite</code>.</p>
 </section>
 
@@ -1266,12 +1225,7 @@ async def process_qualiphy(payload):
   <div class="endpoint-head">
     <span class="endpoint-method post">POST</span>
     <span class="endpoint-path">/api/custom_pharmacy_search</span>
-    <div class="endpoint-actions">
-      <a href="https://api-docs.qualiphy.me/docs/api/custom-pharmacy-search" target="_blank" rel="noopener" class="canonical-link">Full reference
-        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3h6v6M17 3l-9 9M9 5H4v11h11v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      </a>
     </div>
-  </div>
   <p>Look up any U.S. pharmacy by name, location, or NCPDPID. Returns full address and identifier fields you'll need for <code>/exam_invite</code> when using custom pharmacy routing.</p>
 </section>
 
@@ -1337,33 +1291,61 @@ async def process_qualiphy(payload):
 
 <!-- ============ FOOTER ============ -->
 <footer class="docs-foot">
-  <div class="docs-foot-inner">
-    <div class="docs-foot-brand">
-      <a href="./" class="logo" aria-label="Qualiphy API docs">
-        <div class="logo-mark"><img src="favicon-76.png" alt="Qualiphy" width="34" height="34"></div>
-        <div class="logo-text"><span>Qualiphy API</span><span class="logo-sub">Developer Docs</span></div>
+  <!-- Quidget no-code option callout -->
+  <div class="docs-foot-cta">
+    <div class="docs-foot-cta-inner">
+      <div class="docs-foot-cta-body">
+        <div class="docs-foot-cta-eyebrow">Prefer not to write code?</div>
+        <h3 class="docs-foot-cta-h">Quidget is the no-code way to integrate Qualiphy on WordPress.</h3>
+        <p class="docs-foot-cta-p">Drop a plugin onto your WooCommerce site and you're live in minutes. Built for clinics that want every Qualiphy capability without an engineering team.</p>
+      </div>
+      <a href="https://quidget.qualiphy.me" target="_blank" rel="noopener" class="docs-foot-cta-btn">
+        Explore Quidget
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 13l6-6M8 7h5v5"/></svg>
       </a>
-      <p>Programmatic access to licensed provider consultations, prescriptions, and pharmacy fulfillment. Built for clinics, medspas, and software teams.</p>
     </div>
-    <div class="docs-foot-col">
-      <h4>Get Started</h4>
-      <a href="#walkthrough">Code walkthrough</a>
-      <a href="#authentication">Authentication</a>
-      <a href="#sandbox">Sandbox &amp; Testing</a>
-      <a href="quick-start/">Quick start</a>
+  </div>
+
+  <div class="docs-foot-inner">
+    <div class="docs-foot-promo">
+      <div class="docs-foot-promo-side">
+        <div class="docs-foot-promo-kicker">Prefer no code?</div>
+        <h3 class="docs-foot-promo-h">Use Quidget for WordPress.</h3>
+        <p class="docs-foot-promo-p">Quidget is our drop-in WordPress plugin that wraps the Qualiphy API in a polished WooCommerce experience. Ship telehealth on your store without writing a line of code.</p>
+      </div>
+      <a href="https://quidget.qualiphy.me" target="_blank" rel="noopener" class="docs-foot-promo-cta">
+        Explore Quidget
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 10h10M11 5l5 5-5 5"/></svg>
+      </a>
     </div>
-    <div class="docs-foot-col">
-      <h4>Reference</h4>
-      <a href="#ep-exam-invite">/exam_invite</a>
-      <a href="#ep-exam-webhook">Webhook</a>
-      <a href="#ep-pharmacy-list">Pharmacies</a>
-      <a href="https://api-docs.qualiphy.me" target="_blank" rel="noopener">Canonical reference ↗</a>
-    </div>
-    <div class="docs-foot-col">
-      <h4>Account</h4>
-      <a href="https://app.qualiphy.me/signup" target="_blank" rel="noopener">Get API access ↗</a>
-      <a href="https://app.qualiphy.me" target="_blank" rel="noopener">Qualiphy portal ↗</a>
-      <a href="mailto:engineering@qualiphy.me">Contact engineering</a>
+
+    <div class="docs-foot-cols">
+      <div class="docs-foot-brand">
+        <a href="./" class="logo" aria-label="Qualiphy API docs">
+          <div class="logo-mark"><img src="favicon-76.png" alt="Qualiphy" width="34" height="34"></div>
+          <div class="logo-text"><span>Qualiphy API</span><span class="logo-sub">Developer Docs</span></div>
+        </a>
+        <p>Programmatic access to licensed provider consultations, treatments, and pharmacy fulfillment. Built for clinics, medspas, and software teams.</p>
+      </div>
+      <div class="docs-foot-col">
+        <h4>Get Started</h4>
+        <a href="quick-start/">Quick start</a>
+        <a href="#walkthrough">Code walkthrough</a>
+        <a href="#authentication">Authentication</a>
+        <a href="#sandbox">Sandbox &amp; Testing</a>
+      </div>
+      <div class="docs-foot-col">
+        <h4>Reference</h4>
+        <a href="#ep-exam-invite">/exam_invite</a>
+        <a href="#ep-exam-webhook">Webhook</a>
+        <a href="#ep-pharmacy-list">Pharmacies</a>
+        <a href="#glossary">Field glossary</a>
+      </div>
+      <div class="docs-foot-col">
+        <h4>Account</h4>
+        <a href="https://app.qualiphy.me/signup" target="_blank" rel="noopener">Get API access ↗</a>
+        <a href="https://app.qualiphy.me" target="_blank" rel="noopener">Qualiphy portal ↗</a>
+      </div>
     </div>
   </div>
   <div class="docs-foot-bottom">
