@@ -89,7 +89,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .25s}
 
 /* ============ DOCS LAYOUT ============ */
-.docs-shell{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:280px 1fr;gap:0;padding-top:64px;min-height:100vh}
+.docs-shell{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:280px minmax(0,1fr);gap:0;padding-top:64px;min-height:100vh}
 
 /* SIDEBAR */
 .sidebar{position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;padding:28px 18px 80px 24px;border-right:1px solid var(--border);background:linear-gradient(180deg,var(--paper),var(--surface-warm));scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent}
@@ -154,7 +154,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .fcard p{font-size:13.5px;margin:0;color:var(--text-mid);line-height:1.55}
 
 /* CODE BLOCKS */
-.codeblock{background:#0F0D14;border-radius:11px;overflow:hidden;margin:16px 0;border:1px solid #1f1b29}
+.codeblock{background:#0F0D14;border-radius:11px;overflow:hidden;margin:16px 0;border:1px solid #1f1b29;max-width:100%}
 .codeblock-tabs{display:flex;background:#1A161F;border-bottom:1px solid #2a2434;padding:0 12px}
 .codeblock-tab{padding:10px 14px;font-family:var(--font-m);font-size:11.5px;font-weight:600;color:rgba(255,255,255,.55);border:none;background:transparent;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:color .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
 .codeblock-tab.active{color:var(--lavender);border-bottom-color:var(--lavender)}
@@ -219,7 +219,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .toc-mobile{display:none}
 
 /* FOOTER */
-.docs-foot{background:var(--ink);color:rgba(255,255,255,.7);padding:48px 0 28px;margin-top:60px;grid-column:1 / -1}
+.docs-foot{background:var(--ink);color:rgba(255,255,255,.7);padding:48px 0 28px;margin-top:60px}
 .docs-foot-inner{max-width:1240px;margin:0 auto;padding:0 clamp(1.25rem,4vw,2.5rem);display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
 .docs-foot .logo{color:#fff}
 .docs-foot .logo-sub{color:rgba(255,255,255,.6)}
@@ -260,11 +260,11 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
     </a>
     <div class="nav-links">
       <a href="./" class="nav-link active">Documentation</a>
-      <a href="integrations/" class="nav-link">Setup wizard</a>
+      <a href="quick-start/" class="nav-link">Quick start</a>
       <a href="https://api-docs.qualiphy.me" target="_blank" rel="noopener" class="nav-link">Reference ↗</a>
     </div>
     <div class="nav-actions">
-      <a href="integrations/" class="btn btn-outline btn-sm">Run setup wizard</a>
+      <a href="quick-start/" class="btn btn-outline btn-sm">Run quick start</a>
       <a href="https://app.qualiphy.me/signup" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get API access →</a>
       <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
@@ -283,7 +283,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
   <div class="sidebar-group">
     <div class="sidebar-group-h"><span class="grp-num">01</span>Getting Started</div>
-    <a href="#quickstart" class="s-link" data-search="quickstart 5-minute first api call setup">Quickstart</a>
+    <a href="#walkthrough" class="s-link" data-search="walkthrough quickstart 5-minute first api call code example sample">Code walkthrough</a>
     <a href="#authentication" class="s-link" data-search="authentication api key auth header credentials">Authentication</a>
     <a href="#sandbox" class="s-link" data-search="sandbox testing test mode magic patient names approve reject">Sandbox &amp; Testing</a>
     <a href="#environments" class="s-link" data-search="base urls environments staging production sandbox versioning deprecation">Base URLs &amp; Environments</a>
@@ -329,9 +329,9 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
     <a href="#going-live" class="s-link" data-search="going live production checklist launch deploy">Going to Production</a>
   </div>
 
-  <a href="integrations/" class="sidebar-cta">
+  <a href="quick-start/" class="sidebar-cta">
     <span class="sidebar-cta-h">Need a custom plan?</span>
-    <span class="sidebar-cta-d">Run our setup wizard. Answer a few questions and we'll generate a tailored integration plan for your dev team.</span>
+    <span class="sidebar-cta-d">Run our quick start. Answer a few questions and we'll generate a tailored integration plan for your dev team.</span>
     <span class="sidebar-cta-btn">Run wizard
       <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M5 10h10M11 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
     </span>
@@ -347,20 +347,20 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
   <h1>Build telehealth into anything you ship.</h1>
   <p>The Qualiphy API lets clinics, medspas, and software teams launch licensed provider consultations, prescriptions, and pharmacy fulfillment under their own brand. Programmatic access to the same network that powers Qualiphy's products. This is the comprehensive guide. The five-minute version is below.</p>
   <div class="docs-hero-actions">
-    <a href="#quickstart" class="btn btn-primary">Quickstart →</a>
-    <a href="integrations/" class="btn btn-outline">Or run the setup wizard</a>
+    <a href="quick-start/" class="btn btn-primary">Quick start →</a>
+    <a href="#walkthrough" class="btn btn-outline">Or skim the code walkthrough</a>
   </div>
 </header>
 
 <!-- ============ GETTING STARTED ============ -->
 
-<section class="docs-section" id="quickstart">
-  <h2>Quickstart</h2>
-  <p>The fastest path from zero to a successfully approved test exam. About 5 minutes.</p>
+<section class="docs-section" id="walkthrough">
+  <h2>Code walkthrough</h2>
+  <p>The fastest path from zero to a successfully approved test exam. About 5 minutes if you already have an API key.</p>
 
   <div class="cb cb-info">
     <div class="cb-icon">i</div>
-    <div class="cb-body"><strong>Not technical?</strong> The <a href="integrations/">Integration Setup wizard</a> will generate a custom plan you can email to your dev team, with the exact endpoints and payload tailored to your use case.</div>
+    <div class="cb-body"><strong>Not technical?</strong> Run the <a href="quick-start/">Quick start</a> instead. It generates a custom plan you can hand to your dev team, with the exact endpoints and sample payload tailored to your use case.</div>
   </div>
 
   <h3>1. Get an API key</h3>
@@ -1327,11 +1327,13 @@ async def process_qualiphy(payload):
 <!-- BOTTOM CTA -->
 <div style="margin-top:64px;padding:32px;background:linear-gradient(135deg,var(--indigo),var(--indigo-deep));border-radius:18px;color:#fff;text-align:center">
   <h2 style="color:#fff;font-size:1.5rem;margin-bottom:10px">Want a tailored plan for your team?</h2>
-  <p style="color:rgba(255,255,255,.78);font-size:15px;max-width:520px;margin:0 auto 18px">The setup wizard asks a handful of questions about your business, then generates a custom integration plan you can email straight to your dev team.</p>
-  <a href="integrations/" class="btn" style="background:var(--lavender);color:var(--ink)">Run the setup wizard →</a>
+  <p style="color:rgba(255,255,255,.78);font-size:15px;max-width:520px;margin:0 auto 18px">The quick start asks a handful of questions about your business, then generates a custom integration plan you can email straight to your dev team.</p>
+  <a href="quick-start/" class="btn" style="background:var(--lavender);color:var(--ink)">Run the quick start →</a>
 </div>
 
 </main>
+
+</div>
 
 <!-- ============ FOOTER ============ -->
 <footer class="docs-foot">
@@ -1345,10 +1347,10 @@ async def process_qualiphy(payload):
     </div>
     <div class="docs-foot-col">
       <h4>Get Started</h4>
-      <a href="#quickstart">Quickstart</a>
+      <a href="#walkthrough">Code walkthrough</a>
       <a href="#authentication">Authentication</a>
       <a href="#sandbox">Sandbox &amp; Testing</a>
-      <a href="integrations/">Setup wizard</a>
+      <a href="quick-start/">Quick start</a>
     </div>
     <div class="docs-foot-col">
       <h4>Reference</h4>
@@ -1369,8 +1371,6 @@ async def process_qualiphy(payload):
     <div>Made with care in the United States</div>
   </div>
 </footer>
-
-</div>
 
 <script>
 // Year
