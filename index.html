@@ -237,17 +237,25 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  .docs-section[id^="recipe-"] .recipe.is-active-payload{box-shadow:0 0 0 2px var(--indigo),0 6px 18px rgba(77,61,113,.18)}
 }
 
-/* ============ SIDEBAR API KEY FIELD ============ */
-.sb-key{margin-bottom:14px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;gap:6px}
-.sb-key-label{font-family:var(--font-m);font-size:9.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
-.sb-key-input{width:100%;padding:7px 10px;background:var(--paper);border:1px solid var(--border-mid);border-radius:7px;font-family:var(--font-m);font-size:12px;color:var(--text);outline:none;transition:all .15s var(--ease)}
-.sb-key-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
-.sb-key-input::placeholder{color:var(--text-vlt)}
-.sb-key-hint{font-family:var(--font-m);font-size:10px;color:var(--text-vlt);line-height:1.4;letter-spacing:.02em}
-.sb-key-hint.is-active{color:var(--indigo);font-weight:600}
-.sb-key-clear{background:transparent;border:0;color:var(--text-lt);font-family:var(--font-m);font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0;display:none}
-.sb-key-clear.is-visible{display:inline-block}
-.sb-key-clear:hover{color:var(--rose)}
+/* ============ TOP-OF-PAGE API KEY BLOCK ============ */
+.api-key-block{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:18px 22px;border-radius:14px;background:var(--surface);border:1px solid var(--border);margin-bottom:18px}
+.api-key-block-side{flex:1 1 320px;min-width:0}
+.api-key-block-kicker{font-family:var(--font-m);font-size:10.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.api-key-block-title{font-family:var(--font-d);font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-bottom:4px;line-height:1.25}
+.api-key-block-desc{color:var(--text-mid);font-size:13px;line-height:1.55;margin:0;max-width:62ch}
+.api-key-block-desc.is-active{color:var(--indigo);font-weight:600}
+.api-key-block-desc code{font-size:11.5px;padding:1px 5px}
+.api-key-block-action{display:flex;gap:8px;align-items:stretch;flex:0 1 360px;min-width:260px}
+.api-key-block-input{flex:1;min-width:0;padding:11px 14px;background:var(--paper);border:1.5px solid var(--border-mid);border-radius:10px;font-family:var(--font-m);font-size:13px;color:var(--text);outline:none;transition:all .15s var(--ease)}
+.api-key-block-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
+.api-key-block-input::placeholder{color:var(--text-vlt)}
+.api-key-block-clear{display:none;align-items:center;justify-content:center;padding:0 14px;background:transparent;border:1.5px solid var(--border-mid);border-radius:10px;color:var(--text-lt);font-family:var(--font-m);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s var(--ease)}
+.api-key-block-clear.is-visible{display:inline-flex}
+.api-key-block-clear:hover{color:var(--rose);border-color:var(--rose)}
+[data-theme="dark"] .api-key-block{background:var(--surface);border-color:var(--border-mid)}
+[data-theme="dark"] .api-key-block-input{background:var(--paper);border-color:var(--border-mid);color:var(--text)}
+[data-theme="dark"] .api-key-block-input:focus{box-shadow:0 0 0 3px rgba(169,159,212,.18)}
+[data-theme="dark"] .api-key-block-clear{border-color:var(--border-mid)}
 
 .docs-hero{padding-bottom:36px;margin-bottom:32px;border-bottom:1px solid var(--border-lt)}
 .docs-hero h1{margin-bottom:14px}
@@ -390,8 +398,10 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .hero-quidget-kicker{font-family:var(--font-m);font-size:10.5px;font-weight:600;color:var(--indigo);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
 .hero-quidget-title{font-family:var(--font-d);font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-bottom:4px;line-height:1.25}
 .hero-quidget-desc{color:var(--text-mid);font-size:13.5px;line-height:1.55;margin:0;max-width:60ch}
-.hero-quidget-cta{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--indigo);color:#fff;border-radius:9px;font-family:var(--font-h);font-size:13.5px;font-weight:700;transition:all .18s var(--ease);flex-shrink:0;text-decoration:none}
-.hero-quidget-cta:hover{background:#362A52;transform:translateX(2px);color:#fff}
+.hero-quidget-cta{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:#1F1A26;color:#fff;border-radius:9px;font-family:var(--font-h);font-size:13.5px;font-weight:700;transition:all .18s var(--ease);flex-shrink:0;text-decoration:none}
+.hero-quidget-cta:hover{background:#0E0C13;transform:translateX(2px);color:#fff}
+[data-theme="dark"] .hero-quidget-cta{background:#CEC8FE;color:#1F1A26}
+[data-theme="dark"] .hero-quidget-cta:hover{background:#fff;color:#1F1A26}
 [data-theme="dark"] .hero-quidget-card{background:linear-gradient(135deg,rgba(206,200,254,.06),rgba(77,61,113,.16));border-color:rgba(206,200,254,.18)}
 [data-theme="dark"] .hero-quidget-title{color:#fff}
 [data-theme="dark"] .hero-quidget-desc{color:rgba(255,255,255,.72)}
@@ -455,14 +465,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 <!-- ============ SIDEBAR ============ -->
 <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
- <div class="sb-key">
- <label class="sb-key-label" for="docs-api-key">
- <span>Your API key</span>
- <button type="button" class="sb-key-clear" id="docs-api-key-clear" aria-label="Clear API key">Clear</button>
- </label>
- <input class="sb-key-input" id="docs-api-key" type="text" placeholder="Paste to auto-fill code samples" autocomplete="off" spellcheck="false" aria-describedby="docs-api-key-hint">
- <div class="sb-key-hint" id="docs-api-key-hint">Stored only in your browser session.</div>
- </div>
  <div class="sidebar-search">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
  <input type="text" id="docsSearch" placeholder="Search docs..." aria-label="Search">
@@ -538,12 +540,25 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <p class="docs-hero-aside">Answer 5 quick questions, get a custom integration plan with the exact endpoints, sample call, and checklist your dev team needs.</p>
 </header>
 
+<!-- TOP BLOCK: API key field -->
+<div class="api-key-block">
+ <div class="api-key-block-side">
+ <div class="api-key-block-kicker">Your API key</div>
+ <div class="api-key-block-title">Auto-fill code samples across the docs</div>
+ <p class="api-key-block-desc" id="docs-api-key-hint">Paste your API key. Every <code>YOUR_API_KEY</code> token across the docs is replaced live. Stored only in this browser session — never sent anywhere.</p>
+ </div>
+ <div class="api-key-block-action">
+ <input class="api-key-block-input" id="docs-api-key" type="text" placeholder="Paste API key" autocomplete="off" spellcheck="false" aria-describedby="docs-api-key-hint">
+ <button type="button" class="api-key-block-clear" id="docs-api-key-clear" aria-label="Clear API key">Clear</button>
+ </div>
+</div>
+
 <!-- TOP CTA: Quidget for non-developers -->
 <div class="hero-quidget-card">
  <div class="hero-quidget-side">
  <div class="hero-quidget-kicker">Prefer no code?</div>
- <div class="hero-quidget-title">Use Quidget for WordPress.</div>
- <p class="hero-quidget-desc">Drop-in plugin that wraps the Qualiphy API in a polished WooCommerce experience. Ship telehealth on your store without writing a line of code.</p>
+ <div class="hero-quidget-title">Run your site on WordPress?</div>
+ <p class="hero-quidget-desc">Quidget is our drop-in WordPress plugin that wraps the Qualiphy API in a polished WooCommerce experience. Ship telehealth on your store without writing a line of code.</p>
  </div>
  <a href="https://quidget.qualiphy.me" target="_blank" rel="noopener" class="hero-quidget-cta">
  Explore Quidget
@@ -1924,7 +1939,7 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  };
 })();
 
-// ============ Sidebar API key field: substitutes YOUR_API_KEY across the page ============
+// ============ Top-of-page API key field: substitutes YOUR_API_KEY across the page ============
 (function(){
  const STORAGE_KEY = 'qualiphy-docs-api-key';
  const input = document.getElementById('docs-api-key');
@@ -1933,11 +1948,7 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  if (!input) return;
 
  function setHintActive(active){
- if (!hint) return;
- hint.textContent = active
- ? 'Active: every YOUR_API_KEY in code samples is filled with this key.'
- : 'Stored only in your browser session.';
- hint.classList.toggle('is-active', active);
+ if (hint) hint.classList.toggle('is-active', active);
  if (clearBtn) clearBtn.classList.toggle('is-visible', active);
  }
 
