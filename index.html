@@ -208,7 +208,18 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 /* CONTENT */
 .docs-main{padding:48px clamp(1.5rem,4vw,4rem) 120px;max-width:880px}
-/* ============ SIDEBAR ENV TOGGLE ============ */
+
+/* ============ SIDEBAR API KEY FIELD ============ */
+.sb-key{margin-bottom:14px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;gap:6px}
+.sb-key-label{font-family:var(--font-m);font-size:9.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
+.sb-key-input{width:100%;padding:7px 10px;background:var(--paper);border:1px solid var(--border-mid);border-radius:7px;font-family:var(--font-m);font-size:12px;color:var(--text);outline:none;transition:all .15s var(--ease)}
+.sb-key-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
+.sb-key-input::placeholder{color:var(--text-vlt)}
+.sb-key-hint{font-family:var(--font-m);font-size:10px;color:var(--text-vlt);line-height:1.4;letter-spacing:.02em}
+.sb-key-hint.is-active{color:var(--indigo);font-weight:600}
+.sb-key-clear{background:transparent;border:0;color:var(--text-lt);font-family:var(--font-m);font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0;display:none}
+.sb-key-clear.is-visible{display:inline-block}
+.sb-key-clear:hover{color:var(--rose)}
 
 .docs-hero{padding-bottom:36px;margin-bottom:32px;border-bottom:1px solid var(--border-lt)}
 .docs-hero h1{margin-bottom:14px}
@@ -405,6 +416,14 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 <!-- ============ SIDEBAR ============ -->
 <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+ <div class="sb-key">
+ <label class="sb-key-label" for="docs-api-key">
+ <span>Your API key</span>
+ <button type="button" class="sb-key-clear" id="docs-api-key-clear" aria-label="Clear API key">Clear</button>
+ </label>
+ <input class="sb-key-input" id="docs-api-key" type="text" placeholder="Paste to auto-fill code samples" autocomplete="off" spellcheck="false" aria-describedby="docs-api-key-hint">
+ <div class="sb-key-hint" id="docs-api-key-hint">Stored only in your browser session.</div>
+ </div>
  <div class="sidebar-search">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
  <input type="text" id="docsSearch" placeholder="Search docs..." aria-label="Search">
@@ -1740,6 +1759,59 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  renderLines(body, txt);
  });
  };
+})();
+
+// ============ Sidebar API key field: substitutes YOUR_API_KEY across the page ============
+(function(){
+ const STORAGE_KEY = 'qualiphy-docs-api-key';
+ const input = document.getElementById('docs-api-key');
+ const hint = document.getElementById('docs-api-key-hint');
+ const clearBtn = document.getElementById('docs-api-key-clear');
+ if (!input) return;
+
+ function setHintActive(active){
+ if (!hint) return;
+ hint.textContent = active
+ ? 'Active: every YOUR_API_KEY in code samples is filled with this key.'
+ : 'Stored only in your browser session.';
+ hint.classList.toggle('is-active', active);
+ if (clearBtn) clearBtn.classList.toggle('is-visible', active);
+ }
+
+ function apply(key){
+ if (window.__renderPaneWithKey) window.__renderPaneWithKey(key);
+ setHintActive(!!key);
+ }
+
+ // Restore from session
+ let saved = '';
+ try { saved = sessionStorage.getItem(STORAGE_KEY) || ''; } catch(_){}
+ if (saved) {
+ input.value = saved;
+ apply(saved);
+ }
+
+ let timer = null;
+ input.addEventListener('input', () => {
+ clearTimeout(timer);
+ timer = setTimeout(() => {
+ const v = input.value.trim();
+ try {
+ if (v) sessionStorage.setItem(STORAGE_KEY, v);
+ else sessionStorage.removeItem(STORAGE_KEY);
+ } catch(_){}
+ apply(v);
+ }, 180);
+ });
+
+ if (clearBtn) {
+ clearBtn.addEventListener('click', () => {
+ input.value = '';
+ try { sessionStorage.removeItem(STORAGE_KEY); } catch(_){}
+ apply('');
+ input.focus();
+ });
+ }
 })();
 </script>
 
