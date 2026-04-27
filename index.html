@@ -23,7 +23,7 @@
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-WGKMC7NC');</script>
 
 <title>Qualiphy API Documentation</title>
-<meta name="description" content="Comprehensive API documentation for the Qualiphy telehealth platform. Quickstart guides, integration recipes, endpoint reference, webhook patterns, and sandbox testing for clinics building on Qualiphy.">
+<meta name="description" content="Comprehensive API documentation for the Qualiphy telehealth platform. Quickstart guides, integration recipes, endpoint reference, and webhook patterns for clinics building on Qualiphy.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://docs.qualiphy.me/">
 
@@ -209,13 +209,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 /* CONTENT */
 .docs-main{padding:48px clamp(1.5rem,4vw,4rem) 120px;max-width:880px}
 /* ============ SIDEBAR ENV TOGGLE ============ */
-.sb-env{margin-bottom:14px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;gap:7px}
-.sb-env-label{font-family:var(--font-m);font-size:9.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase}
-.sb-env-seg{display:inline-flex;border:1px solid var(--border-mid);border-radius:8px;padding:2px;background:var(--paper);gap:0;width:100%}
-.sb-env-btn{flex:1;font-family:var(--font-h);font-size:12px;font-weight:600;color:var(--text-mid);padding:5px 8px;border-radius:5px;background:transparent;border:0;cursor:pointer;transition:all .15s var(--ease)}
-.sb-env-btn:hover{color:var(--ink)}
-.sb-env-btn.is-active{background:var(--indigo);color:#fff}
-[data-theme="dark"] .sb-env-btn.is-active{color:#0E0C13}
 
 .docs-hero{padding-bottom:36px;margin-bottom:32px;border-bottom:1px solid var(--border-lt)}
 .docs-hero h1{margin-bottom:14px}
@@ -412,13 +405,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 <!-- ============ SIDEBAR ============ -->
 <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
- <div class="sb-env" role="group" aria-label="API environment">
- <span class="sb-env-label">Environment</span>
- <div class="sb-env-seg" role="tablist">
- <button class="sb-env-btn is-active" data-env="production" role="tab" aria-selected="true">Production</button>
- <button class="sb-env-btn" data-env="sandbox" role="tab" aria-selected="false">Sandbox</button>
- </div>
- </div>
  <div class="sidebar-search">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
  <input type="text" id="docsSearch" placeholder="Search docs..." aria-label="Search">
@@ -429,8 +415,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <div class="sidebar-group-h"><span class="grp-num">01</span>Getting Started</div>
  <a href="#walkthrough" class="s-link" data-search="walkthrough quickstart 5-minute first api call code example sample">Code walkthrough</a>
  <a href="#authentication" class="s-link" data-search="authentication api key auth header credentials">Authentication</a>
- <a href="#sandbox" class="s-link" data-search="sandbox testing test mode magic patient names approve reject">Sandbox &amp; Testing</a>
- <a href="#environments" class="s-link" data-search="base urls environments staging production sandbox versioning deprecation">Base URLs &amp; Environments</a>
  </div>
 
  <div class="sidebar-group">
@@ -500,7 +484,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 <section class="docs-section" id="walkthrough">
  <h2>Code walkthrough</h2>
- <p>The fastest path from zero to a successfully approved test exam. About 5 minutes if you already have an API key.</p>
+ <p>The fastest path from zero to a successfully approved exam. About 5 minutes if you already have an API key.</p>
 
  <div class="cb cb-info">
  <div class="cb-icon">i</div>
@@ -526,10 +510,10 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  </div>
  <button class="copy-btn" onclick="copyCode(this,'qs1-curl')">Copy</button>
  </div>
- <div class="codeblock-pane active" id="qs1-curl"><div class="codeblock-body">curl -X POST https://sandbox-api.qualiphy.me/api/exam_list \
+ <div class="codeblock-pane active" id="qs1-curl"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/exam_list \
   -H "Content-Type: application/json" \
   -d '{"api_key":"YOUR_API_KEY"}'</div></div>
- <div class="codeblock-pane" id="qs1-node"><div class="codeblock-body">const res = await fetch('https://sandbox-api.qualiphy.me/api/exam_list', {
+ <div class="codeblock-pane" id="qs1-node"><div class="codeblock-body">const res = await fetch('https://api.qualiphy.me/api/exam_list', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({api_key: process.env.QUALIPHY_KEY})
@@ -538,14 +522,14 @@ const exams = await res.json();</div></div>
  <div class="codeblock-pane" id="qs1-python"><div class="codeblock-body">import requests, os
 
   r = requests.post(
-  'https://sandbox-api.qualiphy.me/api/exam_list',
+  'https://api.qualiphy.me/api/exam_list',
   json={'api_key': os.environ['QUALIPHY_KEY']}
 )
   exams = r.json()</div></div>
  </div>
 
- <h3>3. Send a test exam invite</h3>
- <p>Use the sandbox URL and a magic patient name (<code>Test Approve</code>) so a real provider auto-approves your test without spending a real consultation slot.</p>
+ <h3>3. Send an exam invite</h3>
+ <p>Build a payload with the patient's details, the exam ID from step 2, and a webhook URL where you want to receive the result.</p>
 
  <div class="codeblock">
  <div class="codeblock-tabs">
@@ -560,31 +544,31 @@ const exams = await res.json();</div></div>
  </div>
  <button class="copy-btn" onclick="copyCode(this,'qs2-curl')">Copy</button>
  </div>
- <div class="codeblock-pane active" id="qs2-curl"><div class="codeblock-body">curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \
+ <div class="codeblock-pane active" id="qs2-curl"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/exam_invite \
   -H "Content-Type: application/json" \
   -d '{
   "api_key": "YOUR_API_KEY",
   "exams": [4226],
-  "first_name": "Test",
-  "last_name": "Approve",
-  "email": "test@yourclinic.com",
+  "first_name": "Sarah",
+  "last_name": "Johnson",
+  "email": "sarah@example.com",
   "dob": "1990-06-30",
   "phone_number": "+15551234567",
-  "tele_state": "TE",
+  "tele_state": "NY",
   "webhook_url": "https://your-app.com/webhooks/qualiphy"
 }'</div></div>
- <div class="codeblock-pane" id="qs2-node"><div class="codeblock-body">const res = await fetch('https://sandbox-api.qualiphy.me/api/exam_invite', {
+ <div class="codeblock-pane" id="qs2-node"><div class="codeblock-body">const res = await fetch('https://api.qualiphy.me/api/exam_invite', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({
     api_key: process.env.QUALIPHY_KEY,
     exams: [4226],
-    first_name: 'Test',
-    last_name: 'Approve',
-    email: 'test@yourclinic.com',
+    first_name: 'Sarah',
+    last_name: 'Johnson',
+    email: 'sarah@example.com',
     dob: '1990-06-30',
     phone_number: '+15551234567',
-    tele_state: 'TE',
+    tele_state: 'NY',
     webhook_url: 'https://your-app.com/webhooks/qualiphy'
   })
 });
@@ -593,16 +577,16 @@ const exams = await res.json();</div></div>
  <div class="codeblock-pane" id="qs2-python"><div class="codeblock-body">import requests, os
 
   r = requests.post(
-  'https://sandbox-api.qualiphy.me/api/exam_invite',
+  'https://api.qualiphy.me/api/exam_invite',
   json={
     'api_key': os.environ['QUALIPHY_KEY'],
     'exams': [4226],
-    'first_name': 'Test',
-    'last_name': 'Approve',
-    'email': 'test@yourclinic.com',
+    'first_name': 'Sarah',
+    'last_name': 'Johnson',
+    'email': 'sarah@example.com',
     'dob': '1990-06-30',
     'phone_number': '+15551234567',
-    'tele_state': 'TE',
+    'tele_state': 'NY',
     'webhook_url': 'https://your-app.com/webhooks/qualiphy'
   }
 )
@@ -611,11 +595,11 @@ const exams = await res.json();</div></div>
  </div>
 
  <h3>4. Wait for the webhook</h3>
- <p>A real provider will review the test patient and approve in 2-24 hours (weekdays). When approved, your <code>webhook_url</code> receives a POST with the result payload. See <a href="#ep-exam-webhook">webhook reference</a> for the schema.</p>
+ <p>A licensed provider reviews the patient and approves in 2-24 hours (weekdays). When approved, your <code>webhook_url</code> receives a POST with the result payload. See <a href="#ep-exam-webhook">webhook reference</a> for the schema.</p>
 
  <div class="cb cb-success">
  <div class="cb-icon">✓</div>
- <div class="cb-body"><strong>That's it.</strong> Once your webhook handler logs an approval, you've completed the full integration loop. Switch the base URL from <code>sandbox-api</code> to <code>api</code> when you're ready for production.</div>
+ <div class="cb-body"><strong>That's it.</strong> Once your webhook handler logs an approval, you've completed the full integration loop.</div>
  </div>
 </section>
 
@@ -625,80 +609,17 @@ const exams = await res.json();</div></div>
 
  <div class="cb cb-warn">
  <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Never expose your API key in client-side code.</strong> All API calls should be made from your server. Treat your key like a database password: store it in a secrets manager or environment variable, rotate it if it leaks, and use a separate key for sandbox vs. production.</div>
+ <div class="cb-body"><strong>Never expose your API key in client-side code.</strong> All API calls should be made from your server. Treat your key like a database password: store it in a secrets manager or environment variable, and rotate it if it leaks.</div>
  </div>
 
  <h3>Where to find your key</h3>
  <ol>
- <li>Sign in to the <a href="https://app.qualiphy.me" target="_blank" rel="noopener">Qualiphy portal</a></li>
- <li>Open <strong>Settings → API</strong></li>
- <li>Copy your sandbox key or generate a new one</li>
+ <li>Sign in to the <a href="https://app.qualiphy.me/app/clinic/settings" target="_blank" rel="noopener">Qualiphy portal Settings</a></li>
+ <li>Copy your API key or generate a new one</li>
  </ol>
 
  <h3>Rotating keys</h3>
  <p>You can rotate your API key from the same screen. The new key takes effect immediately. The old key continues to work for a brief grace period so you can update your environment variables without downtime.</p>
-</section>
-
-<section class="docs-section" id="sandbox">
- <h2>Sandbox &amp; Testing</h2>
- <p>The sandbox environment uses real Qualiphy providers reviewing fake patients. This means your integration runs against the actual production code path, but no real treatment is dispensed and no real shipping happens.</p>
-
- <h3>Using the sandbox</h3>
- <ol>
- <li>Use the sandbox base URL: <code>https://sandbox-api.qualiphy.me/</code></li>
- <li>Set <code>tele_state</code> to <code>"TE"</code> in your exam invite payload</li>
- <li>Use a magic patient name to control the outcome (see below)</li>
- </ol>
-
- <h3>Magic patient names</h3>
- <p>The sandbox recognizes specific name patterns and routes them to the corresponding outcome:</p>
-
- <div class="param-table">
- <div class="param-row">
- <div class="param-name"><code>Test Approve</code></div>
- <div class="param-desc">Provider auto-approves the exam. Use for happy-path testing.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>Test Reject</code></div>
- <div class="param-desc">Provider rejects the exam. Use to test your rejection-flow handling.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>Test Prescription Approve</code></div>
- <div class="param-desc">Approves an Rx exam with a treatment attached. Use for testing pharmacy fulfillment workflows.</div>
- </div>
- </div>
-
- <h3>Turnaround time</h3>
- <p>Sandbox tests are reviewed by real providers in 2-24 hours on weekdays. Plan your testing window accordingly. There's no faster way to mock approvals end-to-end because the entire pipeline runs against the production approval system.</p>
-
- <div class="cb cb-tip">
- <div class="cb-icon">!</div>
- <div class="cb-body"><strong>For unit tests in CI</strong>: stub the Qualiphy API client at the network layer rather than calling sandbox. Reserve sandbox runs for integration tests and pre-launch QA.</div>
- </div>
-</section>
-
-<section class="docs-section" id="environments">
- <h2>Base URLs &amp; Environments</h2>
-
- <div class="param-table">
- <div class="param-row">
- <div class="param-name">Sandbox</div>
- <div class="param-desc"><code>https://sandbox-api.qualiphy.me/</code><br><span style="font-size:13px;color:var(--text-lt)">Real providers, fake patients, no fulfillment. Use for all development and pre-launch testing.</span></div>
- </div>
- <div class="param-row">
- <div class="param-name">Production</div>
- <div class="param-desc"><code>https://api.qualiphy.me/</code><br><span style="font-size:13px;color:var(--text-lt)">Real patients, real treatments, real shipping. Use only after sandbox validation.</span></div>
- </div>
- </div>
-
- <h3>Staging deprecation notice</h3>
- <div class="cb cb-warn">
- <div class="cb-icon">!</div>
- <div class="cb-body"><code>https://staging-api.qualiphy.me/</code> is being deprecated. Starting <strong>January 1, 2026</strong>, all sandbox traffic should use <code>https://sandbox-api.qualiphy.me/</code>. Migrate now to avoid disruption.</div>
- </div>
-
- <h3>Versioning</h3>
- <p>The Qualiphy API is currently at v1. Breaking changes are announced via the <a href="#" id="changeFormLink">API change notification form</a>. Subscribe before going to production.</p>
 </section>
 
 <!-- ============ CORE CONCEPTS ============ -->
@@ -1059,11 +980,11 @@ const exams = await res.json();</div></div>
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
  <div class="param-row"><div class="param-name"><code>exams</code><div class="param-meta"><span class="param-type">array</span><span class="param-req">Required</span></div></div><div class="param-desc">Array of exam IDs from <a href="#ep-exam-list"><code>/exam_list</code></a>. Stack non-Rx exams freely; only one Rx exam may run per meeting.</div></div>
- <div class="param-row"><div class="param-name"><code>first_name</code> <code>last_name</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Patient name. In sandbox, use <code>Test Approve</code>, <code>Test Reject</code>, or <code>Test Prescription Approve</code> to control outcomes.</div></div>
+ <div class="param-row"><div class="param-name"><code>first_name</code> <code>last_name</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Patient name as it should appear on the consultation record.</div></div>
  <div class="param-row"><div class="param-name"><code>email</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Patient email. Used for invite delivery and as the patient identifier.</div></div>
  <div class="param-row"><div class="param-name"><code>dob</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Date of birth as <code>YYYY-MM-DD</code>. Example: <code>1990-06-30</code>.</div></div>
  <div class="param-row"><div class="param-name"><code>phone_number</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Patient phone. Two formats accepted: <code>+15552223232</code> or <code>1234567890</code>.</div></div>
- <div class="param-row"><div class="param-name"><code>tele_state</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Two-letter state abbreviation of the <strong>patient</strong> (not your clinic). Determines provider matching. Use <code>TE</code> for sandbox tests.</div></div>
+ <div class="param-row"><div class="param-name"><code>tele_state</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Two-letter state abbreviation of the <strong>patient</strong> (not your clinic). Determines provider matching.</div></div>
  </div>
 
  <h4>Common optional parameters</h4>
@@ -1116,7 +1037,7 @@ const exams = await res.json();</div></div>
  <h4>Common 401 errors</h4>
  <p>The <code>/exam_invite</code> endpoint returns several distinct 401 messages. Most map to a specific portal action you (or your clinic admin) need to take in <a href="https://app.qualiphy.me" target="_blank" rel="noopener">app.qualiphy.me</a> - not a code change.</p>
  <div class="param-table">
- <div class="param-row"><div class="param-name">Unauthorized access.</div><div class="param-desc">API key is missing, invalid, or doesn't match the environment (sandbox vs. production).</div></div>
+ <div class="param-row"><div class="param-name">Unauthorized access.</div><div class="param-desc">API key is missing or invalid.</div></div>
  <div class="param-row"><div class="param-name">Need to add Patient Care Provider via Qualiphy Portal!</div><div class="param-desc">Your account doesn't have a provider configured for the patient's state. Add one in <strong>Portal → Operators → Add Provider</strong>.</div></div>
  <div class="param-row"><div class="param-name">You need to signed docusign and signed rx</div><div class="param-desc">Onboarding agreements aren't complete. Sign all DocuSign documents and the Rx agreement in the portal before retrying.</div></div>
  <div class="param-row"><div class="param-name">Need to sign Prescriptive Services Contract via Qualiphy Portal!</div><div class="param-desc">Required before any Rx exam (GFE works without this). Sign in <strong>Portal → Settings → Agreements</strong>.</div></div>
@@ -1567,28 +1488,28 @@ return {"ok": True}
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>200</code></div><div class="param-desc">Success. Body contains the response payload.</div></div>
  <div class="param-row"><div class="param-name"><code>400</code></div><div class="param-desc">Bad request. Usually a missing required field, malformed date/phone, or an invalid <code>tele_state</code>. The response body specifies which field.</div></div>
- <div class="param-row"><div class="param-name"><code>401</code></div><div class="param-desc">Authentication failed. Your <code>api_key</code> is missing, invalid, or doesn't match the environment (sandbox vs. production).</div></div>
+ <div class="param-row"><div class="param-name"><code>401</code></div><div class="param-desc">Authentication failed. Your <code>api_key</code> is missing or invalid.</div></div>
  <div class="param-row"><div class="param-name"><code>500</code></div><div class="param-desc">Server error. Retry after a brief backoff. If it persists, contact support.</div></div>
  </div>
 </section>
 
 <section class="docs-section" id="going-live">
  <h2>Going to Production</h2>
- <p>A pre-launch checklist. Run through this before flipping the base URL from sandbox to production.</p>
+ <p>A pre-launch checklist. Run through this before flipping your integration on for real patients.</p>
  <ul style="list-style:none;padding-left:0">
- <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Webhook handler tested end-to-end with sandbox <code>Test Approve</code> and <code>Test Reject</code></span></li>
- <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Production API key stored in your secrets manager (separate from sandbox key)</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Webhook handler tested end-to-end against the approve and reject paths</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Production API key stored in your secrets manager (not in source control)</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span><code>tele_state</code> is sourced from patient address, not clinic address</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Idempotency check on <code>patient_exam_id</code> in webhook handler</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Error monitoring on the <code>/exam_invite</code> call (4xx and 5xx)</span></li>
- <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Patient name validation: production accidentally sending <code>Test Approve</code> = real provider time wasted</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Patient name validation: real names only - test fixtures left in production waste real provider time</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Subscribed to API change notifications</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>For Rx programs: pharmacy routing values stored on the patient/subscription record, not hardcoded</span></li>
  </ul>
 
  <div class="cb cb-success" style="margin-top:24px">
  <div class="cb-icon">✓</div>
- <div class="cb-body"><strong>Ready to ship?</strong> Switch <code>https://sandbox-api.qualiphy.me/</code> to <code>https://api.qualiphy.me/</code>, swap your API key, and you're live. We recommend rolling out gradually - feature-flag the integration on for a small percentage of patients first.</div>
+ <div class="cb-body"><strong>Ready to ship?</strong> Once your test exam clears the full pipeline, swap any test patient details for real ones and you're live. We recommend rolling out gradually - feature-flag the integration on for a small percentage of patients first.</div>
  </div>
 </section>
 
@@ -1631,7 +1552,6 @@ return {"ok": True}
  <a href="quick-start/">Quick start</a>
  <a href="#walkthrough">Code walkthrough</a>
  <a href="#authentication">Authentication</a>
- <a href="#sandbox">Sandbox &amp; Testing</a>
  </div>
  <div class="docs-foot-col">
  <h4>Reference</h4>
@@ -1781,20 +1701,13 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  });
 })();
 
-// ============ ENV: live sample substitution + line numbers ============
+// ============ Code-block line numbers + API key substitution ============
 (function(){
- const ENV_KEY = 'qaliphy-docs-env';
-
- const SANDBOX_HOST = 'sandbox-api.qualiphy.me';
- const PROD_HOST = 'api.qualiphy.me';
-
  const panes = Array.from(document.querySelectorAll('.codeblock-pane'));
  panes.forEach(p => {
  const body = p.querySelector('.codeblock-body');
  if (body) p.dataset.original = body.textContent;
  });
-
- function getEnv(){ try { return localStorage.getItem(ENV_KEY) || 'production'; } catch(_){ return 'production'; } }
 
  function renderLines(body, text){
  body.textContent = '';
@@ -1809,41 +1722,24 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  body.appendChild(frag);
  }
 
- function applySubstitutions(){
- const env = getEnv();
- const host = env === 'production' ? PROD_HOST : SANDBOX_HOST;
+ // Initial render: just line-number every pane. The API key substitution
+ // hooks below override this on every keystroke via window.__applyApiKey.
+ panes.forEach(p => {
+ const body = p.querySelector('.codeblock-body');
+ if (body) renderLines(body, p.dataset.original || '');
+ });
+
+ // Expose for the API key field (added in a separate block) so it can
+ // re-render every pane with the user's key swapped in.
+ window.__renderPaneWithKey = function(key){
  panes.forEach(p => {
  const body = p.querySelector('.codeblock-body');
  if (!body) return;
  let txt = p.dataset.original || '';
- txt = txt.replaceAll(SANDBOX_HOST, host);
+ if (key) txt = txt.replaceAll('YOUR_API_KEY', key);
  renderLines(body, txt);
  });
- }
-
- // Wire env toggle (now in sidebar)
- document.querySelectorAll('.sb-env-btn').forEach(btn => {
- btn.addEventListener('click', () => {
- const env = btn.dataset.env;
- try { localStorage.setItem(ENV_KEY, env); } catch(_){}
- document.querySelectorAll('.sb-env-btn').forEach(b => {
- const active = b.dataset.env === env;
- b.classList.toggle('is-active', active);
- b.setAttribute('aria-selected', active ? 'true' : 'false');
- });
- applySubstitutions();
- });
- });
-
- // Restore env state on load
- const savedEnv = getEnv();
- document.querySelectorAll('.sb-env-btn').forEach(b => {
- const active = b.dataset.env === savedEnv;
- b.classList.toggle('is-active', active);
- b.setAttribute('aria-selected', active ? 'true' : 'false');
- });
-
- applySubstitutions();
+ };
 })();
 </script>
 
