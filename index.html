@@ -231,8 +231,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .rail-tester-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .rail-tester-actions .btn{padding:7px 12px;font-size:12px;border-radius:8px}
 .rail-tester-actions .btn-outline{padding:7px 12px}
-.rail-key-warning{margin-top:10px;font-size:11.5px;color:var(--rose);font-weight:600;display:none;line-height:1.4}
-.rail-key-warning.is-visible{display:block}
 .rail-prod-note{margin-top:10px;font-size:10.5px;color:var(--text-vlt);line-height:1.45;letter-spacing:.01em}
 .rail-response{margin-top:14px;border:1px solid var(--border-mid);border-radius:10px;overflow:hidden}
 .rail-response-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
@@ -253,25 +251,20 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  .docs-section[id^="recipe-"] .recipe.is-active-payload{box-shadow:0 0 0 2px var(--indigo),0 6px 18px rgba(77,61,113,.18)}
 }
 
-/* ============ TOP-OF-PAGE API KEY BLOCK ============ */
-.api-key-block{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:18px 22px;border-radius:14px;background:var(--surface);border:1px solid var(--border);margin-bottom:18px}
-.api-key-block-side{flex:1 1 320px;min-width:0}
-.api-key-block-kicker{font-family:var(--font-m);font-size:10.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
-.api-key-block-title{font-family:var(--font-d);font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-bottom:4px;line-height:1.25}
-.api-key-block-desc{color:var(--text-mid);font-size:13px;line-height:1.55;margin:0;max-width:62ch}
-.api-key-block-desc.is-active{color:var(--indigo);font-weight:600}
-.api-key-block-desc code{font-size:11.5px;padding:1px 5px}
-.api-key-block-action{display:flex;gap:8px;align-items:stretch;flex:0 1 360px;min-width:260px}
-.api-key-block-input{flex:1;min-width:0;padding:11px 14px;background:var(--paper);border:1.5px solid var(--border-mid);border-radius:10px;font-family:var(--font-m);font-size:13px;color:var(--text);outline:none;transition:all .15s var(--ease)}
-.api-key-block-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
-.api-key-block-input::placeholder{color:var(--text-vlt)}
-.api-key-block-clear{display:none;align-items:center;justify-content:center;padding:0 14px;background:transparent;border:1.5px solid var(--border-mid);border-radius:10px;color:var(--text-lt);font-family:var(--font-m);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s var(--ease)}
-.api-key-block-clear.is-visible{display:inline-flex}
-.api-key-block-clear:hover{color:var(--rose);border-color:var(--rose)}
-[data-theme="dark"] .api-key-block{background:var(--surface);border-color:var(--border-mid)}
-[data-theme="dark"] .api-key-block-input{background:var(--paper);border-color:var(--border-mid);color:var(--text)}
-[data-theme="dark"] .api-key-block-input:focus{box-shadow:0 0 0 3px rgba(169,159,212,.18)}
-[data-theme="dark"] .api-key-block-clear{border-color:var(--border-mid)}
+/* ============ RIGHT-RAIL API KEY FIELD ============ */
+.rail-key{margin-bottom:18px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;gap:7px}
+.rail-key-label{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-m);font-size:9.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;margin:0}
+.rail-key-input{width:100%;padding:9px 11px;background:var(--paper);border:1.5px solid var(--border-mid);border-radius:8px;font-family:var(--font-m);font-size:12.5px;color:var(--text);outline:none;transition:all .15s var(--ease)}
+.rail-key-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
+.rail-key-input::placeholder{color:var(--text-vlt)}
+.rail-key-hint{font-family:var(--font-m);font-size:10px;color:var(--text-vlt);line-height:1.45;letter-spacing:.02em;margin:0}
+.rail-key-hint.is-active{color:var(--indigo);font-weight:600}
+.rail-key-clear{display:none;background:transparent;border:0;color:var(--text-lt);font-family:var(--font-m);font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0}
+.rail-key-clear.is-visible{display:inline-block}
+.rail-key-clear:hover{color:var(--rose)}
+[data-theme="dark"] .rail-key{background:var(--surface);border-color:var(--border-mid)}
+[data-theme="dark"] .rail-key-input{background:var(--paper);border-color:var(--border-mid);color:var(--text)}
+[data-theme="dark"] .rail-key-input:focus{box-shadow:0 0 0 3px rgba(169,159,212,.18)}
 
 .docs-hero{padding-bottom:36px;margin-bottom:32px;border-bottom:1px solid var(--border-lt)}
 .docs-hero h1{margin-bottom:14px}
@@ -552,19 +545,6 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  </div>
  <p class="docs-hero-aside">Answer 5 quick questions, get a custom integration plan with the exact endpoints, sample call, and checklist your dev team needs.</p>
 </header>
-
-<!-- TOP BLOCK: API key field -->
-<div class="api-key-block">
- <div class="api-key-block-side">
- <div class="api-key-block-kicker">Your API key</div>
- <div class="api-key-block-title">Auto-fill code samples across the docs</div>
- <p class="api-key-block-desc" id="docs-api-key-hint">Paste your API key. Every <code>YOUR_API_KEY</code> token across the docs is replaced live. Stored only in this browser session — never sent anywhere.</p>
- </div>
- <div class="api-key-block-action">
- <input class="api-key-block-input" id="docs-api-key" type="text" placeholder="Paste API key" autocomplete="off" spellcheck="false" aria-describedby="docs-api-key-hint">
- <button type="button" class="api-key-block-clear" id="docs-api-key-clear" aria-label="Clear API key">Clear</button>
- </div>
-</div>
 
 <!-- TOP CTA: Quidget for non-developers -->
 <div class="hero-quidget-card">
@@ -1726,6 +1706,15 @@ return {"ok": True}
 <!-- ============ RIGHT RAIL: live API tester ============ -->
 <aside class="right-rail" id="right-rail" aria-label="API tester">
  <div class="right-rail-inner">
+ <div class="rail-key">
+ <label class="rail-key-label" for="docs-api-key">
+ <span>Your API key</span>
+ <button type="button" class="rail-key-clear" id="docs-api-key-clear" aria-label="Clear API key">Clear</button>
+ </label>
+ <input class="rail-key-input" id="docs-api-key" type="text" placeholder="Paste API key" autocomplete="off" spellcheck="false" aria-describedby="docs-api-key-hint">
+ <div class="rail-key-hint" id="docs-api-key-hint">Persists in this browser session. Required to send requests; auto-fills <code>YOUR_API_KEY</code> across the docs.</div>
+ </div>
+
  <div class="right-rail-h">Try it now</div>
  <div class="right-rail-title" id="right-rail-title">Browse a recipe or endpoint</div>
  <div class="right-rail-sub" id="right-rail-sub"></div>
@@ -1744,7 +1733,6 @@ return {"ok": True}
  <button class="btn btn-outline btn-sm" id="rail-reset" type="button">Reset</button>
  <button class="btn btn-outline btn-sm" id="rail-copy-curl" type="button">Copy cURL</button>
  </div>
- <div class="rail-key-warning" id="rail-key-warning">Add your API key above to send requests.</div>
  <div class="rail-prod-note">Production API — every successful request runs for real. Use carefully on mutating endpoints.</div>
  <div class="rail-response" id="rail-response" hidden>
  <div class="rail-response-meta">
@@ -2031,7 +2019,6 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  const sendBtn = document.getElementById('rail-send');
  const resetBtn = document.getElementById('rail-reset');
  const copyCurlBtn = document.getElementById('rail-copy-curl');
- const keyWarn = document.getElementById('rail-key-warning');
  const responseEl = document.getElementById('rail-response');
  const responseStatus = document.getElementById('rail-response-status');
  const responseTime = document.getElementById('rail-response-time');
@@ -2088,9 +2075,7 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  }
 
  function setKeyWarning(){
- const hasKey = !!getApiKey();
- if (keyWarn) keyWarn.classList.toggle('is-visible', !hasKey);
- if (sendBtn) sendBtn.disabled = !hasKey;
+ if (sendBtn) sendBtn.disabled = !getApiKey();
  }
 
  function clearActiveCard(){
