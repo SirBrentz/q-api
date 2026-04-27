@@ -279,6 +279,11 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .copy-btn{background:transparent;color:rgba(255,255,255,.6);font-family:var(--font-m);font-size:11px;font-weight:600;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:6px;cursor:pointer;transition:all .15s;letter-spacing:.04em}
 .copy-btn:hover{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
 .copy-btn.copied{color:#7ED957;border-color:#7ED957}
+.codeblock-head-actions{display:flex;align-items:center;gap:8px}
+.codeblock-variant{appearance:none;-webkit-appearance:none;-moz-appearance:none;background:rgba(255,255,255,.04);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:4px 24px 4px 9px;font-family:var(--font-m);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.04em;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5l3 3 3-3' stroke='rgba(255,255,255,0.6)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 7px center;background-size:10px;transition:all .15s}
+.codeblock-variant:hover{border-color:rgba(255,255,255,.3);color:#fff}
+.codeblock-variant:focus{outline:none;border-color:var(--lavender);box-shadow:0 0 0 2px rgba(206,200,254,.18)}
+.codeblock-variant option{background:#1A161F;color:#fff}
 .codeblock-body{padding:14px 0;font-family:var(--font-m);font-size:12.5px;line-height:1.65;color:var(--code-text);overflow-x:auto;letter-spacing:0;counter-reset:cb-line}
 .codeblock-body .cb-line{display:block;padding-left:54px;padding-right:18px;position:relative;white-space:pre}
 .codeblock-body .cb-line::before{counter-increment:cb-line;content:counter(cb-line);position:absolute;left:0;width:42px;text-align:right;padding-right:8px;color:var(--code-gutter);user-select:none;-webkit-user-select:none;font-variant-numeric:tabular-nums;border-right:1px solid rgba(255,255,255,.04)}
@@ -1133,7 +1138,7 @@ const exams = await res.json();</div></div>
  <h4>Event 1 - Consultation Complete</h4>
  <p>Fires for every exam (GFE, Rx, Urgent Care) when the provider finishes the consultation. This is the basic exam outcome.</p>
  <div class="codeblock">
- <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>event: 1 &middot; Consultation Complete</span></div><button class="copy-btn" onclick="copyCode(this,'wh-e1')">Copy</button></div>
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>event: 1 &middot; Consultation Complete</span></div><div class="codeblock-head-actions"><select class="codeblock-variant" data-variant-target="wh-e1" aria-label="Select status variant"><option value="wh-e1">Approved</option><option value="wh-e1-rejected">Rejected</option><option value="wh-e1-deferred">Deferred to Medical Director</option><option value="wh-e1-na">NA</option><option value="wh-e1-missed">Missed</option></select><button class="copy-btn" onclick="copyCode(this,'wh-e1')">Copy</button></div></div>
  <div class="codeblock-pane active" id="wh-e1"><div class="codeblock-body">{
   "event": 1,
   "reason": "Initial consultation complete",
@@ -1152,13 +1157,83 @@ const exams = await res.json();</div></div>
     { "no": 1, "question": "How are you feeling?", "answer": "Good." }
   ]
 }</div></div>
+ <div class="codeblock-pane" id="wh-e1-rejected"><div class="codeblock-body">{
+  "event": 1,
+  "reason": "Patient does not meet eligibility criteria for this treatment.",
+  "exam_id": "exam-001",
+  "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+  "exam_name": "General Health Check",
+  "exam_status": "Rejected",
+  "rx_status": null,
+  "clinic_name": "Downtown Medical Center",
+  "patient_email": "patient@example.com",
+  "patient_phone_number": "5551234567",
+  "patient_exam_id": "patient-exam-789",
+  "provider_name": "NP Liza",
+  "additional_data": "{\"order_id\":\"WC-12847\"}",
+  "questions_answers": [
+    { "no": 1, "question": "How are you feeling?", "answer": "Tired and run down." }
+  ]
+}</div></div>
+ <div class="codeblock-pane" id="wh-e1-deferred"><div class="codeblock-body">{
+  "event": 1,
+  "reason": "Flagged for medical director review pending additional records.",
+  "exam_id": "exam-001",
+  "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+  "exam_name": "General Health Check",
+  "exam_status": "Deferred to Medical Director",
+  "rx_status": null,
+  "clinic_name": "Downtown Medical Center",
+  "patient_email": "patient@example.com",
+  "patient_phone_number": "5551234567",
+  "patient_exam_id": "patient-exam-789",
+  "provider_name": "NP Liza",
+  "additional_data": "{\"order_id\":\"WC-12847\"}",
+  "questions_answers": [
+    { "no": 1, "question": "How are you feeling?", "answer": "Borderline blood pressure, on multiple medications." }
+  ]
+}</div></div>
+ <div class="codeblock-pane" id="wh-e1-na"><div class="codeblock-body">{
+  "event": 1,
+  "reason": "Patient self-disqualified during pre-screening questionnaire.",
+  "exam_id": "exam-001",
+  "exam_url": null,
+  "exam_name": "General Health Check",
+  "exam_status": "NA",
+  "rx_status": null,
+  "clinic_name": "Downtown Medical Center",
+  "patient_email": "patient@example.com",
+  "patient_phone_number": "5551234567",
+  "patient_exam_id": "patient-exam-789",
+  "provider_name": null,
+  "additional_data": "{\"order_id\":\"WC-12847\"}",
+  "questions_answers": [
+    { "no": 1, "question": "Are you currently pregnant or breastfeeding?", "answer": "Yes." }
+  ]
+}</div></div>
+ <div class="codeblock-pane" id="wh-e1-missed"><div class="codeblock-body">{
+  "event": 1,
+  "reason": "Patient did not join the scheduled consultation window.",
+  "exam_id": "exam-001",
+  "exam_url": null,
+  "exam_name": "General Health Check",
+  "exam_status": "Missed",
+  "rx_status": null,
+  "clinic_name": "Downtown Medical Center",
+  "patient_email": "patient@example.com",
+  "patient_phone_number": "5551234567",
+  "patient_exam_id": "patient-exam-789",
+  "provider_name": null,
+  "additional_data": "{\"order_id\":\"WC-12847\"}",
+  "questions_answers": []
+}</div></div>
  </div>
  <p style="margin-top:10px"><strong>Status values:</strong> <code>Approved</code>, <code>Rejected</code>, <code>Deferred to Medical Director</code>, <code>NA</code>, <code>Missed</code>. The <code>exam_url</code> is a CloudFront-hosted PDF of the consultation record. URLs include a signed-expiration query param - mirror the file to your own storage if you need long-term access.</p>
 
  <h4 style="margin-top:24px">Event 2 - Prescription Confirmed</h4>
  <p>Fires only for Rx exams, after Event 1, when the treatment order has been written and confirmed at the pharmacy. Carries the full schema below.</p>
  <div class="codeblock">
- <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>event: 2 &middot; Prescription Confirmed</span></div><button class="copy-btn" onclick="copyCode(this,'wh-e2')">Copy</button></div>
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>event: 2 &middot; Prescription Confirmed</span></div><div class="codeblock-head-actions"><select class="codeblock-variant" data-variant-target="wh-e2" aria-label="Select prescription variant"><option value="wh-e2">Single item (GLP-1)</option><option value="wh-e2-multi">Multi-item</option><option value="wh-e2-controlled">Controlled substance</option></select><button class="copy-btn" onclick="copyCode(this,'wh-e2')">Copy</button></div></div>
  <div class="codeblock-pane active" id="wh-e2"><div class="codeblock-body">{
   "event": 2,
   "exam_id": 1292,
@@ -1188,6 +1263,115 @@ const exams = await res.json();</div></div>
       "gpi_number": "",
       "schedule_code": "",
       "active_ingredient": "",
+      "inactive_ingredient": "",
+      "pharmacy_name": "Choose Your Pharmacy",
+      "pharmacy_contacts": [
+        { "full_name": null, "email": null, "phone_number": null, "role": null }
+      ],
+      "prescription_tracking": [
+        { "rx_number": null, "tracking_number": null, "ship_carrier": null, "delivery_service": null, "pharmacy_location": null }
+      ],
+      "created_at": "2025-03-19T18:42:27.000Z"
+    }
+  ],
+  "questions_answers": [ /* same shape as event 1 */ ]
+}</div></div>
+ <div class="codeblock-pane" id="wh-e2-multi"><div class="codeblock-body">{
+  "event": 2,
+  "exam_id": 1517,
+  "exam_name": "Hormone Replacement Therapy",
+  "exam_status": "Approved",
+  "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+  "rx_status": "Pharmacy Confirmed",
+  "clinic_name": "Downtown Medical Center",
+  "patient_email": "patient@example.com",
+  "patient_phone_number": "5551234567",
+  "patient_exam_id": 152019,
+  "provider_name": "NP Liza",
+  "prescribed_os_id": 712,
+  "prescription": [
+    {
+      "prescription_id": 4180,
+      "drug_name": "Estradiol",
+      "dosage_form_type": "Cream",
+      "strength": "0.1%",
+      "size": "30g",
+      "quantity": "1",
+      "quantity_units": "tube",
+      "directions": "Apply a pea-sized amount to inner forearm daily.",
+      "duration_days": 30,
+      "refill_amount": 5,
+      "ndc_number": "",
+      "gpi_number": "",
+      "schedule_code": "",
+      "active_ingredient": "Estradiol",
+      "inactive_ingredient": "",
+      "pharmacy_name": "Choose Your Pharmacy",
+      "pharmacy_contacts": [
+        { "full_name": null, "email": null, "phone_number": null, "role": null }
+      ],
+      "prescription_tracking": [
+        { "rx_number": null, "tracking_number": null, "ship_carrier": null, "delivery_service": null, "pharmacy_location": null }
+      ],
+      "created_at": "2025-03-19T18:42:27.000Z"
+    },
+    {
+      "prescription_id": 4181,
+      "drug_name": "Progesterone",
+      "dosage_form_type": "Cap",
+      "strength": "100mg",
+      "size": "30ct",
+      "quantity": "1",
+      "quantity_units": "bottle",
+      "directions": "Take 1 capsule by mouth at bedtime.",
+      "duration_days": 30,
+      "refill_amount": 5,
+      "ndc_number": "",
+      "gpi_number": "",
+      "schedule_code": "",
+      "active_ingredient": "Progesterone",
+      "inactive_ingredient": "",
+      "pharmacy_name": "Choose Your Pharmacy",
+      "pharmacy_contacts": [
+        { "full_name": null, "email": null, "phone_number": null, "role": null }
+      ],
+      "prescription_tracking": [
+        { "rx_number": null, "tracking_number": null, "ship_carrier": null, "delivery_service": null, "pharmacy_location": null }
+      ],
+      "created_at": "2025-03-19T18:42:27.000Z"
+    }
+  ],
+  "questions_answers": [ /* same shape as event 1 */ ]
+}</div></div>
+ <div class="codeblock-pane" id="wh-e2-controlled"><div class="codeblock-body">{
+  "event": 2,
+  "exam_id": 1843,
+  "exam_name": "Testosterone Replacement Therapy",
+  "exam_status": "Approved",
+  "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+  "rx_status": "Pharmacy Confirmed",
+  "clinic_name": "Downtown Medical Center",
+  "patient_email": "patient@example.com",
+  "patient_phone_number": "5551234567",
+  "patient_exam_id": 158402,
+  "provider_name": "NP Liza",
+  "prescribed_os_id": 904,
+  "prescription": [
+    {
+      "prescription_id": 5012,
+      "drug_name": "Testosterone Cypionate",
+      "dosage_form_type": "Inj",
+      "strength": "200mg/mL",
+      "size": "10mL",
+      "quantity": "1",
+      "quantity_units": "vial",
+      "directions": "Inject 1mL intramuscularly every 7 days.",
+      "duration_days": 70,
+      "refill_amount": 0,
+      "ndc_number": "00574-0820-10",
+      "gpi_number": "",
+      "schedule_code": "C3",
+      "active_ingredient": "Testosterone Cypionate",
       "inactive_ingredient": "",
       "pharmacy_name": "Choose Your Pharmacy",
       "pharmacy_contacts": [
@@ -1485,6 +1669,17 @@ document.querySelectorAll('.codeblock').forEach(block => {
  const target = block.querySelector('#' + tab.dataset.tab);
  if (target) target.classList.add('active');
  });
+ });
+});
+
+// Variant dropdowns in code blocks (e.g. webhook event status variants)
+document.querySelectorAll('.codeblock-variant').forEach(sel => {
+ sel.addEventListener('change', () => {
+ const block = sel.closest('.codeblock');
+ if (!block) return;
+ block.querySelectorAll('.codeblock-pane').forEach(p => p.classList.remove('active'));
+ const target = block.querySelector('#' + sel.value);
+ if (target) target.classList.add('active');
  });
 });
 
