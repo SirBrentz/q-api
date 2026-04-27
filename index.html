@@ -454,10 +454,10 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <div class="sidebar-group">
  <div class="sidebar-group-h"><span class="grp-num">03</span>Recipes</div>
  <a href="#recipe-gfe" class="s-link" data-search="gfe good faith exam aesthetic medspa botox recipe">GFE for Aesthetic Treatment</a>
- <a href="#recipe-glp1" class="s-link" data-search="glp-1 weight loss subscription prescription rx semaglutide tirzepatide">GLP-1 Weight Loss Program</a>
- <a href="#recipe-urgent" class="s-link" data-search="urgent care prescription pharmacy uti pink eye acne">Urgent Care Visit</a>
+ <a href="#recipe-glp1" class="s-link" data-search="partner pharmacy medication shipping glp-1 weight loss prescription rx semaglutide tirzepatide hormone replacement peptides">Partner Pharmacy Medication Shipping</a>
+ <a href="#recipe-urgent" class="s-link" data-search="urgent care custom pharmacy retail cvs walgreens prescription uti pink eye acne local">Urgent Care Visit &amp; Custom Pharmacies</a>
  <a href="#recipe-prefill" class="s-link" data-search="prefill answers screening questions intake form custom">Pre-fill Patient Answers</a>
- <a href="#recipe-custom-invite" class="s-link" data-search="custom invite white label send your own email sms meeting url">Custom Invite Delivery</a>
+ <a href="#recipe-custom-invite" class="s-link" data-search="patient notification settings invite white label send your own email sms meeting url disable provider contact glp-1 follow-up">Patient Notification Settings</a>
  </div>
 
  <div class="sidebar-group">
@@ -671,7 +671,7 @@ const exams = await res.json();</div></div>
  <p>Qualiphy frames <code>/exam_invite</code> as four named flavors, each with its own field combination. They're all the same endpoint - just different parameter sets:</p>
  <div class="param-table">
  <div class="param-row"><div class="param-name">Good Faith Exam &amp; Orders</div><div class="param-desc">Aesthetic GFE for in-clinic procedures. Required: <code>exams</code> + patient identity. No pharmacy fields.</div></div>
- <div class="param-row"><div class="param-name">QualiphyRx Packages</div><div class="param-desc">Rx via partner pharmacy. Adds <code>pharmacy_id</code> and <code>exam_pos_id</code> for a specific dosage package.</div></div>
+ <div class="param-row"><div class="param-name">QualiphyRx Packages</div><div class="param-desc">Rx via partner pharmacy. Adds <code>pharmacy_id</code> and <code>order_set_id</code> for a specific dosage package.</div></div>
  <div class="param-row"><div class="param-name">Urgent Care Visit</div><div class="param-desc">Same-day Rx to a retail pharmacy. Requires custom-pharmacy fields (<code>custom_pharmacy: 1</code>, <code>ncpdpid</code>, <code>pharmacy_*</code> address).</div></div>
  <div class="param-row"><div class="param-name">Choose Your Own Pharmacy</div><div class="param-desc">Patient picks the pharmacy at meeting time. Set <code>custom_pharmacy_patient_choice: 2</code>.</div></div>
  </div>
@@ -705,7 +705,7 @@ const exams = await res.json();</div></div>
  </div>
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>pharmacy_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-opt">Optional</span></div></div><div class="param-desc">For partner pharmacy routing. Get the ID from <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a>.</div></div>
- <div class="param-row"><div class="param-name"><code>exam_pos_id</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Preselect a specific drug + dosage package. Get the ID from <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a>.</div></div>
+ <div class="param-row"><div class="param-name"><code>order_set_id</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Preselect a specific drug + dosage package. Get the ID from <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a>. <span style="color:var(--text-lt)">Legacy: <code>exam_pos_id</code> is still accepted as a fallback for older integrations.</span></div></div>
  <div class="param-row"><div class="param-name"><code>custom_pharmacy</code><div class="param-meta"><span class="param-type">integer</span><span class="param-opt">Optional</span></div></div><div class="param-desc"><code>1</code>=Custom Pharmacy, <code>2</code>=Partner Pharmacy.</div></div>
  <div class="param-row"><div class="param-name"><code>ncpdpid</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Custom pharmacy's NCPDPID. Get from <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a>.</div></div>
  <div class="param-row"><div class="param-name"><code>pharmacy_name</code> <code>pharmacy_address_line_1</code> <code>pharmacy_address_line_2</code> <code>pharmacy_city</code> <code>pharmacy_state</code> <code>pharmacy_zip_code</code> <code>pharmacy_phone</code> <code>pharmacy_type</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Custom pharmacy details when <code>custom_pharmacy: 1</code>.</div></div>
@@ -1153,7 +1153,7 @@ return {"ok": True}
  <span class="endpoint-method post">POST</span>
  <span class="endpoint-path">/api/partner_pharmacy_treatment_packages</span>
  </div>
- <p>Lists treatment packages (drug + dosage combinations + pricing) available at a specific partner pharmacy. Returns <code>exam_pos_id</code> values for use with <code>/exam_invite</code>.</p>
+ <p>Lists treatment packages (drug + dosage combinations + pricing) available at a specific partner pharmacy. Returns <code>order_set_id</code> values for use with <code>/exam_invite</code>. <span style="color:var(--text-lt)">Legacy <code>exam_pos_id</code> is still returned alongside for older integrations.</span></p>
 </section>
 
 <section class="endpoint" id="ep-pharmacy-search">
@@ -1177,15 +1177,16 @@ return {"ok": True}
  </div>
  <div>
  <h3 class="recipe-h">Run a GFE for Botox or fillers</h3>
- <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook</div>
+ <div class="recipe-sub">~15 min implementation · 2 endpoints + 1 webhook</div>
  </div>
  </div>
  <div class="recipe-body">
  <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">In your e-commerce platform (WooCommerce, Shopify, custom checkout, etc.), the patient checks out for an aesthetic treatment. Your order-completion handler fires.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the patient's details and your aesthetic exam ID.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link. They join, complete the screening, and a provider approves.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Your webhook receives an <code>approve</code> result. Update the order status and notify the patient that they're cleared to come in.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-exam-list"><code>/exam_list</code></a> to grab your aesthetic exam ID. Store the IDs you'll use - they're stable.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">In your e-commerce platform (WooCommerce, Shopify, custom checkout, etc.), the patient checks out for an aesthetic treatment. Your order-completion handler fires.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the patient's details and your aesthetic exam ID.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link <em>only if you want Qualiphy to contact your patient</em>. Otherwise the <code>meeting_url</code> in the response is yours to deliver - see <a href="#recipe-custom-invite">Patient Notification Settings</a> to disable.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">5</div><div class="recipe-step-body">Your webhook receives an <code>approve</code> result. Update the order status and notify the patient that they're cleared to come in.</div></div>
  </div>
  </div>
  </div>
@@ -1218,8 +1219,8 @@ return {"ok": True}
 </section>
 
 <section class="docs-section" id="recipe-glp1">
- <h2>Recipe: GLP-1 Weight Loss Program</h2>
- <p>Subscription-based weight loss is the highest-volume Rx use case. Patient signs up monthly; each month requires a fresh consultation and a treatment routed to a compounding pharmacy.</p>
+ <h2>Recipe: Partner Pharmacy Medication Shipping</h2>
+ <p>Order medication from our partner pharmacies with negotiated rates. We handle routing the prescription and notifying you with shipping updates along the way. Works for GLP-1, peptides, hormone replacement, and other Rx programs running through Qualiphy partner pharmacies.</p>
 
  <div class="recipe">
  <div class="recipe-head">
@@ -1227,29 +1228,31 @@ return {"ok": True}
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
  </div>
  <div>
- <h3 class="recipe-h">Run a recurring GLP-1 program</h3>
- <div class="recipe-sub">~30 min implementation · 3 endpoints + 1 webhook</div>
+ <h3 class="recipe-h">Order medication with Qualiphy</h3>
+ <div class="recipe-sub">~30 min implementation · up to 4 endpoints + 1 webhook</div>
  </div>
  </div>
  <div class="recipe-body">
  <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to discover available pharmacies. Store the <code>pharmacy_id</code> values you'll use.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with each pharmacy ID to get the available dosages. Store the <code>exam_pos_id</code> values.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Each month per patient: call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the GLP-1 exam ID, the pharmacy ID, and the package ID for the patient's dose.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires when approved. Update subscription status. Pharmacy ships directly to the patient - no further work on your end.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-exam-list"><code>/exam_list</code></a> to grab the medication exam ID(s) you'll be sending patients through.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to discover available pharmacies. Store the <code>pharmacy_id</code> values you want to use. <em>Skip this step if you don't have a preferred pharmacy and want the prescriber to choose the cheapest option every time.</em></div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with each pharmacy ID to get the available dosages. Store the <code>order_set_id</code> values. <em>Skip this step if you don't care which dosage is prescribed and trust the physician to make the right decision per patient.</em></div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Per patient: call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the medication exam ID, the patient details, and the optional <code>pharmacy_id</code> + <code>order_set_id</code> if you preselected them.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">5</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link <em>only if you want Qualiphy to contact your patient</em>. Otherwise the <code>meeting_url</code> in the response is yours to deliver - see <a href="#recipe-custom-invite">Patient Notification Settings</a> to disable.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">6</div><div class="recipe-step-body">Webhook event 1 fires when the consultation completes. Webhook event 2 fires once the prescription is confirmed at the partner pharmacy, and event 3 fires when the package ships - tracking number included.</div></div>
  </div>
  </div>
  </div>
 
  <div class="cb cb-tip">
  <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Subscription pattern:</strong> store the <code>pharmacy_id</code> and <code>exam_pos_id</code> on the subscription record. When a renewal cron job fires, it just rebuilds the same payload with current patient data and submits a fresh exam invite.</div>
+ <div class="cb-body"><strong>Repeat orders:</strong> store the <code>pharmacy_id</code> and <code>order_set_id</code> on the patient/subscription record. For the next order just rebuild the same <code>/exam_invite</code> payload with current patient data - no need to re-discover pharmacy or dosage IDs.</div>
  </div>
 </section>
 
 <section class="docs-section" id="recipe-urgent">
- <h2>Recipe: Urgent Care Visit</h2>
- <p>Patient has a UTI on a Sunday night. They need a same-day treatment sent to their local pharmacy.</p>
+ <h2>Recipe: Urgent Care Visit &amp; Custom Pharmacies</h2>
+ <p>Use this flow when the prescription should ship to (or be picked up from) a pharmacy <em>outside</em> Qualiphy's partner network - the patient's local CVS, Walgreens, or any other retail pharmacy. Common for same-day UTI treatments, but also for any program where a patient prefers their own pharmacy over the partner-pharmacy default.</p>
 
  <div class="recipe">
  <div class="recipe-head">
@@ -1257,24 +1260,31 @@ return {"ok": True}
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
  </div>
  <div>
- <h3 class="recipe-h">Same-day treatment to a retail pharmacy</h3>
- <div class="recipe-sub">~20 min implementation · 2 endpoints + 1 webhook</div>
+ <h3 class="recipe-h">Send a prescription to a custom pharmacy</h3>
+ <div class="recipe-sub">~20 min implementation · 3 endpoints + 1 webhook</div>
  </div>
  </div>
  <div class="recipe-body">
  <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">On checkout, ask the patient which pharmacy they want to use. Call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to look up nearby pharmacies by name or ZIP.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Submit <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the urgent-care exam ID, the patient's chosen pharmacy details, and <code>custom_pharmacy: 1</code>.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Patient joins the screening, talks to the provider. If approved, the treatment order is sent to the chosen pharmacy.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires. Notify the patient that their script is ready for pickup at their pharmacy.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-exam-list"><code>/exam_list</code></a> to grab the exam ID(s) you'll be sending patients through.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">On checkout, ask the patient which pharmacy they want to use. Call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to look up nearby pharmacies by name or ZIP.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Submit <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the exam ID, the patient details, and the patient's chosen pharmacy.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link <em>only if you want Qualiphy to contact your patient</em>. Otherwise the <code>meeting_url</code> in the response is yours to deliver - see <a href="#recipe-custom-invite">Patient Notification Settings</a> to disable.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">5</div><div class="recipe-step-body">Patient joins the screening, talks to the provider. If approved, the prescription is sent to the chosen pharmacy.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">6</div><div class="recipe-step-body">Webhook event 1 fires once the consultation is approved. Webhook event 2 fires after the provider sends the prescription to the pharmacy. (No event 3 for custom pharmacies - see warning below.)</div></div>
  </div>
  </div>
+ </div>
+
+ <div class="cb cb-warn">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Qualiphy is not the contact for tracking or availability with custom pharmacies.</strong> The pharmacy itself is the source of truth for fill status, ready-for-pickup, and shipping. Direct your patient (or your support team) to the pharmacy for those updates - we don't relay them.</div>
  </div>
 </section>
 
 <section class="docs-section" id="recipe-prefill">
  <h2>Recipe: Pre-fill Patient Answers</h2>
- <p>You already collect health screening info on your own intake form. You don't want patients to re-answer the same questions during the Qualiphy screening.</p>
+ <p>You already collect health screening info on your own intake form, and you don't want patients to re-answer the same questions during the Qualiphy screening. Or you want full control over the wording of every question and you'll display the form on your end - not Qualiphy's.</p>
 
  <div class="recipe">
  <div class="recipe-head">
@@ -1290,30 +1300,50 @@ return {"ok": True}
  <div class="recipe-steps">
  <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Call <a href="#ep-exam-questions"><code>/exam_questions</code></a> to get the question schema for the exam. Map each question to the matching field on your intake form.</div></div>
  <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> as usual. Capture the returned <code>patient_exam_id</code>.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Immediately call <a href="#ep-exam-submit"><code>/exam_submit_answers</code></a> with the patient's pre-collected answers. The screening picks up where the answers leave off.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Immediately call <a href="#ep-exam-submit"><code>/exam_submit_answers</code></a> with the patient's pre-collected answers. <strong>Every question you submit appears pre-filled on the Qualiphy side.</strong> If you submit answers for every question, the questionnaire is skipped entirely and the patient goes straight to the provider call. Submit a subset and the patient only sees the unanswered questions, with their existing answers shown alongside.</div></div>
  </div>
  </div>
  </div>
 </section>
 
 <section class="docs-section" id="recipe-custom-invite">
- <h2>Recipe: Custom Invite Delivery</h2>
- <p>You want full control over the patient-facing email/SMS. Maybe your brand voice is specific, or you've already built a notification system you trust.</p>
+ <h2>Patient Notification Settings</h2>
+ <p>Qualiphy sends two distinct kinds of patient-facing messages. Each can be disabled independently if you want full control - or you want your providers to stay out of direct patient contact. Disable one, both, or neither.</p>
 
+ <h3 style="margin-top:24px">1. Auto-generated invites</h3>
+ <p>When you call <a href="#ep-exam-invite"><code>/exam_invite</code></a>, Qualiphy automatically emails and texts the patient the meeting link. Disable these if you want to deliver the link from your own branded system using the <code>meeting_url</code> returned in the response.</p>
+ <p><strong>How to disable:</strong> contact your Qualiphy rep. This is an account-level switch, not a per-request flag.</p>
+
+ <div class="cb cb-warn">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>GLP-1 follow-up certification.</strong> If you disable auto-generated invites and you prescribe GLP-1 medications, you must agree to send the legally-required follow-up exam invitation yourself (typically ~3 weeks after the original visit, to check for adverse effects). Qualiphy normally sends this automatically; if you turn it off, the responsibility shifts to you.</div>
+ </div>
+
+ <h3 style="margin-top:24px">2. Provider direct contact</h3>
+ <p>Qualiphy providers may personally email or call the patient in specific situations - for example, when a video call drops mid-session and the provider needs to call them back, or to nudge a patient whose exam has been pending too long. These messages come from the provider's number/email, not Qualiphy's automated system.</p>
+ <p><strong>How to disable:</strong> in the Qualiphy portal, go to <strong>Settings → Notification Settings</strong>. From there you can toggle each notification type per clinic, manage which notification contacts get copied, and choose whether providers contact patients directly for pending consultations.</p>
+
+ <figure style="margin:18px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)">
+ <img src="assets/notification-settings.png" alt="Qualiphy portal Notification Settings panel showing Approved Notification, Deferred Notification, Not Applicable Notification, and Qualiphy Providers Contact Patients toggles" style="display:block;width:100%;height:auto">
+ <figcaption style="padding:10px 14px;font-family:var(--font-m);font-size:11.5px;color:var(--text-lt);background:var(--surface);border-top:1px solid var(--border-lt);letter-spacing:.02em">Settings → Notification Settings in the Qualiphy portal. Toggle each notification type per clinic and add or remove notification contacts.</figcaption>
+ </figure>
+
+ <h3 style="margin-top:24px">Sending invites from your own system</h3>
+ <p>Once auto-generated invites are off, the integration shape is straightforward:</p>
  <div class="recipe">
  <div class="recipe-head">
  <div class="recipe-icon">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l8 6 8-6M4 6h16v12H4z"/></svg>
  </div>
  <div>
- <h3 class="recipe-h">Send invites from your own system</h3>
- <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook + a config change</div>
+ <h3 class="recipe-h">Deliver the meeting link yourself</h3>
+ <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook + a one-time config change</div>
  </div>
  </div>
  <div class="recipe-body">
  <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Email your Qualiphy rep and ask them to disable automatic invite emails for your account. (Required once; not a per-request flag.)</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a>. Capture the returned <code>meeting_url</code>.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Contact your Qualiphy rep to disable auto-generated invites for your account.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> as usual. Capture the returned <code>meeting_url</code>.</div></div>
  <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Send your own email or SMS to the patient with the <code>meeting_url</code> embedded in your branded template.</div></div>
  </div>
  </div>
@@ -1414,7 +1444,7 @@ return {"ok": True}
 
  <h3>Partner pharmacy (recommended for Rx programs)</h3>
  <p>Use Qualiphy's pre-vetted compounding pharmacy network. Bundled, all-inclusive pricing. Qualiphy handles fulfillment and ships directly to the patient. Best for GLP-1, peptide, and other recurring Rx programs.</p>
- <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> to get an <code>exam_pos_id</code> for a specific dosage. Pass both into your <code>/exam_invite</code> payload.</p>
+ <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> to get an <code>order_set_id</code> for a specific dosage. Pass both into your <code>/exam_invite</code> payload.</p>
 
  <h3>Custom pharmacy</h3>
  <p>Send the treatment order to a specific retail or compounding pharmacy. Required for Urgent Care exams (the patient picks a pharmacy near them). Best when the patient already has a preferred pharmacy.</p>
