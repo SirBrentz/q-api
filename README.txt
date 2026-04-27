@@ -6,63 +6,64 @@ Drop the entire folder at the subdomain web root.
 WHAT'S NEW IN THIS DROP
 -----------------------
 
-API KEY FIELD REMOVED
+ENV TOGGLE
 
-The "Your API key" input on the main docs page has been
-removed for security. A previously-stored value in
-localStorage is auto-cleared on next page load.
+1. Production is now the default environment. Code samples
+   show api.qualiphy.me on first page load.
+2. Order swapped: Production sits on the left (active by
+   default), Sandbox on the right.
+3. Choice persists in localStorage; switches every code block
+   on the page live.
 
-ENV TOGGLE MOVED TO SIDEBAR
+TOP NAV (DARK MODE)
 
-The Sandbox / Production segmented control now sits at the
-top of the left sidebar (above the search box), where it's
-easier to find and doesn't take up content-area real estate.
-Live-rewrites every code block on the page when toggled.
-Choice persists in localStorage.
+4. Top nav is now styled like the left sidebar -- solid dark
+   surface (#15121C) with strong-contrast nav links and
+   buttons:
+     - "Documentation" active pill: white text on indigo bg
+     - "Quick start" link: legible mid-grey, lifts to bright
+       text on hover
+     - "Run quick start" outline button: visible borders,
+       text contrast
+     - "Get API access" primary button: lifted lavender bg
+       with dark text for high contrast against the page
+5. Theme toggle button: matching dark-mode borders and hover
+   states so it doesn't float ghostly on the surface.
 
-EM/EN DASHES STRIPPED
+DARK-MODE CALLOUT BLOCKS (.cb-info / .cb-warn / .cb-tip / .cb-success)
 
-Replaced em dashes (--) and en dashes (-) with plain hyphens
-across both pages. Also re-indented every code block since
-the dash-replacement regex squashed JSON indentation.
+6. The pastel callouts had light backgrounds with light text
+   in dark mode -- washed out. Each callout now uses a subtle
+   tinted-dark surface plus a 3px left-accent border in the
+   accent color, plus a properly-contrasting icon:
+     - Info -> lavender accent
+     - Warn -> amber accent (e.g. staging deprecation, "Never
+       expose your API key", "Multi-exam constraint")
+     - Success -> emerald accent ("That's it.", "Ready to ship?")
+     - Tip -> mid-grey accent ("For unit tests in CI",
+       "Subscription pattern")
 
-DARK-MODE LEGIBILITY FIXES
+DARK-MODE INLINE CODE CHIPS
 
-1. Default theme is now light. Removed the prefers-color-scheme
-   auto-detection and the matchMedia listener. Dark only
-   applies if the user has explicitly clicked the toggle.
+7. The small <code> chips inline in prose (like
+   sandbox-api.qualiphy.me, /exam_invite, approve, etc.) now
+   render as lavender-on-dark with subtle borders. Was
+   washed-out and hard to read against the dark page.
 
-2. Top nav buttons in dark mode now have proper contrast:
-   - "Documentation" active pill uses a lavender-on-lavender-tint
-     combo that's actually legible
-   - "Quick start" link readable
-   - "Run quick start" outline button: visible borders, readable text
-   - "Get API access" primary button: deeper indigo (5D4B87) for
-     better contrast against the dark page bg
-   - Hero "Get a tailored API plan" button matches
+DARK-MODE RECIPE / EXAM-WORKS BLOCKS
 
-3. Footer surface stays permanently dark in both themes.
-   Root cause was that --ink token was used for both content
-   text and surface backgrounds. Split into two tokens:
-   --ink (text, flips with theme) and --ink-surface (footer,
-   stays dark always). Footer columns + Quidget promo block
-   render correctly in dark.
+8. The "How an Exam Works" steps and recipe section blocks
+   (e.g. "GFE for Aesthetic Treatment") had hardcoded white
+   backgrounds. Now use subtle dark surface with proper border
+   contrast. Numbered circles use the deeper indigo for
+   contrast on dark.
 
-4. "Want a tailored plan for your team?" CTA panel + sidebar
-   "Need a custom plan?" CTA both lock their indigo gradients
-   to permanent dark hex literals so they don't flip.
+QUIDGET CTA
 
-5. Status-code chips (200, 400, 401, 500) inside the
-   Errors & Status Codes section no longer stretch to fill
-   their column. Was rendering as 200px-wide bars with 3-char
-   text in the middle. Root cause: <code> elements inside a
-   flex-column .param-name container were inheriting display:
-   block from align-self:stretch. Fixed with display:inline-block
-   + align-self:flex-start.
-
-6. Removed redundant duplicate Quidget block in the footer.
-   Only the .docs-foot-promo block remains as the single
-   no-code callout.
+9. The "Explore Quidget" footer button stays in its light-mode
+   appearance (light lavender bg, dark indigo text) regardless
+   of theme, since that's the look that works best for the
+   call-to-action.
 
 DEPLOYMENT
 ----------

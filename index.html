@@ -110,16 +110,20 @@
 }
 
 /* ============ DARK-MODE NAV / BUTTON CONTRAST OVERRIDES ============ */
-[data-theme="dark"] .btn-primary{background:#5D4B87;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4)}
-[data-theme="dark"] .btn-primary:hover{background:#6E5B98;color:#fff}
+[data-theme="dark"] .nav{background:#15121C;border-bottom:1px solid var(--border-mid);backdrop-filter:none;-webkit-backdrop-filter:none}
+[data-theme="dark"] .btn-primary{background:#A99FD4;color:#0E0C13;box-shadow:0 1px 3px rgba(0,0,0,.4);font-weight:700}
+[data-theme="dark"] .btn-primary:hover{background:#CEC8FE;color:#0E0C13}
 [data-theme="dark"] .btn-outline{color:var(--text);border-color:var(--border-mid);background:transparent}
-[data-theme="dark"] .btn-outline:hover{background:var(--surface);color:var(--text);border-color:var(--text-lt)}
+[data-theme="dark"] .btn-outline:hover{background:var(--surface-warm);color:var(--text);border-color:var(--text-lt)}
 [data-theme="dark"] .nav-link{color:var(--text-mid)}
-[data-theme="dark"] .nav-link:hover{color:var(--text);background:var(--surface)}
-[data-theme="dark"] .nav-link.active{color:var(--lavender);background:rgba(206,200,254,.1)}
+[data-theme="dark"] .nav-link:hover{color:var(--text);background:var(--surface-warm)}
+[data-theme="dark"] .nav-link.active{color:#CEC8FE;background:rgba(206,200,254,.1)}
 /* Hero primary CTA also uses --indigo bg; ensure dark-mode contrast */
 [data-theme="dark"] .docs-hero .btn-primary,
-[data-theme="dark"] .btn.btn-primary.btn-lg{background:#5D4B87;color:#fff}
+[data-theme="dark"] .btn.btn-primary.btn-lg{background:#A99FD4;color:#0E0C13}
+/* Theme-toggle button: matching surface to avoid the floating look */
+[data-theme="dark"] .theme-toggle{border-color:var(--border-mid);color:var(--text-mid)}
+[data-theme="dark"] .theme-toggle:hover{background:var(--surface-warm);color:var(--text);border-color:var(--text-lt)}
 /* Ensure h1/h2 colors use --text in dark, since --ink token meaning was specifically for *content text* */
 [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4, [data-theme="dark"] h5{color:var(--text)}
 
@@ -143,6 +147,7 @@ h4{font-size:.98rem;margin:20px 0 8px;color:var(--ink-soft)}
 p{color:var(--text-mid);margin-bottom:14px}
 strong{font-weight:600;color:var(--text)}
 code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);color:var(--indigo);padding:2px 7px;border-radius:5px;border:1px solid rgba(77,61,113,.08)}
+[data-theme="dark"] code{background:rgba(206,200,254,.1);color:#CEC8FE;border-color:rgba(206,200,254,.18)}
 
 .kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-m);font-size:11px;font-weight:500;color:var(--indigo);letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;background:rgba(77,61,113,.07);border-radius:100px;margin-bottom:18px}
 
@@ -238,6 +243,17 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .cb-success .cb-icon{background:var(--emerald);color:#fff}
 .cb-tip{background:var(--surface);border:1px solid var(--border)}
 .cb-tip .cb-icon{background:var(--ink-surface);color:#fff}
+
+/* Dark-mode callout overrides — pastel surfaces don't work on dark, so we use
+   subtle tinted-dark surfaces with a more visible left accent border */
+[data-theme="dark"] .cb-info{background:rgba(169,159,212,.08);border-color:rgba(169,159,212,.22);border-left:3px solid #A99FD4}
+[data-theme="dark"] .cb-info .cb-icon{background:#A99FD4;color:#0E0C13}
+[data-theme="dark"] .cb-warn{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.22);border-left:3px solid #FBBF24}
+[data-theme="dark"] .cb-warn .cb-icon{background:#FBBF24;color:#0E0C13}
+[data-theme="dark"] .cb-success{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.22);border-left:3px solid #34D399}
+[data-theme="dark"] .cb-success .cb-icon{background:#34D399;color:#0E0C13}
+[data-theme="dark"] .cb-tip{background:var(--surface);border-color:var(--border-mid);border-left:3px solid #B5ADC2}
+[data-theme="dark"] .cb-tip .cb-icon{background:#3B344F;color:#E8E3F0}
 .cb-body{flex:1;color:var(--text-mid)}
 .cb-body strong{color:var(--ink)}
 .cb-body code{background:rgba(255,255,255,.6)}
@@ -299,6 +315,12 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .recipe-body{position:relative;font-size:14.5px;color:var(--text-mid);line-height:1.65}
 .recipe-steps{position:relative;margin-top:16px;display:grid;gap:12px}
 .recipe-step{display:flex;gap:12px;padding:12px 14px;background:rgba(255,255,255,.7);border:1px solid var(--border-lt);border-radius:10px;backdrop-filter:blur(4px)}
+[data-theme="dark"] .recipe{background:linear-gradient(135deg,rgba(206,200,254,.06) 0%,var(--surface) 60%);border-color:var(--border-mid)}
+[data-theme="dark"] .recipe::before{background:radial-gradient(ellipse,rgba(206,200,254,.08),transparent 60%)}
+[data-theme="dark"] .recipe-step{background:rgba(255,255,255,.03);border-color:var(--border)}
+[data-theme="dark"] .recipe-icon{background:#5D4B87}
+[data-theme="dark"] .recipe-step-n{background:#5D4B87}
+[data-theme="dark"] .fcard-icon{background:rgba(206,200,254,.1);color:#CEC8FE}
 .recipe-step-n{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--indigo);color:#fff;font-family:var(--font-h);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .recipe-step-body{font-size:13.5px;color:var(--text);line-height:1.55}
 .recipe-step-body code{font-size:.9em}
@@ -324,8 +346,8 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .docs-foot-promo-kicker{font-family:var(--font-m);font-size:10.5px;font-weight:600;color:var(--lavender);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
 .docs-foot-promo-h{font-family:var(--font-d);font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:-.015em;margin-bottom:6px;line-height:1.2}
 .docs-foot-promo-p{color:rgba(255,255,255,.72);font-size:13.5px;line-height:1.55;margin:0;max-width:48ch}
-.docs-foot-promo-cta{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--lavender);color:var(--ink-soft);border-radius:9px;font-family:var(--font-h);font-size:13.5px;font-weight:700;transition:all .18s var(--ease);flex-shrink:0;text-decoration:none}
-.docs-foot-promo-cta:hover{background:#fff;transform:translateX(2px);color:var(--indigo-deep)}
+.docs-foot-promo-cta{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:#CEC8FE;color:#1F1A26;border-radius:9px;font-family:var(--font-h);font-size:13.5px;font-weight:700;transition:all .18s var(--ease);flex-shrink:0;text-decoration:none}
+.docs-foot-promo-cta:hover{background:#fff;transform:translateX(2px);color:#362A52}
 .docs-foot-cols{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
 .docs-foot .logo{color:#fff}
 .docs-foot .logo-sub{color:rgba(255,255,255,.6)}
@@ -389,8 +411,8 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <div class="sb-env" role="group" aria-label="API environment">
  <span class="sb-env-label">Environment</span>
  <div class="sb-env-seg" role="tablist">
- <button class="sb-env-btn is-active" data-env="sandbox" role="tab" aria-selected="true">Sandbox</button>
- <button class="sb-env-btn" data-env="production" role="tab" aria-selected="false">Production</button>
+ <button class="sb-env-btn is-active" data-env="production" role="tab" aria-selected="true">Production</button>
+ <button class="sb-env-btn" data-env="sandbox" role="tab" aria-selected="false">Sandbox</button>
  </div>
  </div>
  <div class="sidebar-search">
@@ -1578,7 +1600,7 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  if (body) p.dataset.original = body.textContent;
  });
 
- function getEnv(){ try { return localStorage.getItem(ENV_KEY) || 'sandbox'; } catch(_){ return 'sandbox'; } }
+ function getEnv(){ try { return localStorage.getItem(ENV_KEY) || 'production'; } catch(_){ return 'production'; } }
 
  function renderLines(body, text){
  body.textContent = '';
