@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Theme init: must run BEFORE first paint to avoid theme flash -->
+<script>
+(function(){
+ try {
+ var saved = localStorage.getItem('qaliphy-docs-theme');
+ var theme = saved === 'dark' ? 'dark' : 'light';
+ document.documentElement.setAttribute('data-theme', theme);
+ requestAnimationFrame(function(){ document.documentElement.classList.add('theme-ready'); });
+ } catch(e) {}
+})();
+</script>
+
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-WGKMC7NC');</script>
 
 <title>Integration Quick Start - Qualiphy API</title>
@@ -259,6 +271,82 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  .result-actions{flex-direction:column;align-items:stretch}
  .result-actions .btn{width:100%}
 }
+
+/* ============ DARK MODE ============ */
+[data-theme="dark"]{
+ --paper:#0E0C13;
+ --surface:#15121C;
+ --surface-warm:#191522;
+ --ink:#F4F1F9;
+ --ink-soft:#EAE5F2;
+ --text:#E8E3F0;
+ --text-mid:#B5ADC2;
+ --text-lt:#8B829F;
+ --text-vlt:#5F5870;
+ --border:#252132;
+ --border-lt:#1D1928;
+ --border-mid:#2F2A3F;
+ --lavender-mist:rgba(206,200,254,.08);
+ --lavender-soft:#3B344F;
+ --indigo:#A99FD4;
+ --indigo-hover:#B9B0E0;
+ --indigo-deep:#C7BFE8;
+ --emerald:#34D399;
+ --emerald-bg:rgba(52,211,153,.14);
+ --amber:#FBBF24;
+ --rose:#FB7185;
+}
+[data-theme="dark"] body{background:var(--paper);color:var(--text)}
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4{color:var(--text)}
+[data-theme="dark"] code{background:rgba(206,200,254,.1);color:#CEC8FE;border-color:rgba(206,200,254,.18)}
+[data-theme="dark"] .nav{background:#15121C;border-bottom:1px solid var(--border-mid);backdrop-filter:none;-webkit-backdrop-filter:none}
+[data-theme="dark"] .nav-link{color:var(--text-mid)}
+[data-theme="dark"] .nav-link:hover{color:var(--text);background:var(--surface-warm)}
+[data-theme="dark"] .btn-primary{background:#A99FD4;color:#0E0C13;box-shadow:0 1px 3px rgba(0,0,0,.4);font-weight:700}
+[data-theme="dark"] .btn-primary:hover{background:#CEC8FE;color:#0E0C13}
+[data-theme="dark"] .pdot{background:var(--surface);color:var(--text-vlt);border-color:var(--border)}
+[data-theme="dark"] .pstep.done .pdot{background:var(--indigo);color:#0E0C13;border-color:var(--indigo)}
+[data-theme="dark"] .pstep.active .pdot{border-color:var(--indigo);color:var(--indigo);background:var(--surface)}
+[data-theme="dark"] .card{background:var(--surface);border-color:var(--border);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+[data-theme="dark"] .fi{background:var(--paper);border-color:var(--border-mid);color:var(--text)}
+[data-theme="dark"] .fi:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(169,159,212,.15)}
+[data-theme="dark"] .fi::placeholder{color:var(--text-vlt)}
+[data-theme="dark"] .fi.invalid{border-color:var(--rose);background:rgba(251,113,133,.08)}
+[data-theme="dark"] .fi.invalid:focus{box-shadow:0 0 0 3px rgba(251,113,133,.18)}
+[data-theme="dark"] .cbox{background:var(--paper);border-color:var(--border-mid)}
+[data-theme="dark"] .cb-info{background:rgba(169,159,212,.08);border-color:rgba(169,159,212,.22);border-left:3px solid #A99FD4}
+[data-theme="dark"] .cb-info .cb-icon{background:#A99FD4;color:#0E0C13}
+[data-theme="dark"] .cb-warn{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.22);border-left:3px solid #FBBF24}
+[data-theme="dark"] .cb-warn .cb-icon{background:#FBBF24;color:#0E0C13}
+[data-theme="dark"] .cb-success{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.22);border-left:3px solid #34D399}
+[data-theme="dark"] .cb-success .cb-icon{background:#34D399;color:#0E0C13}
+[data-theme="dark"] .otag-req{background:rgba(251,191,36,.14);color:var(--amber)}
+[data-theme="dark"] .otag-rec{background:rgba(206,200,254,.12);color:#CEC8FE}
+[data-theme="dark"] .oc{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] .oc:hover{border-color:var(--border-mid);background:var(--surface-warm)}
+[data-theme="dark"] .oc.sel{border-color:var(--indigo);background:rgba(169,159,212,.08)}
+[data-theme="dark"] .sc{background:var(--paper);color:var(--text);border-color:var(--border-mid)}
+[data-theme="dark"] .sc:hover{border-color:var(--text-lt)}
+[data-theme="dark"] .sc.on{background:var(--indigo);color:#0E0C13;border-color:var(--indigo)}
+[data-theme="dark"] .exam-x{background:var(--paper);border-color:var(--border-mid);color:var(--text-lt)}
+[data-theme="dark"] .summary{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] .rs{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] .ep-chip{background:var(--surface-warm);border-color:var(--border)}
+[data-theme="dark"] .ep-chip:hover{background:var(--surface);border-color:var(--indigo);color:var(--indigo-hover)}
+[data-theme="dark"] .ep-chip.webhook:hover{background:var(--surface);color:var(--emerald)}
+[data-theme="dark"] .fl{color:var(--text-mid)}
+
+/* Theme toggle button */
+.theme-toggle{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--text-mid);cursor:pointer;transition:all .15s var(--ease);padding:0;flex-shrink:0}
+.theme-toggle:hover{background:var(--surface-warm);color:var(--ink);border-color:var(--border-mid)}
+.theme-toggle .t-moon{display:none}
+[data-theme="dark"] .theme-toggle .t-sun{display:none}
+[data-theme="dark"] .theme-toggle .t-moon{display:inline-block}
+[data-theme="dark"] .theme-toggle{border-color:var(--border-mid);color:var(--text-mid)}
+[data-theme="dark"] .theme-toggle:hover{background:var(--surface-warm);color:var(--text);border-color:var(--text-lt)}
+
+/* Smooth theme transitions, but skip on first paint */
+html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme-ready .oc, html.theme-ready .summary, html.theme-ready .rs{transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
 </style>
 <!-- jsPDF for one-click "Download as PDF" -->
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -279,8 +367,12 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <a href="./" class="nav-link active">Quick start</a>
  </div>
  <div class="nav-actions">
+ <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" type="button" title="Toggle theme">
+ <svg class="t-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+ <svg class="t-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+ </button>
  <a href="../" class="btn btn-outline btn-sm">Browse docs</a>
- <a href="https://app.qualiphy.me/signup" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get API access →</a>
+ <a href="https://app.qualiphy.me/app/clinic/settings" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get API access →</a>
  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
  </div>
  </div>
@@ -498,6 +590,20 @@ let opts={prefill:false,attach:false,redirect:false};
 
 const $=id=>document.getElementById(id);
 const gv=id=>{const e=$(id);return e?e.value.trim():''};
+
+/* ===== THEME TOGGLE ===== */
+(function(){
+ const btn = document.getElementById('theme-toggle');
+ if (!btn) return;
+ function set(theme){
+ document.documentElement.setAttribute('data-theme', theme);
+ try { localStorage.setItem('qaliphy-docs-theme', theme); } catch(e){}
+ }
+ btn.addEventListener('click', () => {
+ const cur = document.documentElement.getAttribute('data-theme') || 'light';
+ set(cur === 'dark' ? 'light' : 'dark');
+ });
+})();
 
 /* ===== PROGRESS BAR ===== */
 function renderPbar(){
