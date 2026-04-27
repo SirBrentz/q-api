@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Theme init: must run BEFORE first paint to avoid theme flash -->
+<script>
+(function(){
+  try {
+    var saved = localStorage.getItem('qaliphy-docs-theme');
+    var prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefers ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    // Mark ready AFTER first paint so transitions don't fire during initial render
+    requestAnimationFrame(function(){ document.documentElement.classList.add('theme-ready'); });
+  } catch(e) {}
+})();
+</script>
+
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-WGKMC7NC');</script>
 
@@ -43,7 +57,50 @@
   --font-b:'DM Sans',system-ui,-apple-system,sans-serif;
   --font-m:'JetBrains Mono',ui-monospace,monospace;
   --ease:cubic-bezier(.16,1,.3,1);
+
+  /* Surfaces that change between modes (kept here so dark theme can override neatly) */
+  --code-bg:#0F0D14;
+  --code-border:#1f1b29;
+  --code-text:#E4DFEF;
+  --code-head:rgba(255,255,255,.05);
+  --code-gutter:rgba(255,255,255,.18);
+  --shadow-sm:0 1px 3px rgba(15,12,30,.04), 0 1px 2px rgba(15,12,30,.03);
+  --shadow-md:0 4px 14px rgba(15,12,30,.05), 0 2px 6px rgba(15,12,30,.03);
 }
+
+[data-theme="dark"]{
+  --paper:#0E0C13;
+  --surface:#15121C;
+  --surface-warm:#191522;
+  --ink:#F4F1F9;
+  --ink-soft:#EAE5F2;
+  --text:#E8E3F0;
+  --text-mid:#B5ADC2;
+  --text-lt:#8B829F;
+  --text-vlt:#5F5870;
+  --border:#252132;
+  --border-lt:#1D1928;
+  --border-mid:#2F2A3F;
+  --lavender-mist:rgba(206,200,254,.08);
+  --lavender-soft:#3B344F;
+  --indigo:#A99FD4;        /* lift indigo for legibility on dark */
+  --indigo-hover:#B9B0E0;
+  --indigo-deep:#C7BFE8;
+  --emerald:#34D399;
+  --emerald-bg:rgba(52,211,153,.14);
+  --amber:#FBBF24;
+  --rose:#FB7185;
+  --code-bg:#08060C;
+  --code-border:#1F1B2C;
+  --code-text:#E4DFEF;
+  --code-head:rgba(255,255,255,.03);
+  --code-gutter:rgba(255,255,255,.14);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.18);
+  --shadow-md:0 4px 14px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.18);
+}
+
+/* Smooth theme transitions but skip on first paint to avoid flash */
+html.theme-ready body, html.theme-ready .nav, html.theme-ready .sidebar, html.theme-ready .docs-foot, html.theme-ready .codeblock, html.theme-ready .endpoint{transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;scroll-padding-top:88px}
@@ -69,7 +126,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .btn-primary{background:var(--indigo);color:#fff;box-shadow:0 1px 3px rgba(77,61,113,.3)}
 .btn-primary:hover{background:var(--indigo-hover);transform:translateY(-1px);box-shadow:0 8px 22px rgba(77,61,113,.25);color:#fff}
 .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border-mid)}
-.btn-outline:hover{border-color:var(--indigo);color:var(--indigo);background:#fff}
+.btn-outline:hover{border-color:var(--indigo);color:var(--indigo);background:var(--surface-warm)}
 .btn-sm{padding:8px 14px;font-size:13px}
 .btn-lg{padding:14px 24px;font-size:15.5px;border-radius:12px}
 
@@ -86,6 +143,11 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .nav-link:hover{color:var(--ink);background:rgba(77,61,113,.06)}
 .nav-link.active{color:var(--indigo);background:rgba(77,61,113,.08)}
 .nav-actions{display:flex;align-items:center;gap:8px}
+.theme-toggle{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--text-mid);cursor:pointer;transition:all .15s var(--ease);padding:0}
+.theme-toggle:hover{background:var(--surface-warm);color:var(--ink);border-color:var(--border-mid)}
+.theme-toggle .t-moon{display:none}
+[data-theme="dark"] .theme-toggle .t-sun{display:none}
+[data-theme="dark"] .theme-toggle .t-moon{display:inline-block}
 .hamburger{display:none;width:36px;height:36px;border-radius:8px;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .25s}
 
@@ -97,7 +159,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .sidebar::-webkit-scrollbar{width:6px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:3px}
 .sidebar-search{position:relative;margin-bottom:22px}
-.sidebar-search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border);border-radius:9px;background:#fff;font-family:var(--font-b);font-size:13px;color:var(--text);outline:none;transition:all .15s}
+.sidebar-search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border);border-radius:9px;background:var(--paper);font-family:var(--font-b);font-size:13px;color:var(--text);outline:none;transition:all .15s}
 .sidebar-search input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.08)}
 .sidebar-search input::placeholder{color:var(--text-vlt)}
 .sidebar-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-vlt);pointer-events:none}
@@ -117,6 +179,28 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 /* CONTENT */
 .docs-main{padding:48px clamp(1.5rem,4vw,4rem) 120px;max-width:880px}
+/* ============ DOCS SETTINGS BAR ============ */
+.docs-settings{display:flex;flex-wrap:wrap;align-items:flex-end;gap:24px;padding:14px 18px;margin:0 0 22px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.ds-group{display:flex;flex-direction:column;gap:6px}
+.ds-group-key{flex:1;min-width:280px}
+.ds-label{font-family:var(--font-m);font-size:10.5px;font-weight:600;color:var(--text-lt);letter-spacing:.06em;text-transform:uppercase}
+.ds-seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;padding:3px;background:var(--paper);gap:0}
+.ds-seg-btn{font-family:var(--font-h);font-size:12.5px;font-weight:600;color:var(--text-mid);padding:5px 12px;border-radius:6px;background:transparent;border:0;cursor:pointer;transition:all .15s var(--ease)}
+.ds-seg-btn:hover{color:var(--ink)}
+.ds-seg-btn.is-active{background:var(--indigo);color:#fff}
+[data-theme="dark"] .ds-seg-btn.is-active{color:var(--paper)}
+.ds-key-row{position:relative;display:flex;align-items:center}
+.ds-key-input{flex:1;width:100%;padding:8px 36px 8px 12px;font-family:var(--font-m);font-size:12.5px;color:var(--text);background:var(--paper);border:1px solid var(--border);border-radius:8px;outline:none;transition:all .15s}
+.ds-key-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(77,61,113,.1)}
+.ds-key-input::placeholder{color:var(--text-vlt)}
+.ds-key-toggle{position:absolute;right:6px;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;color:var(--text-lt);cursor:pointer}
+.ds-key-toggle:hover{color:var(--ink);background:var(--surface-warm)}
+.ds-hint{font-size:11.5px;color:var(--text-lt)}
+@media(max-width:720px){
+  .docs-settings{flex-direction:column;align-items:stretch}
+  .ds-group-key{min-width:0}
+}
+
 .docs-hero{padding-bottom:36px;margin-bottom:32px;border-bottom:1px solid var(--border-lt)}
 .docs-hero h1{margin-bottom:14px}
 .docs-hero p{font-size:17px;color:var(--text-mid);max-width:62ch;line-height:1.6}
@@ -149,14 +233,14 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 /* CARDS */
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:20px 0}
-.fcard{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .2s var(--ease)}
+.fcard{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .2s var(--ease)}
 .fcard:hover{border-color:var(--border-mid);box-shadow:0 8px 24px rgba(77,61,113,.06);transform:translateY(-2px)}
 .fcard-icon{width:36px;height:36px;border-radius:9px;background:var(--lavender-mist);color:var(--indigo);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
 .fcard h4{margin:0 0 6px;color:var(--ink)}
 .fcard p{font-size:13.5px;margin:0;color:var(--text-mid);line-height:1.55}
 
 /* CODE BLOCKS */
-.codeblock{background:#0F0D14;border-radius:11px;overflow:hidden;margin:16px 0;border:1px solid #1f1b29;max-width:100%}
+.codeblock{background:var(--code-bg);border-radius:11px;overflow:hidden;margin:16px 0;border:1px solid var(--code-border);max-width:100%;box-shadow:var(--shadow-sm)}
 .codeblock-tabs{display:flex;background:#1A161F;border-bottom:1px solid #2a2434;padding:0 12px}
 .codeblock-tab{padding:10px 14px;font-family:var(--font-m);font-size:11.5px;font-weight:600;color:rgba(255,255,255,.55);border:none;background:transparent;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:color .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
 .codeblock-tab.active{color:var(--lavender);border-bottom-color:var(--lavender)}
@@ -169,7 +253,9 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .copy-btn{background:transparent;color:rgba(255,255,255,.6);font-family:var(--font-m);font-size:11px;font-weight:600;padding:4px 10px;border:1px solid rgba(255,255,255,.12);border-radius:6px;cursor:pointer;transition:all .15s;letter-spacing:.04em}
 .copy-btn:hover{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
 .copy-btn.copied{color:#7ED957;border-color:#7ED957}
-.codeblock-body{padding:16px 18px;font-family:var(--font-m);font-size:12.5px;line-height:1.65;color:#E4DFEF;overflow-x:auto;white-space:pre;letter-spacing:0}
+.codeblock-body{padding:14px 0;font-family:var(--font-m);font-size:12.5px;line-height:1.65;color:var(--code-text);overflow-x:auto;letter-spacing:0;counter-reset:cb-line}
+.codeblock-body .cb-line{display:block;padding-left:54px;padding-right:18px;position:relative;white-space:pre}
+.codeblock-body .cb-line::before{counter-increment:cb-line;content:counter(cb-line);position:absolute;left:0;width:42px;text-align:right;padding-right:8px;color:var(--code-gutter);user-select:none;-webkit-user-select:none;font-variant-numeric:tabular-nums;border-right:1px solid rgba(255,255,255,.04)}
 .codeblock-pane{display:none}
 .codeblock-pane.active{display:block}
 /* tiny syntax hints */
@@ -179,7 +265,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .codeblock-body .c{color:#5F5868;font-style:italic}
 
 /* PARAM TABLE */
-.param-table{margin:18px 0;border:1px solid var(--border);border-radius:11px;overflow:hidden;background:#fff}
+.param-table{margin:18px 0;border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--paper)}
 .param-row{display:grid;grid-template-columns:200px 1fr;gap:0;border-bottom:1px solid var(--border-lt);padding:14px 18px}
 .param-row:last-child{border-bottom:none}
 .param-row:hover{background:var(--surface-warm)}
@@ -273,6 +359,10 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
       <a href="quick-start/" class="nav-link">Quick start</a>
     </div>
     <div class="nav-actions">
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" type="button" title="Toggle theme">
+        <svg class="t-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="t-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
       <a href="quick-start/" class="btn btn-outline btn-sm">Run quick start</a>
       <a href="https://app.qualiphy.me/signup" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get API access →</a>
       <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -349,6 +439,27 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 <!-- ============ MAIN ============ -->
 <main class="docs-main">
+
+<!-- SETTINGS BAR: env toggle + API key (saved to localStorage) -->
+<div class="docs-settings" role="region" aria-label="Sample customization">
+  <div class="ds-group" role="group" aria-label="API environment">
+    <span class="ds-label">Environment</span>
+    <div class="ds-seg" role="tablist">
+      <button class="ds-seg-btn is-active" data-env="sandbox" role="tab" aria-selected="true">Sandbox</button>
+      <button class="ds-seg-btn" data-env="production" role="tab" aria-selected="false">Production</button>
+    </div>
+  </div>
+  <div class="ds-group ds-group-key">
+    <label class="ds-label" for="ds-key">Your API key</label>
+    <div class="ds-key-row">
+      <input id="ds-key" class="ds-key-input" type="password" autocomplete="off" placeholder="Paste to fill all samples on this page" maxlength="200">
+      <button id="ds-key-toggle" class="ds-key-toggle" type="button" aria-label="Show / hide key" title="Show / hide">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <span class="ds-hint">Saved only in your browser. Never sent to Qualiphy.</span>
+  </div>
+</div>
 
 <!-- HERO -->
 <header class="docs-hero">
@@ -1377,7 +1488,15 @@ document.querySelectorAll('.codeblock').forEach(block => {
 function copyCode(btn, paneId) {
   const block = btn.closest('.codeblock');
   const activePane = block.querySelector('.codeblock-pane.active');
-  const text = activePane ? activePane.textContent.trim() : '';
+  if (!activePane) return;
+  // Build text from line spans (preserves newlines), or fall back to dataset.original after env substitution
+  let text;
+  const lines = activePane.querySelectorAll('.cb-line');
+  if (lines.length) {
+    text = Array.from(lines).map(l => l.textContent.replace(/^\s$/, '')).join('\n').trim();
+  } else {
+    text = (activePane.querySelector('.codeblock-body')?.textContent || '').trim();
+  }
   navigator.clipboard.writeText(text).then(() => {
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
@@ -1448,6 +1567,124 @@ window.addEventListener('keydown', e => {
 document.getElementById('hamburger')?.addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('open');
 });
+
+// Theme toggle
+(function(){
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  function set(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('qaliphy-docs-theme', theme); } catch(e){}
+  }
+  btn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'light';
+    set(cur === 'dark' ? 'light' : 'dark');
+  });
+  // Follow system preference if user hasn't explicitly chosen
+  const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', e => {
+      let saved = null; try { saved = localStorage.getItem('qaliphy-docs-theme'); } catch(_){}
+      if (!saved) set(e.matches ? 'dark' : 'light');
+    });
+  }
+})();
+
+// ============ ENV + API KEY: live sample substitution + line numbers ============
+(function(){
+  const ENV_KEY = 'qaliphy-docs-env';
+  const REAL_KEY_KEY = 'qaliphy-docs-apikey';
+
+  const SANDBOX_HOST = 'sandbox-api.qualiphy.me';
+  const PROD_HOST = 'api.qualiphy.me';
+  const KEY_PLACEHOLDER = 'YOUR_API_KEY';
+
+  const panes = Array.from(document.querySelectorAll('.codeblock-pane'));
+  // Snapshot raw text from each pane ONCE before any DOM rewriting
+  panes.forEach(p => {
+    const body = p.querySelector('.codeblock-body');
+    if (body) p.dataset.original = body.textContent;
+  });
+
+  function getEnv(){ try { return localStorage.getItem(ENV_KEY) || 'sandbox'; } catch(_){ return 'sandbox'; } }
+  function getKey(){ try { return localStorage.getItem(REAL_KEY_KEY) || ''; } catch(_){ return ''; } }
+
+  function renderLines(body, text){
+    // Wrap each line in a span; this is what gives us the line-number gutter via counter()
+    body.textContent = '';
+    const lines = text.split('\n');
+    const frag = document.createDocumentFragment();
+    lines.forEach(line => {
+      const span = document.createElement('span');
+      span.className = 'cb-line';
+      // Use textContent so HTML special chars (<, >, &) are escaped
+      span.textContent = line.length ? line : ' '; // empty line: render a space so the gutter still shows the number
+      frag.appendChild(span);
+    });
+    body.appendChild(frag);
+  }
+
+  function applySubstitutions(){
+    const env = getEnv();
+    const host = env === 'production' ? PROD_HOST : SANDBOX_HOST;
+    const key = getKey();
+    panes.forEach(p => {
+      const body = p.querySelector('.codeblock-body');
+      if (!body) return;
+      let txt = p.dataset.original || '';
+      txt = txt.replaceAll(SANDBOX_HOST, host);
+      if (key && key !== KEY_PLACEHOLDER) {
+        txt = txt.replaceAll('"' + KEY_PLACEHOLDER + '"', JSON.stringify(key));
+        txt = txt.replaceAll(KEY_PLACEHOLDER, key);
+      }
+      renderLines(body, txt);
+    });
+  }
+
+  // Wire env toggle
+  document.querySelectorAll('.ds-seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const env = btn.dataset.env;
+      try { localStorage.setItem(ENV_KEY, env); } catch(_){}
+      document.querySelectorAll('.ds-seg-btn').forEach(b => {
+        const active = b.dataset.env === env;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      applySubstitutions();
+    });
+  });
+
+  // Wire API key field
+  const keyInput = document.getElementById('ds-key');
+  const keyToggle = document.getElementById('ds-key-toggle');
+  if (keyInput) {
+    keyInput.value = getKey();
+    let timer;
+    keyInput.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        try { localStorage.setItem(REAL_KEY_KEY, keyInput.value); } catch(_){}
+        applySubstitutions();
+      }, 250);
+    });
+  }
+  if (keyToggle && keyInput) {
+    keyToggle.addEventListener('click', () => {
+      keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+    });
+  }
+
+  // Restore env state on load
+  const savedEnv = getEnv();
+  document.querySelectorAll('.ds-seg-btn').forEach(b => {
+    const active = b.dataset.env === savedEnv;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+
+  applySubstitutions();
+})();
 </script>
 
 </body>
