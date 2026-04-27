@@ -437,12 +437,18 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  </div>
 
  <div class="sidebar-group">
- <div class="sidebar-group-h"><span class="grp-num">02</span>Core Concepts</div>
- <a href="#how-exam-works" class="s-link" data-search="how exam works lifecycle invite meeting result webhook flow">How an Exam Works</a>
- <a href="#exam-types" class="s-link" data-search="exam types gfe rx urgent care good faith prescription">Exam Types</a>
- <a href="#states" class="s-link" data-search="states telehealth tele_state patient state matching">States &amp; Telehealth</a>
- <a href="#pharmacy-routing" class="s-link" data-search="pharmacy routing partner custom provider choice prescription fulfillment">Pharmacy Routing</a>
- <a href="#glossary" class="s-link" data-search="glossary field naming weirdness gotchas tele_state custom_pharmacy attachments_required gender">Field Glossary</a>
+ <div class="sidebar-group-h"><span class="grp-num">02</span>API Reference</div>
+ <a href="#ep-exam-list" class="s-link" data-search="exam list endpoint get all exams"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_list</code></a>
+ <a href="#ep-exam-invite" class="s-link" data-search="exam invite endpoint create patient screening post"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_invite</code><span class="s-tag">core</span></a>
+ <a href="#ep-exam-webhook" class="s-link" data-search="webhook endpoint result notification approval payload"><code style="background:none;padding:0;color:inherit;font-size:inherit">webhook</code></a>
+ <a href="#ep-exam-upload" class="s-link" data-search="exam upload attachment lab results id documents"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_upload_attachment</code></a>
+ <a href="#ep-exam-questions" class="s-link" data-search="exam questions retrieve screening qa"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_questions</code></a>
+ <a href="#ep-exam-submit" class="s-link" data-search="exam submit answers prefill patient responses"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_submit_answers</code></a>
+ <a href="#ep-exam-resend" class="s-link" data-search="exam invite resend reminder"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_invite_resend</code></a>
+ <a href="#ep-exam-cancel" class="s-link" data-search="cancel exam invite abort scrap"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_invite_cancel</code></a>
+ <a href="#ep-pharmacy-list" class="s-link" data-search="partner pharmacy list endpoint compounding pharmacy options"><code style="background:none;padding:0;color:inherit;font-size:inherit">/partner_pharmacy_list</code></a>
+ <a href="#ep-pharmacy-packages" class="s-link" data-search="partner pharmacy treatment packages dosage prescription bundle"><code style="background:none;padding:0;color:inherit;font-size:inherit">/partner_pharmacy_treatment_packages</code></a>
+ <a href="#ep-pharmacy-search" class="s-link" data-search="custom pharmacy search ncpdpid retail walgreens cvs lookup"><code style="background:none;padding:0;color:inherit;font-size:inherit">/custom_pharmacy_search</code></a>
  </div>
 
  <div class="sidebar-group">
@@ -455,18 +461,12 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  </div>
 
  <div class="sidebar-group">
- <div class="sidebar-group-h"><span class="grp-num">04</span>API Reference</div>
- <a href="#ep-exam-list" class="s-link" data-search="exam list endpoint get all exams"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_list</code></a>
- <a href="#ep-exam-invite" class="s-link" data-search="exam invite endpoint create patient screening post"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_invite</code><span class="s-tag">core</span></a>
- <a href="#ep-exam-webhook" class="s-link" data-search="webhook endpoint result notification approval payload"><code style="background:none;padding:0;color:inherit;font-size:inherit">webhook</code></a>
- <a href="#ep-exam-upload" class="s-link" data-search="exam upload attachment lab results id documents"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_upload_attachment</code></a>
- <a href="#ep-exam-questions" class="s-link" data-search="exam questions retrieve screening qa"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_questions</code></a>
- <a href="#ep-exam-submit" class="s-link" data-search="exam submit answers prefill patient responses"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_submit_answers</code></a>
- <a href="#ep-exam-resend" class="s-link" data-search="exam invite resend reminder"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_invite_resend</code></a>
- <a href="#ep-exam-cancel" class="s-link" data-search="cancel exam invite abort scrap"><code style="background:none;padding:0;color:inherit;font-size:inherit">/exam_invite_cancel</code></a>
- <a href="#ep-pharmacy-list" class="s-link" data-search="partner pharmacy list endpoint compounding pharmacy options"><code style="background:none;padding:0;color:inherit;font-size:inherit">/partner_pharmacy_list</code></a>
- <a href="#ep-pharmacy-packages" class="s-link" data-search="partner pharmacy treatment packages dosage prescription bundle"><code style="background:none;padding:0;color:inherit;font-size:inherit">/partner_pharmacy_treatment_packages</code></a>
- <a href="#ep-pharmacy-search" class="s-link" data-search="custom pharmacy search ncpdpid retail walgreens cvs lookup"><code style="background:none;padding:0;color:inherit;font-size:inherit">/custom_pharmacy_search</code></a>
+ <div class="sidebar-group-h"><span class="grp-num">04</span>Core Concepts</div>
+ <a href="#how-exam-works" class="s-link" data-search="how exam works lifecycle invite meeting result webhook flow">How an Exam Works</a>
+ <a href="#exam-types" class="s-link" data-search="exam types gfe rx urgent care good faith prescription">Exam Types</a>
+ <a href="#states" class="s-link" data-search="states telehealth tele_state patient state matching">States &amp; Telehealth</a>
+ <a href="#pharmacy-routing" class="s-link" data-search="pharmacy routing partner custom provider choice prescription fulfillment">Pharmacy Routing</a>
+ <a href="#glossary" class="s-link" data-search="glossary field naming weirdness gotchas tele_state custom_pharmacy attachments_required gender">Field Glossary</a>
  </div>
 
  <div class="sidebar-group">
@@ -639,325 +639,6 @@ const exams = await res.json();</div></div>
 
  <h3>Rotating keys</h3>
  <p>You can rotate your API key from the same screen. The new key takes effect immediately. The old key continues to work for a brief grace period so you can update your environment variables without downtime.</p>
-</section>
-
-<!-- ============ CORE CONCEPTS ============ -->
-
-<section class="docs-section" id="how-exam-works">
- <h2>How an Exam Works</h2>
- <p>Every Qualiphy interaction follows the same lifecycle, regardless of treatment type. Understanding this flow makes everything else easier to reason about.</p>
-
- <div class="recipe-steps">
- <div class="recipe-step">
- <div class="recipe-step-n">1</div>
- <div class="recipe-step-body"><strong>You call <code>/exam_invite</code></strong> with patient details and one or more exam IDs. Qualiphy returns a <code>meeting_url</code> immediately.</div>
- </div>
- <div class="recipe-step">
- <div class="recipe-step-n">2</div>
- <div class="recipe-step-body"><strong>The patient receives an invite</strong> via email and SMS (or via your own system if you've configured custom delivery). They click the link and enter the screening.</div>
- </div>
- <div class="recipe-step">
- <div class="recipe-step-n">3</div>
- <div class="recipe-step-body"><strong>The patient completes the screening.</strong> They answer health questions, then connect with a licensed provider for a brief video consultation.</div>
- </div>
- <div class="recipe-step">
- <div class="recipe-step-n">4</div>
- <div class="recipe-step-body"><strong>The provider makes a decision</strong>: approve, reject, or defer. For Rx exams, an approval includes a treatment order that routes to your selected pharmacy.</div>
- </div>
- <div class="recipe-step">
- <div class="recipe-step-n">5</div>
- <div class="recipe-step-body"><strong>Your <code>webhook_url</code> receives the result</strong> as a POST. Your handler updates the patient record, triggers fulfillment, sends a notification, or whatever your business logic requires.</div>
- </div>
- </div>
-
- <p>Steps 1 and 5 are where your code lives. Steps 2-4 happen on Qualiphy's side without further integration work.</p>
-</section>
-
-<section class="docs-section" id="exam-types">
- <h2>Exam Types</h2>
- <p>The same <code>/exam_invite</code> endpoint handles all three exam types. The exam ID determines the type; a single payload can trigger one of any kind.</p>
-
- <div class="feature-grid">
- <div class="fcard">
- <div class="fcard-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 7-7"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
- </div>
- <h4>Good Faith Exam (GFE)</h4>
- <p>Provider clears a patient for an in-clinic procedure. Most common for Botox, fillers, IV therapy, and other aesthetic services. No medication is dispensed.</p>
- </div>
- <div class="fcard">
- <div class="fcard-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
- </div>
- <h4>Rx Treatment</h4>
- <p>Provider evaluates the patient and, if appropriate, issues a treatment order. Common for GLP-1 weight loss programs, hormone therapy, and other ongoing treatments. Medication routes to a partner or custom pharmacy.</p>
- </div>
- <div class="fcard">
- <div class="fcard-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
- </div>
- <h4>Urgent Care</h4>
- <p>On-demand consultations for acute conditions: UTI, pink eye, cold sores, acne, nausea. Treatments are sent to a retail pharmacy of the patient's choice.</p>
- </div>
- </div>
-
- <h3>How to know which type an exam is</h3>
- <p>Call <a href="#ep-exam-list"><code>/exam_list</code></a>; each exam record returns its type. Or check the exam in the Qualiphy portal under <strong>Exam List</strong>.</p>
-
- <div class="cb cb-warn">
- <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Multi-exam constraint:</strong> only one Rx exam may run per meeting. You can stack any number of GFE exams on a single invite, but Rx exams must be sent individually.</div>
- </div>
-</section>
-
-<section class="docs-section" id="states">
- <h2>States &amp; Telehealth</h2>
- <p>Telehealth in the U.S. is regulated state-by-state. Qualiphy uses the <code>tele_state</code> field on every <code>/exam_invite</code> call to match patients with providers licensed in their location.</p>
-
- <h3>Always pass the patient's state</h3>
- <p>Not your clinic's state. The patient's state determines which providers can serve them and which pharmacies can fulfill treatments. A clinic in Texas with a patient in California sends <code>"tele_state": "CA"</code>.</p>
-
- <div class="cb cb-warn">
- <div class="cb-icon">!</div>
- <div class="cb-body">Sending the wrong state is the single most common integration bug. If exams are getting "no provider available" responses, this is almost always why.</div>
- </div>
-
- <h3>Format</h3>
- <p>Two-letter uppercase state abbreviation: <code>NY</code>, <code>CA</code>, <code>TX</code>, etc. Use <code>DC</code> for Washington D.C.</p>
-
- <h3>Coverage</h3>
- <p>Qualiphy serves <strong>48 states + D.C.</strong> Alabama and Mississippi are not currently supported.</p>
-</section>
-
-<section class="docs-section" id="pharmacy-routing">
- <h2>Pharmacy Routing</h2>
- <p>For Rx exams, you choose how treatments get from the provider to the patient. There are three patterns. Pick whichever fits your business model.</p>
-
- <h3>Partner pharmacy (recommended for Rx programs)</h3>
- <p>Use Qualiphy's pre-vetted compounding pharmacy network. Bundled, all-inclusive pricing. Qualiphy handles fulfillment and ships directly to the patient. Best for GLP-1, peptide, and other recurring Rx programs.</p>
- <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> to get an <code>exam_pos_id</code> for a specific dosage. Pass both into your <code>/exam_invite</code> payload.</p>
-
- <h3>Custom pharmacy</h3>
- <p>Send the treatment order to a specific retail or compounding pharmacy. Required for Urgent Care exams (the patient picks a pharmacy near them). Best when the patient already has a preferred pharmacy.</p>
- <p>Workflow: call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to find a pharmacy by name or ZIP, then pass the resulting <code>ncpdpid</code> and address fields into your <code>/exam_invite</code> payload.</p>
-
- <h3>Provider's choice</h3>
- <p>Let the licensed provider pick the right pharmacy and order set during the consultation, based on the patient's needs. Use the <code>provider_pos_selection</code> field on <code>/exam_invite</code>:</p>
-
- <div class="param-table">
- <div class="param-row">
- <div class="param-name"><code>1</code></div>
- <div class="param-desc">Provider does not choose. You've fully specified the pharmacy and order.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>2</code></div>
- <div class="param-desc">Provider picks the order set only (drug + dosage). You specified the pharmacy.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>3</code></div>
- <div class="param-desc">Provider picks both the pharmacy and the order set. Most flexible.</div>
- </div>
- </div>
-</section>
-
-<section class="docs-section" id="glossary">
- <h2>Field Glossary</h2>
- <p>The Qualiphy API has a few field names whose meaning isn't obvious from the name. Bookmark this section - you'll come back to it.</p>
-
- <div class="param-table">
- <div class="param-row">
- <div class="param-name"><code>tele_state</code> vs <code>state</code></div>
- <div class="param-desc"><code>tele_state</code> is the patient's <strong>telehealth jurisdiction</strong>, used to match providers and pharmacies. It must be the patient's state, even if the clinic is elsewhere. <code>state</code> is just the patient's home address state. They're often the same value, but conceptually different fields.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>address_*</code> vs <code>shipping_address_*</code> vs <code>pharmacy_*</code></div>
- <div class="param-desc">Three different addresses. <code>address_*</code> is the patient's home address. <code>shipping_address_*</code> is where Rx ships to (often a clinic or P.O. box, not the patient's home). <code>pharmacy_*</code> is the custom retail pharmacy when <code>custom_pharmacy: 1</code>.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>custom_pharmacy</code></div>
- <div class="param-desc">Inverted from intuition. <code>1</code>=Custom Pharmacy (retail like CVS, Walgreens). <code>2</code>=Partner Pharmacy (Qualiphy's compounding network).</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>attachments_required</code></div>
- <div class="param-desc">Also inverted. <code>1</code>=not required. <code>2</code>=required. Watch for off-by-one bugs.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>rx_type</code></div>
- <div class="param-desc">On exams from <code>/exam_list</code>. <code>1</code>=non-Rx (GFE), <code>2</code>=Rx. You can stack non-Rx exams in one meeting; only one Rx exam per meeting.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>gender</code></div>
- <div class="param-desc">Integer, not string. <code>1</code>=Male, <code>2</code>=Female, <code>3</code>=Prefer not to say.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>exam_id</code> vs <code>patient_exam_id</code></div>
- <div class="param-desc"><code>exam_id</code> is the static catalog ID for a treatment (e.g. "GLP-1 Weight Loss"). <code>patient_exam_id</code> is unique to one patient's instance of that exam. Always use <code>patient_exam_id</code> when cancelling, looking up answers, or correlating webhooks.</div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>event</code> on the webhook</div>
- <div class="param-desc"><code>1</code>=Consultation Complete. <code>2</code>=Prescription Confirmed. <code>3</code>=Prescription Tracking. Always switch on this. <a href="#ep-exam-webhook">Webhook reference &rarr;</a></div>
- </div>
- <div class="param-row">
- <div class="param-name"><code>provider_pos_selection</code></div>
- <div class="param-desc">"POS" = Pharmacy / Order Set. <code>1</code>=you specify both. <code>2</code>=provider picks order set. <code>3</code>=provider picks both.</div>
- </div>
- </div>
-</section>
-
-<!-- ============ RECIPES ============ -->
-
-<section class="docs-section" id="recipe-gfe">
- <h2>Recipe: GFE for an Aesthetic Treatment</h2>
- <p>The most common Qualiphy API integration. A patient buys a Botox or filler treatment on your store; you need a licensed provider to clear them before they show up at the clinic.</p>
-
- <div class="recipe">
- <div class="recipe-head">
- <div class="recipe-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 7-7"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
- </div>
- <div>
- <h3 class="recipe-h">Run a GFE for Botox or fillers</h3>
- <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook</div>
- </div>
- </div>
- <div class="recipe-body">
- <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">In your e-commerce platform (WooCommerce, Shopify, custom checkout, etc.), the patient checks out for an aesthetic treatment. Your order-completion handler fires.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the patient's details and your aesthetic exam ID.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link. They join, complete the screening, and a provider approves.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Your webhook receives an <code>approve</code> result. Update the order status and notify the patient that they're cleared to come in.</div></div>
- </div>
- </div>
- </div>
-
- <div class="codeblock">
- <div class="codeblock-head">
- <div class="codeblock-head-meta">
- <span class="method-pill method-post">POST</span>
- <span>/api/exam_invite</span>
- </div>
- <button class="copy-btn" onclick="copyCode(this,'rec-gfe')">Copy</button>
- </div>
- <div class="codeblock-pane active" id="rec-gfe"><div class="codeblock-body">{
-  "api_key": "YOUR_API_KEY",
-  "exams": [4226],
-  "first_name": "Sarah",
-  "last_name": "Johnson",
-  "email": "sarah@example.com",
-  "dob": "1985-03-12",
-  "phone_number": "+15551234567",
-  "tele_state": "NY",
-  "webhook_url": "https://yourstore.com/webhooks/qualiphy",
-  "additional_data": "{\"order_id\":\"WC-12847\"}",
-  "redirect_approve": "https://yourstore.com/cleared",
-  "redirect_reject": "https://yourstore.com/needs-followup"
-}</div></div>
- </div>
-
- <p><strong>Tip:</strong> Use <code>additional_data</code> to pass your internal order ID. It comes back unchanged in the webhook payload, making it trivial to match results to orders without a separate database lookup.</p>
-</section>
-
-<section class="docs-section" id="recipe-glp1">
- <h2>Recipe: GLP-1 Weight Loss Program</h2>
- <p>Subscription-based weight loss is the highest-volume Rx use case. Patient signs up monthly; each month requires a fresh consultation and a treatment routed to a compounding pharmacy.</p>
-
- <div class="recipe">
- <div class="recipe-head">
- <div class="recipe-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
- </div>
- <div>
- <h3 class="recipe-h">Run a recurring GLP-1 program</h3>
- <div class="recipe-sub">~30 min implementation · 3 endpoints + 1 webhook</div>
- </div>
- </div>
- <div class="recipe-body">
- <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to discover available pharmacies. Store the <code>pharmacy_id</code> values you'll use.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with each pharmacy ID to get the available dosages. Store the <code>exam_pos_id</code> values.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Each month per patient: call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the GLP-1 exam ID, the pharmacy ID, and the package ID for the patient's dose.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires when approved. Update subscription status. Pharmacy ships directly to the patient - no further work on your end.</div></div>
- </div>
- </div>
- </div>
-
- <div class="cb cb-tip">
- <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Subscription pattern:</strong> store the <code>pharmacy_id</code> and <code>exam_pos_id</code> on the subscription record. When a renewal cron job fires, it just rebuilds the same payload with current patient data and submits a fresh exam invite.</div>
- </div>
-</section>
-
-<section class="docs-section" id="recipe-urgent">
- <h2>Recipe: Urgent Care Visit</h2>
- <p>Patient has a UTI on a Sunday night. They need a same-day treatment sent to their local pharmacy.</p>
-
- <div class="recipe">
- <div class="recipe-head">
- <div class="recipe-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
- </div>
- <div>
- <h3 class="recipe-h">Same-day treatment to a retail pharmacy</h3>
- <div class="recipe-sub">~20 min implementation · 2 endpoints + 1 webhook</div>
- </div>
- </div>
- <div class="recipe-body">
- <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">On checkout, ask the patient which pharmacy they want to use. Call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to look up nearby pharmacies by name or ZIP.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Submit <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the urgent-care exam ID, the patient's chosen pharmacy details, and <code>custom_pharmacy: 1</code>.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Patient joins the screening, talks to the provider. If approved, the treatment order is sent to the chosen pharmacy.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires. Notify the patient that their script is ready for pickup at their pharmacy.</div></div>
- </div>
- </div>
- </div>
-</section>
-
-<section class="docs-section" id="recipe-prefill">
- <h2>Recipe: Pre-fill Patient Answers</h2>
- <p>You already collect health screening info on your own intake form. You don't want patients to re-answer the same questions during the Qualiphy screening.</p>
-
- <div class="recipe">
- <div class="recipe-head">
- <div class="recipe-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 7-7M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
- </div>
- <div>
- <h3 class="recipe-h">Submit answers programmatically</h3>
- <div class="recipe-sub">~30 min implementation · 3 endpoints + 1 webhook</div>
- </div>
- </div>
- <div class="recipe-body">
- <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Call <a href="#ep-exam-questions"><code>/exam_questions</code></a> to get the question schema for the exam. Map each question to the matching field on your intake form.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> as usual. Capture the returned <code>patient_exam_id</code>.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Immediately call <a href="#ep-exam-submit"><code>/exam_submit_answers</code></a> with the patient's pre-collected answers. The screening picks up where the answers leave off.</div></div>
- </div>
- </div>
- </div>
-</section>
-
-<section class="docs-section" id="recipe-custom-invite">
- <h2>Recipe: Custom Invite Delivery</h2>
- <p>You want full control over the patient-facing email/SMS. Maybe your brand voice is specific, or you've already built a notification system you trust.</p>
-
- <div class="recipe">
- <div class="recipe-head">
- <div class="recipe-icon">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l8 6 8-6M4 6h16v12H4z"/></svg>
- </div>
- <div>
- <h3 class="recipe-h">Send invites from your own system</h3>
- <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook + a config change</div>
- </div>
- </div>
- <div class="recipe-body">
- <div class="recipe-steps">
- <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Email your Qualiphy rep and ask them to disable automatic invite emails for your account. (Required once; not a per-request flag.)</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a>. Capture the returned <code>meeting_url</code>.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Send your own email or SMS to the patient with the <code>meeting_url</code> embedded in your branded template.</div></div>
- </div>
- </div>
- </div>
 </section>
 
 <!-- ============ ENDPOINT REFERENCE ============ -->
@@ -1481,6 +1162,325 @@ return {"ok": True}
  <span class="endpoint-path">/api/custom_pharmacy_search</span>
  </div>
  <p>Look up any U.S. pharmacy by name, location, or NCPDPID. Returns full address and identifier fields you'll need for <code>/exam_invite</code> when using custom pharmacy routing.</p>
+</section>
+
+<!-- ============ RECIPES ============ -->
+
+<section class="docs-section" id="recipe-gfe">
+ <h2>Recipe: GFE for an Aesthetic Treatment</h2>
+ <p>The most common Qualiphy API integration. A patient buys a Botox or filler treatment on your store; you need a licensed provider to clear them before they show up at the clinic.</p>
+
+ <div class="recipe">
+ <div class="recipe-head">
+ <div class="recipe-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 7-7"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
+ </div>
+ <div>
+ <h3 class="recipe-h">Run a GFE for Botox or fillers</h3>
+ <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook</div>
+ </div>
+ </div>
+ <div class="recipe-body">
+ <div class="recipe-steps">
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">In your e-commerce platform (WooCommerce, Shopify, custom checkout, etc.), the patient checks out for an aesthetic treatment. Your order-completion handler fires.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the patient's details and your aesthetic exam ID.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link. They join, complete the screening, and a provider approves.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Your webhook receives an <code>approve</code> result. Update the order status and notify the patient that they're cleared to come in.</div></div>
+ </div>
+ </div>
+ </div>
+
+ <div class="codeblock">
+ <div class="codeblock-head">
+ <div class="codeblock-head-meta">
+ <span class="method-pill method-post">POST</span>
+ <span>/api/exam_invite</span>
+ </div>
+ <button class="copy-btn" onclick="copyCode(this,'rec-gfe')">Copy</button>
+ </div>
+ <div class="codeblock-pane active" id="rec-gfe"><div class="codeblock-body">{
+  "api_key": "YOUR_API_KEY",
+  "exams": [4226],
+  "first_name": "Sarah",
+  "last_name": "Johnson",
+  "email": "sarah@example.com",
+  "dob": "1985-03-12",
+  "phone_number": "+15551234567",
+  "tele_state": "NY",
+  "webhook_url": "https://yourstore.com/webhooks/qualiphy",
+  "additional_data": "{\"order_id\":\"WC-12847\"}",
+  "redirect_approve": "https://yourstore.com/cleared",
+  "redirect_reject": "https://yourstore.com/needs-followup"
+}</div></div>
+ </div>
+
+ <p><strong>Tip:</strong> Use <code>additional_data</code> to pass your internal order ID. It comes back unchanged in the webhook payload, making it trivial to match results to orders without a separate database lookup.</p>
+</section>
+
+<section class="docs-section" id="recipe-glp1">
+ <h2>Recipe: GLP-1 Weight Loss Program</h2>
+ <p>Subscription-based weight loss is the highest-volume Rx use case. Patient signs up monthly; each month requires a fresh consultation and a treatment routed to a compounding pharmacy.</p>
+
+ <div class="recipe">
+ <div class="recipe-head">
+ <div class="recipe-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+ </div>
+ <div>
+ <h3 class="recipe-h">Run a recurring GLP-1 program</h3>
+ <div class="recipe-sub">~30 min implementation · 3 endpoints + 1 webhook</div>
+ </div>
+ </div>
+ <div class="recipe-body">
+ <div class="recipe-steps">
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to discover available pharmacies. Store the <code>pharmacy_id</code> values you'll use.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with each pharmacy ID to get the available dosages. Store the <code>exam_pos_id</code> values.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Each month per patient: call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the GLP-1 exam ID, the pharmacy ID, and the package ID for the patient's dose.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires when approved. Update subscription status. Pharmacy ships directly to the patient - no further work on your end.</div></div>
+ </div>
+ </div>
+ </div>
+
+ <div class="cb cb-tip">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Subscription pattern:</strong> store the <code>pharmacy_id</code> and <code>exam_pos_id</code> on the subscription record. When a renewal cron job fires, it just rebuilds the same payload with current patient data and submits a fresh exam invite.</div>
+ </div>
+</section>
+
+<section class="docs-section" id="recipe-urgent">
+ <h2>Recipe: Urgent Care Visit</h2>
+ <p>Patient has a UTI on a Sunday night. They need a same-day treatment sent to their local pharmacy.</p>
+
+ <div class="recipe">
+ <div class="recipe-head">
+ <div class="recipe-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+ </div>
+ <div>
+ <h3 class="recipe-h">Same-day treatment to a retail pharmacy</h3>
+ <div class="recipe-sub">~20 min implementation · 2 endpoints + 1 webhook</div>
+ </div>
+ </div>
+ <div class="recipe-body">
+ <div class="recipe-steps">
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">On checkout, ask the patient which pharmacy they want to use. Call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to look up nearby pharmacies by name or ZIP.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Submit <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the urgent-care exam ID, the patient's chosen pharmacy details, and <code>custom_pharmacy: 1</code>.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Patient joins the screening, talks to the provider. If approved, the treatment order is sent to the chosen pharmacy.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Webhook fires. Notify the patient that their script is ready for pickup at their pharmacy.</div></div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<section class="docs-section" id="recipe-prefill">
+ <h2>Recipe: Pre-fill Patient Answers</h2>
+ <p>You already collect health screening info on your own intake form. You don't want patients to re-answer the same questions during the Qualiphy screening.</p>
+
+ <div class="recipe">
+ <div class="recipe-head">
+ <div class="recipe-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 7-7M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
+ </div>
+ <div>
+ <h3 class="recipe-h">Submit answers programmatically</h3>
+ <div class="recipe-sub">~30 min implementation · 3 endpoints + 1 webhook</div>
+ </div>
+ </div>
+ <div class="recipe-body">
+ <div class="recipe-steps">
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Call <a href="#ep-exam-questions"><code>/exam_questions</code></a> to get the question schema for the exam. Map each question to the matching field on your intake form.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> as usual. Capture the returned <code>patient_exam_id</code>.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Immediately call <a href="#ep-exam-submit"><code>/exam_submit_answers</code></a> with the patient's pre-collected answers. The screening picks up where the answers leave off.</div></div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<section class="docs-section" id="recipe-custom-invite">
+ <h2>Recipe: Custom Invite Delivery</h2>
+ <p>You want full control over the patient-facing email/SMS. Maybe your brand voice is specific, or you've already built a notification system you trust.</p>
+
+ <div class="recipe">
+ <div class="recipe-head">
+ <div class="recipe-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l8 6 8-6M4 6h16v12H4z"/></svg>
+ </div>
+ <div>
+ <h3 class="recipe-h">Send invites from your own system</h3>
+ <div class="recipe-sub">~15 min implementation · 1 endpoint + 1 webhook + a config change</div>
+ </div>
+ </div>
+ <div class="recipe-body">
+ <div class="recipe-steps">
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Email your Qualiphy rep and ask them to disable automatic invite emails for your account. (Required once; not a per-request flag.)</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a>. Capture the returned <code>meeting_url</code>.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Send your own email or SMS to the patient with the <code>meeting_url</code> embedded in your branded template.</div></div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- ============ CORE CONCEPTS ============ -->
+
+<section class="docs-section" id="how-exam-works">
+ <h2>How an Exam Works</h2>
+ <p>Every Qualiphy interaction follows the same lifecycle, regardless of treatment type. Understanding this flow makes everything else easier to reason about.</p>
+
+ <div class="recipe-steps">
+ <div class="recipe-step">
+ <div class="recipe-step-n">1</div>
+ <div class="recipe-step-body"><strong>You call <code>/exam_invite</code></strong> with patient details and one or more exam IDs. Qualiphy returns a <code>meeting_url</code> immediately.</div>
+ </div>
+ <div class="recipe-step">
+ <div class="recipe-step-n">2</div>
+ <div class="recipe-step-body"><strong>The patient receives an invite</strong> via email and SMS (or via your own system if you've configured custom delivery). They click the link and enter the screening.</div>
+ </div>
+ <div class="recipe-step">
+ <div class="recipe-step-n">3</div>
+ <div class="recipe-step-body"><strong>The patient completes the screening.</strong> They answer health questions, then connect with a licensed provider for a brief video consultation.</div>
+ </div>
+ <div class="recipe-step">
+ <div class="recipe-step-n">4</div>
+ <div class="recipe-step-body"><strong>The provider makes a decision</strong>: approve, reject, or defer. For Rx exams, an approval includes a treatment order that routes to your selected pharmacy.</div>
+ </div>
+ <div class="recipe-step">
+ <div class="recipe-step-n">5</div>
+ <div class="recipe-step-body"><strong>Your <code>webhook_url</code> receives the result</strong> as a POST. Your handler updates the patient record, triggers fulfillment, sends a notification, or whatever your business logic requires.</div>
+ </div>
+ </div>
+
+ <p>Steps 1 and 5 are where your code lives. Steps 2-4 happen on Qualiphy's side without further integration work.</p>
+</section>
+
+<section class="docs-section" id="exam-types">
+ <h2>Exam Types</h2>
+ <p>The same <code>/exam_invite</code> endpoint handles all three exam types. The exam ID determines the type; a single payload can trigger one of any kind.</p>
+
+ <div class="feature-grid">
+ <div class="fcard">
+ <div class="fcard-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 7-7"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
+ </div>
+ <h4>Good Faith Exam (GFE)</h4>
+ <p>Provider clears a patient for an in-clinic procedure. Most common for Botox, fillers, IV therapy, and other aesthetic services. No medication is dispensed.</p>
+ </div>
+ <div class="fcard">
+ <div class="fcard-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+ </div>
+ <h4>Rx Treatment</h4>
+ <p>Provider evaluates the patient and, if appropriate, issues a treatment order. Common for GLP-1 weight loss programs, hormone therapy, and other ongoing treatments. Medication routes to a partner or custom pharmacy.</p>
+ </div>
+ <div class="fcard">
+ <div class="fcard-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+ </div>
+ <h4>Urgent Care</h4>
+ <p>On-demand consultations for acute conditions: UTI, pink eye, cold sores, acne, nausea. Treatments are sent to a retail pharmacy of the patient's choice.</p>
+ </div>
+ </div>
+
+ <h3>How to know which type an exam is</h3>
+ <p>Call <a href="#ep-exam-list"><code>/exam_list</code></a>; each exam record returns its type. Or check the exam in the Qualiphy portal under <strong>Exam List</strong>.</p>
+
+ <div class="cb cb-warn">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Multi-exam constraint:</strong> only one Rx exam may run per meeting. You can stack any number of GFE exams on a single invite, but Rx exams must be sent individually.</div>
+ </div>
+</section>
+
+<section class="docs-section" id="states">
+ <h2>States &amp; Telehealth</h2>
+ <p>Telehealth in the U.S. is regulated state-by-state. Qualiphy uses the <code>tele_state</code> field on every <code>/exam_invite</code> call to match patients with providers licensed in their location.</p>
+
+ <h3>Always pass the patient's state</h3>
+ <p>Not your clinic's state. The patient's state determines which providers can serve them and which pharmacies can fulfill treatments. A clinic in Texas with a patient in California sends <code>"tele_state": "CA"</code>.</p>
+
+ <div class="cb cb-warn">
+ <div class="cb-icon">!</div>
+ <div class="cb-body">Sending the wrong state is the single most common integration bug. If exams are getting "no provider available" responses, this is almost always why.</div>
+ </div>
+
+ <h3>Format</h3>
+ <p>Two-letter uppercase state abbreviation: <code>NY</code>, <code>CA</code>, <code>TX</code>, etc. Use <code>DC</code> for Washington D.C.</p>
+
+ <h3>Coverage</h3>
+ <p>Qualiphy serves <strong>48 states + D.C.</strong> Alabama and Mississippi are not currently supported.</p>
+</section>
+
+<section class="docs-section" id="pharmacy-routing">
+ <h2>Pharmacy Routing</h2>
+ <p>For Rx exams, you choose how treatments get from the provider to the patient. There are three patterns. Pick whichever fits your business model.</p>
+
+ <h3>Partner pharmacy (recommended for Rx programs)</h3>
+ <p>Use Qualiphy's pre-vetted compounding pharmacy network. Bundled, all-inclusive pricing. Qualiphy handles fulfillment and ships directly to the patient. Best for GLP-1, peptide, and other recurring Rx programs.</p>
+ <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> to get an <code>exam_pos_id</code> for a specific dosage. Pass both into your <code>/exam_invite</code> payload.</p>
+
+ <h3>Custom pharmacy</h3>
+ <p>Send the treatment order to a specific retail or compounding pharmacy. Required for Urgent Care exams (the patient picks a pharmacy near them). Best when the patient already has a preferred pharmacy.</p>
+ <p>Workflow: call <a href="#ep-pharmacy-search"><code>/custom_pharmacy_search</code></a> to find a pharmacy by name or ZIP, then pass the resulting <code>ncpdpid</code> and address fields into your <code>/exam_invite</code> payload.</p>
+
+ <h3>Provider's choice</h3>
+ <p>Let the licensed provider pick the right pharmacy and order set during the consultation, based on the patient's needs. Use the <code>provider_pos_selection</code> field on <code>/exam_invite</code>:</p>
+
+ <div class="param-table">
+ <div class="param-row">
+ <div class="param-name"><code>1</code></div>
+ <div class="param-desc">Provider does not choose. You've fully specified the pharmacy and order.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>2</code></div>
+ <div class="param-desc">Provider picks the order set only (drug + dosage). You specified the pharmacy.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>3</code></div>
+ <div class="param-desc">Provider picks both the pharmacy and the order set. Most flexible.</div>
+ </div>
+ </div>
+</section>
+
+<section class="docs-section" id="glossary">
+ <h2>Field Glossary</h2>
+ <p>The Qualiphy API has a few field names whose meaning isn't obvious from the name. Bookmark this section - you'll come back to it.</p>
+
+ <div class="param-table">
+ <div class="param-row">
+ <div class="param-name"><code>tele_state</code> vs <code>state</code></div>
+ <div class="param-desc"><code>tele_state</code> is the patient's <strong>telehealth jurisdiction</strong>, used to match providers and pharmacies. It must be the patient's state, even if the clinic is elsewhere. <code>state</code> is just the patient's home address state. They're often the same value, but conceptually different fields.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>address_*</code> vs <code>shipping_address_*</code> vs <code>pharmacy_*</code></div>
+ <div class="param-desc">Three different addresses. <code>address_*</code> is the patient's home address. <code>shipping_address_*</code> is where Rx ships to (often a clinic or P.O. box, not the patient's home). <code>pharmacy_*</code> is the custom retail pharmacy when <code>custom_pharmacy: 1</code>.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>custom_pharmacy</code></div>
+ <div class="param-desc">Inverted from intuition. <code>1</code>=Custom Pharmacy (retail like CVS, Walgreens). <code>2</code>=Partner Pharmacy (Qualiphy's compounding network).</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>attachments_required</code></div>
+ <div class="param-desc">Also inverted. <code>1</code>=not required. <code>2</code>=required. Watch for off-by-one bugs.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>rx_type</code></div>
+ <div class="param-desc">On exams from <code>/exam_list</code>. <code>1</code>=non-Rx (GFE), <code>2</code>=Rx. You can stack non-Rx exams in one meeting; only one Rx exam per meeting.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>gender</code></div>
+ <div class="param-desc">Integer, not string. <code>1</code>=Male, <code>2</code>=Female, <code>3</code>=Prefer not to say.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>exam_id</code> vs <code>patient_exam_id</code></div>
+ <div class="param-desc"><code>exam_id</code> is the static catalog ID for a treatment (e.g. "GLP-1 Weight Loss"). <code>patient_exam_id</code> is unique to one patient's instance of that exam. Always use <code>patient_exam_id</code> when cancelling, looking up answers, or correlating webhooks.</div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>event</code> on the webhook</div>
+ <div class="param-desc"><code>1</code>=Consultation Complete. <code>2</code>=Prescription Confirmed. <code>3</code>=Prescription Tracking. Always switch on this. <a href="#ep-exam-webhook">Webhook reference &rarr;</a></div>
+ </div>
+ <div class="param-row">
+ <div class="param-name"><code>provider_pos_selection</code></div>
+ <div class="param-desc">"POS" = Pharmacy / Order Set. <code>1</code>=you specify both. <code>2</code>=provider picks order set. <code>3</code>=provider picks both.</div>
+ </div>
+ </div>
 </section>
 
 <!-- ============ OPERATIONS ============ -->
