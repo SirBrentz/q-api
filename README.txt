@@ -6,79 +6,63 @@ Drop the entire folder at the subdomain web root.
 WHAT'S NEW IN THIS DROP
 -----------------------
 
-This drop adds three of the requested feature improvements
-end-to-end, plus the foundation for the rest. The remaining
-four are listed at the bottom under "Coming next" -- they
-require a follow-up round to ship cleanly.
+API KEY FIELD REMOVED
 
-SHIPPED THIS ROUND
+The "Your API key" input on the main docs page has been
+removed for security. A previously-stored value in
+localStorage is auto-cleared on next page load.
 
-1. Dark mode.
-   Full dark-theme support. Toggle button (sun / moon icon)
-   sits in the top-right nav, next to "Run quick start."
-   - Theme stored in localStorage and persisted across visits
-   - Auto-respects the user's OS preference on first visit
-   - Early-init script runs before first paint to prevent flash
-   - Smooth color transitions only AFTER first paint
-   - All surfaces, borders, code blocks, and accent colors
-     flip cleanly. Lifted indigo / emerald / amber values for
-     legibility on dark.
+ENV TOGGLE MOVED TO SIDEBAR
 
-2. Sandbox / Production environment toggle.
-   New settings strip at the top of the docs page (above the
-   hero) with a Sandbox / Production segmented control. Toggle
-   live-rewrites every code block on the page:
-     - Sandbox -> sandbox-api.qualiphy.me
-     - Production -> api.qualiphy.me
-   - Choice persisted in localStorage
-   - Operates on a snapshot of the original code, so toggling
-     is reversible
+The Sandbox / Production segmented control now sits at the
+top of the left sidebar (above the search box), where it's
+easier to find and doesn't take up content-area real estate.
+Live-rewrites every code block on the page when toggled.
+Choice persists in localStorage.
 
-3. Live API key field.
-   Right next to the env toggle: a password-style text input
-   labeled "Your API key." Pasting a key live-substitutes
-   YOUR_API_KEY in every code block on the page (whether the
-   placeholder appears with quotes or without).
-   - Stored only in localStorage (NEVER transmitted)
-   - Shows / hides the key with the eye icon
-   - Hint text under the field: "Saved only in your browser.
-     Never sent to Qualiphy."
-   - Debounced 250ms so the page doesn't re-render on every
-     keystroke
+EM/EN DASHES STRIPPED
 
-4. Code line numbers.
-   Every code block now has a left gutter with line numbers,
-   styled with the same monospace font and a faint border
-   between the gutter and the code.
-   - Numbers auto-increment via CSS counter
-   - Numbers are unselectable (won't show up in copied text)
-   - Copy button still copies clean code without the numbers
+Replaced em dashes (--) and en dashes (-) with plain hyphens
+across both pages. Also re-indented every code block since
+the dash-replacement regex squashed JSON indentation.
 
-INFRASTRUCTURE LAID FOR (BUT NOT YET WIRED)
+DARK-MODE LEGIBILITY FIXES
 
-The CSS variable system was refactored so the 4 remaining
-features can be added as small additive changes:
-  - --code-bg, --code-border, --code-text, --code-head, etc.
-    are now tokens that flip cleanly with theme
-  - --shadow-sm, --shadow-md tokens
-  - All hardcoded surface colors inside the codeblock,
-    sidebar search, fcard, and param-table swapped to
-    var() lookups
+1. Default theme is now light. Removed the prefers-color-scheme
+   auto-detection and the matchMedia listener. Dark only
+   applies if the user has explicitly clicked the toggle.
 
-COMING NEXT
+2. Top nav buttons in dark mode now have proper contrast:
+   - "Documentation" active pill uses a lavender-on-lavender-tint
+     combo that's actually legible
+   - "Quick start" link readable
+   - "Run quick start" outline button: visible borders, readable text
+   - "Get API access" primary button: deeper indigo (5D4B87) for
+     better contrast against the dark page bg
+   - Hero "Get a tailored API plan" button matches
 
-5. Response status-code tabs (200 / 400 / 401 / 500) on every
-   endpoint section. Currently the response example only shows
-   the 200 case.
-6. "Copy as Postman" alongside the existing Copy button on
-   every code sample. Drops a ready-to-import collection JSON.
-7. Right-rail "On this page" mini-TOC for long endpoint pages
-   (Required -> Common Optional -> Pharmacy Routing -> Response
-   -> 401 errors).
-8. Inline "Test this endpoint" runner (deferred -- this requires
-   either a CORS-friendly sandbox response from the Qualiphy
-   API or a small backend proxy. Worth a security review before
-   shipping a public endpoint runner against the real API).
+3. Footer surface stays permanently dark in both themes.
+   Root cause was that --ink token was used for both content
+   text and surface backgrounds. Split into two tokens:
+   --ink (text, flips with theme) and --ink-surface (footer,
+   stays dark always). Footer columns + Quidget promo block
+   render correctly in dark.
+
+4. "Want a tailored plan for your team?" CTA panel + sidebar
+   "Need a custom plan?" CTA both lock their indigo gradients
+   to permanent dark hex literals so they don't flip.
+
+5. Status-code chips (200, 400, 401, 500) inside the
+   Errors & Status Codes section no longer stretch to fill
+   their column. Was rendering as 200px-wide bars with 3-char
+   text in the middle. Root cause: <code> elements inside a
+   flex-column .param-name container were inheriting display:
+   block from align-self:stretch. Fixed with display:inline-block
+   + align-self:flex-start.
+
+6. Removed redundant duplicate Quidget block in the footer.
+   Only the .docs-foot-promo block remains as the single
+   no-code callout.
 
 DEPLOYMENT
 ----------
@@ -88,11 +72,10 @@ Folder structure:
   /quick-start/index.html          Quick start curated flow
   /assets/fonts/Gilroy-*           Display fonts
   /favicon.ico, .png, etc.         Favicons
-  /sample-plan.pdf                 Example PDF output (delete on deploy)
+  /sample-plan.pdf                 Example PDF (delete on deploy)
   /README.txt                      This file (delete on deploy)
 
 After deploying:
   - Update <link rel="canonical"> and <meta property="og:url">
     in both files if your subdomain isn't docs.qualiphy.me.
-  - Delete README.txt and sample-plan.pdf -- they're for
-    review only.
+  - Delete README.txt and sample-plan.pdf.
