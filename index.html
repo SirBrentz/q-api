@@ -1726,24 +1726,24 @@ return {"ok": True}
  </div>
  <textarea class="rail-tester-input" id="rail-payload" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Request payload"></textarea>
  <div class="rail-tester-actions">
- <button class="btn btn-primary btn-sm" id="rail-test" type="button">
+ <button class="btn btn-primary btn-sm" id="rail-send" type="button">
  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
- Test
+ Try now
  </button>
  <button class="btn btn-outline btn-sm" id="rail-copy-curl" type="button">Copy cURL</button>
  <button class="btn btn-ghost btn-sm" id="rail-reset" type="button">Reset</button>
  </div>
- <div class="rail-prod-note"><strong>Test</strong> generates a realistic mock response from your payload — no real API call is made, nothing is billed. To run the real request, use <strong>Copy cURL</strong> and execute it from your terminal with your own key.</div>
+ <div class="rail-prod-note">Sends a live request to the API using the key above. Use test patient details (e.g. <code>johndoe@example.com</code>) — anything you provision is real until cancelled.</div>
  <div class="rail-response" id="rail-response" hidden>
  <div class="rail-response-meta">
  <span class="rail-response-status" id="rail-response-status">200 OK</span>
- <span class="rail-response-time" id="rail-response-time">mock</span>
+ <span class="rail-response-time" id="rail-response-time">0 ms</span>
  </div>
  <pre class="rail-response-body" id="rail-response-body"></pre>
  </div>
  </div>
 
- <div class="right-rail-empty" id="right-rail-empty">Scroll into a recipe or API endpoint to load a sample request. Edit the payload, click <strong>Test</strong> for a mock response, or copy as cURL to run for real from your terminal.</div>
+ <div class="right-rail-empty" id="right-rail-empty">Scroll into a recipe or API endpoint to load a sample request. Edit the payload here and click <strong>Try now</strong> to send it with your API key.</div>
  </div>
 </aside>
 
@@ -2013,11 +2013,9 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  }
 })();
 
-// ============ Right-rail sample-request tester (mock-only, no live fetch) ============
-// The Test button generates a realistic mock response client-side based on the
-// user's payload. No fetch is made — nothing reaches api.qualiphy.me, nothing
-// is billed. Copy cURL is provided for users who want to run the real request
-// from their own terminal with their own API key.
+// ============ Right-rail live API tester ============
+// Fires real requests to api.qualiphy.me using the user's API key. Mirrors
+// the behavior of the existing prod docs' Try Now flow.
 (function(){
  const rail = document.getElementById('right-rail');
  if (!rail) return;
@@ -2029,7 +2027,7 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  const methodEl = document.getElementById('rail-method');
  const endpointEl = document.getElementById('rail-endpoint');
  const payloadEl = document.getElementById('rail-payload');
- const testBtn = document.getElementById('rail-test');
+ const sendBtn = document.getElementById('rail-send');
  const resetBtn = document.getElementById('rail-reset');
  const copyCurlBtn = document.getElementById('rail-copy-curl');
  const responseEl = document.getElementById('rail-response');
@@ -2103,6 +2101,10 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  return text.replaceAll('YOUR_API_KEY', key);
  }
 
+ function setKeyWarning(){
+ if (sendBtn) sendBtn.disabled = !getApiKey();
+ }
+
  function clearActiveCard(){
  document.querySelectorAll('.docs-section[id^="recipe-"] .recipe.is-active-payload')
  .forEach(c => c.classList.remove('is-active-payload'));
@@ -2174,146 +2176,79 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  });
  }
 
- // ===== Mock response generator =====
- // Generates a realistic JSON response from the user's payload. This NEVER
- // hits the network — it just shows the user what a successful (or validation-
- // failed) reply would look like for the endpoint they're on.
- const REQUIRED_FIELDS = {
- '/api/exam_list': ['api_key'],
- '/api/exam_invite': ['api_key', 'exams', 'first_name', 'last_name', 'email', 'dob', 'phone_number', 'tele_state'],
- '/api/exam_invite_cancel': ['api_key', 'patient_exam_id'],
- '/api/exam_submit_answers': ['api_key', 'patient_exam_id', 'answers']
- };
-
- const SAMPLE_EXAM_LIBRARY = {
- 4226: 'GFE Aesthetic',
- 1292: 'GLP-1 Weight Management',
- 1517: 'Testosterone Replacement Therapy',
- 1843: 'Hair Restoration',
- 3104: 'Urgent Care Visit'
- };
-
- function rndHex(n){
- const a = 'abcdef0123456789';
- let s = '';
- for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)];
- return s;
- }
- function rndInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
- function rndUuid(){
- return `${rndHex(8)}-${rndHex(4)}-${rndHex(4)}-${rndHex(4)}-${rndHex(12)}`;
- }
-
- function findMissing(payload, fields){
- return fields.filter(f => {
- const v = payload[f];
- if (v === undefined || v === null || v === '') return true;
- if (Array.isArray(v) && v.length === 0) return true;
- return false;
- });
- }
-
- function mockExamList(){
- return {
- http_code: 200,
- exams: [
- { exam_id: 4226, exam_title: 'GFE Aesthetic', type: 'GFE' },
- { exam_id: 1292, exam_title: 'GLP-1 Weight Management', type: 'Rx' },
- { exam_id: 1517, exam_title: 'Testosterone Replacement Therapy', type: 'Rx' },
- { exam_id: 1843, exam_title: 'Hair Restoration', type: 'Rx' },
- { exam_id: 3104, exam_title: 'Urgent Care Visit', type: 'UrgentCare' }
- ]
- };
- }
-
- function mockExamInvite(payload){
- const meetingUuid = rndUuid();
- const exams = Array.isArray(payload.exams) ? payload.exams : [];
- const patientExams = exams.map(id => ({
- patient_exam_id: rndInt(100000, 999999),
- exam_title: SAMPLE_EXAM_LIBRARY[id] || 'Custom Exam',
- exam_id: id
- }));
- return {
- http_code: 200,
- meeting_url: `https://app.qualiphy.me/meeting/${meetingUuid}`,
- meeting_uuid: meetingUuid,
- patient_exams: patientExams
- };
- }
-
- function mockExamCancel(payload){
- return {
- http_code: 200,
- patient_exam_id: payload.patient_exam_id,
- status: 'cancelled',
- cancelled_at: new Date().toISOString()
- };
- }
-
- function mockSubmitAnswers(payload){
- const answers = Array.isArray(payload.answers) ? payload.answers : [];
- return {
- http_code: 200,
- patient_exam_id: payload.patient_exam_id,
- answers_recorded: answers.length,
- status: 'prefilled'
- };
- }
-
- function generateMock(endpoint, payload){
- const required = REQUIRED_FIELDS[endpoint];
- if (required) {
- const missing = findMissing(payload, required);
- if (missing.length) {
- return {
- status: '400 Bad Request',
- statusClass: 'is-4xx',
- body: {
- http_code: 400,
- error_message: `Missing required field: ${missing[0]}`
- }
- };
- }
- }
- switch (endpoint) {
- case '/api/exam_list': return { status: '200 OK', statusClass: 'is-2xx', body: mockExamList() };
- case '/api/exam_invite': return { status: '200 OK', statusClass: 'is-2xx', body: mockExamInvite(payload) };
- case '/api/exam_invite_cancel': return { status: '200 OK', statusClass: 'is-2xx', body: mockExamCancel(payload) };
- case '/api/exam_submit_answers': return { status: '200 OK', statusClass: 'is-2xx', body: mockSubmitAnswers(payload) };
- default:
- return { status: '200 OK', statusClass: 'is-2xx', body: { http_code: 200, message: 'Mock response — endpoint has no specific mock shape configured.' } };
- }
- }
-
  function showResponse(opts){
- const { status, statusClass = 'is-2xx', bodyText = '' } = opts;
+ const { status, statusClass = 'is-2xx', bodyText = '', timeMs = 0 } = opts;
  responseStatus.textContent = status;
  responseStatus.className = 'rail-response-status ' + statusClass;
- responseTime.textContent = 'mock';
+ responseTime.textContent = (timeMs >= 0 ? timeMs : 0) + ' ms';
  responseBody.textContent = bodyText;
  responseEl.hidden = false;
  }
 
- if (testBtn) {
- testBtn.addEventListener('click', () => {
+ // Re-evaluate Send button state when API key is typed/cleared.
+ if (apiKeyInput) {
+ apiKeyInput.addEventListener('input', () => setKeyWarning());
+ }
+
+ // Send a real request
+ if (sendBtn) {
+ sendBtn.addEventListener('click', async () => {
+ if (!getApiKey()) { setKeyWarning(); return; }
+
  let payload;
  try {
  payload = JSON.parse(payloadEl.value);
  } catch (e) {
- showResponse({
- status: 'Invalid JSON',
- statusClass: 'is-error',
- bodyText: e.message
- });
+ showResponse({ status: 'Invalid JSON', statusClass: 'is-error', bodyText: e.message, timeMs: 0 });
  return;
  }
- const result = generateMock(currentEndpoint, payload);
- showResponse({
- status: result.status,
- statusClass: result.statusClass,
- bodyText: JSON.stringify(result.body, null, 2)
+
+ const url = API_BASE + currentEndpoint;
+ sendBtn.disabled = true;
+ const origLabel = sendBtn.innerHTML;
+ sendBtn.innerHTML = 'Sending&hellip;';
+ const t0 = performance.now();
+
+ try {
+ const res = await fetch(url, {
+ method: currentMethod,
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(payload)
  });
+ const dt = Math.round(performance.now() - t0);
+ let bodyText;
+ const ct = res.headers.get('content-type') || '';
+ try {
+ if (ct.includes('application/json')) {
+ bodyText = JSON.stringify(await res.json(), null, 2);
+ } else {
+ bodyText = await res.text();
+ }
+ } catch (_) {
+ bodyText = '[Response body could not be read]';
+ }
+ const cls = res.status < 300 ? 'is-2xx' : res.status < 500 ? 'is-4xx' : 'is-5xx';
+ showResponse({
+ status: res.status + ' ' + (res.statusText || ''),
+ statusClass: cls,
+ bodyText,
+ timeMs: dt
+ });
+ } catch (err) {
+ const dt = Math.round(performance.now() - t0);
+ const isCors = err && err.name === 'TypeError';
+ showResponse({
+ status: isCors ? 'Blocked (CORS / network)' : 'Error',
+ statusClass: 'is-error',
+ bodyText: isCors
+ ? "The browser blocked this request before it reached the server. This origin may not be in the API's CORS allowlist yet — use Copy cURL and run from your terminal in the meantime."
+ : (err && err.message) || String(err),
+ timeMs: dt
+ });
+ } finally {
+ sendBtn.disabled = !getApiKey();
+ sendBtn.innerHTML = origLabel;
+ }
  });
  }
 
@@ -2351,6 +2286,8 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  const el = document.getElementById(id);
  if (el) io.observe(el);
  });
+
+ setKeyWarning();
 })();
 </script>
 
