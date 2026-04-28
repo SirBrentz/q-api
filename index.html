@@ -481,6 +481,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <div class="sidebar-group-h"><span class="grp-num">01</span>Getting Started</div>
  <a href="#walkthrough" class="s-link" data-search="walkthrough quickstart 5-minute first api call code example sample">Code walkthrough</a>
  <a href="#authentication" class="s-link" data-search="authentication api key auth header credentials">Authentication</a>
+ <a href="#testing" class="s-link" data-search="testing test state TE sandbox staging mock validate integration test patient name approve reject n/a prescription">Testing your integration</a>
  </div>
 
  <div class="sidebar-group">
@@ -608,7 +609,7 @@ const exams = await res.json();</div></div>
  </div>
 
  <h3>3. Send an exam invite</h3>
- <p>Build a payload with the patient's details, the exam ID from step 2, and a webhook URL where you want to receive the result.</p>
+ <p>Build a payload with the patient's details, the exam ID from step 2, and a webhook URL where you want to receive the result. The sample below uses <a href="#testing">Test mode</a> (<code>state: "TE"</code>, name <code>Test Approve</code>) so it's safe to run as-is — swap in real values when you're ready to ship.</p>
 
  <div class="codeblock">
  <div class="codeblock-tabs">
@@ -628,12 +629,13 @@ const exams = await res.json();</div></div>
   -d '{
   "api_key": "YOUR_API_KEY",
   "exams": [4226],
-  "first_name": "Sarah",
-  "last_name": "Johnson",
-  "email": "sarah@example.com",
+  "first_name": "Test",
+  "last_name": "Approve",
+  "email": "test@example.com",
   "dob": "1990-06-30",
-  "phone_number": "+15551234567",
-  "tele_state": "NY",
+  "phone_number": "+15555550100",
+  "state": "TE",
+  "tele_state": "TE",
   "webhook_url": "https://your-app.com/webhooks/qualiphy"
 }'</div></div>
  <div class="codeblock-pane" id="qs2-node"><div class="codeblock-body">const res = await fetch('https://api.qualiphy.me/api/exam_invite', {
@@ -642,12 +644,13 @@ const exams = await res.json();</div></div>
   body: JSON.stringify({
     api_key: process.env.QUALIPHY_KEY,
     exams: [4226],
-    first_name: 'Sarah',
-    last_name: 'Johnson',
-    email: 'sarah@example.com',
+    first_name: 'Test',
+    last_name: 'Approve',
+    email: 'test@example.com',
     dob: '1990-06-30',
-    phone_number: '+15551234567',
-    tele_state: 'NY',
+    phone_number: '+15555550100',
+    state: 'TE',
+    tele_state: 'TE',
     webhook_url: 'https://your-app.com/webhooks/qualiphy'
   })
 });
@@ -660,12 +663,13 @@ const exams = await res.json();</div></div>
   json={
     'api_key': os.environ['QUALIPHY_KEY'],
     'exams': [4226],
-    'first_name': 'Sarah',
-    'last_name': 'Johnson',
-    'email': 'sarah@example.com',
+    'first_name': 'Test',
+    'last_name': 'Approve',
+    'email': 'test@example.com',
     'dob': '1990-06-30',
-    'phone_number': '+15551234567',
-    'tele_state': 'NY',
+    'phone_number': '+15555550100',
+    'state': 'TE',
+    'tele_state': 'TE',
     'webhook_url': 'https://your-app.com/webhooks/qualiphy'
   }
 )
@@ -701,11 +705,60 @@ const exams = await res.json();</div></div>
  <p>You can rotate your API key from the same screen. The new key takes effect immediately. The old key continues to work for a brief grace period so you can update your environment variables without downtime.</p>
 </section>
 
+<!-- ============ TESTING ============ -->
+<section class="docs-section" id="testing">
+ <h2>Testing your integration</h2>
+ <p>Qualiphy provides a dedicated <strong>Test state</strong> so you can validate exam submissions, webhooks, prescription workflows, and order set configurations without touching live patients or production providers.</p>
+
+ <div class="cb cb-success">
+ <div class="cb-icon">✓</div>
+ <div class="cb-body">No real consultations run in test mode. No providers are paged, no patients are contacted, no prescriptions are filled. All <code>/exam_invite</code> samples in this documentation default to test-mode values so you can copy, paste, and run them safely.</div>
+ </div>
+
+ <h3>1. Route to the test state</h3>
+ <p>On any <code>/exam_invite</code> request, set both <code>state</code> and <code>tele_state</code> to <code>TE</code>. This routes the request to the test environment and prevents any live workflow from running.</p>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">Test routing</span></div></div>
+ <div class="codeblock-pane active"><div class="codeblock-body">{
+  "state": "TE",
+  "tele_state": "TE"
+}</div></div>
+ </div>
+
+ <h3>2. Use a test patient name that names your expected outcome</h3>
+ <p>Test providers read the patient's name to decide how to process the exam — the name <em>is</em> your test instruction. Variations are fine as long as the intent is unambiguous (e.g. <code>Test GFE Approve</code>).</p>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>Test Approve</code></div><div class="param-desc">Provider approves the exam (use for GFE / non-Rx flows).</div></div>
+ <div class="param-row"><div class="param-name"><code>Test Reject</code></div><div class="param-desc">Provider rejects the exam.</div></div>
+ <div class="param-row"><div class="param-name"><code>Test N/A</code></div><div class="param-desc">Provider marks the exam not applicable.</div></div>
+ <div class="param-row"><div class="param-name"><code>Test Prescription Approve</code></div><div class="param-desc">Provider approves an Rx exam (use for partner pharmacy or urgent care flows).</div></div>
+ <div class="param-row"><div class="param-name"><code>Test Prescription Reject</code></div><div class="param-desc">Provider rejects an Rx exam.</div></div>
+ </div>
+
+ <h3>3. Validate end-to-end</h3>
+ <ul>
+ <li>Submit the test invite and capture <code>patient_exam_id</code> from the response.</li>
+ <li>Watch your webhook endpoint for the lifecycle events.</li>
+ <li>Confirm the outcome matches the name you used.</li>
+ </ul>
+
+ <div class="cb cb-warn">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Test exams process asynchronously.</strong> Expect 2–24 hours for a webhook (excluding weekends). Don't block deployments waiting on the response — verify wiring with the immediate <code>/exam_invite</code> 200 response, then poll the webhook log.</div>
+ </div>
+
+ <div class="cb cb-info">
+ <div class="cb-icon">i</div>
+ <div class="cb-body"><strong>Don't include real patient data in test requests.</strong> Use the example <code>email</code>, <code>phone_number</code>, and <code>dob</code> values from our samples, or any clearly-fictional values. When you're ready to ship, switch <code>state</code> and <code>tele_state</code> to the patient's real state and use real patient details — see <a href="#going-live">Going to Production</a>.</div>
+ </div>
+</section>
+
 <!-- ============ ENDPOINT REFERENCE ============ -->
 
 <section class="docs-section">
  <h2 style="margin-bottom:8px">API Reference</h2>
  <p>Quick reference for every endpoint. The most-used parameters are documented here inline. For the complete parameter schema (every optional field, every edge case), each endpoint links to its canonical reference page.</p>
+ <p style="margin-top:10px;color:var(--text-mid);font-size:14.5px">All <code>/exam_invite</code> samples below use <a href="#testing">Test mode</a> by default (<code>state: "TE"</code>, name <code>Test Approve</code>) so the right-rail Try now is safe to run as-is. Swap in real values when you go live.</p>
 </section>
 
 <section class="endpoint" id="ep-exam-list">
@@ -1262,12 +1315,13 @@ return {"ok": True}
  <div class="codeblock-pane active" id="rec-gfe"><div class="codeblock-body">{
   "api_key": "YOUR_API_KEY",
   "exams": [4226],
-  "first_name": "Sarah",
-  "last_name": "Johnson",
-  "email": "sarah@example.com",
+  "first_name": "Test",
+  "last_name": "Approve",
+  "email": "test@example.com",
   "dob": "1985-03-12",
-  "phone_number": "+15551234567",
-  "tele_state": "NY",
+  "phone_number": "+15555550100",
+  "state": "TE",
+  "tele_state": "TE",
   "webhook_url": "https://yourstore.com/webhooks/qualiphy",
   "additional_data": "{\"order_id\":\"WC-12847\"}",
   "redirect_approve": "https://yourstore.com/cleared",
@@ -1320,12 +1374,13 @@ return {"ok": True}
  <div class="codeblock-pane active" id="rec-glp1"><div class="codeblock-body">{
   "api_key": "YOUR_API_KEY",
   "exams": [1292],
-  "first_name": "Marcus",
-  "last_name": "Lee",
-  "email": "marcus@example.com",
+  "first_name": "Test",
+  "last_name": "Prescription Approve",
+  "email": "test@example.com",
   "dob": "1982-09-04",
-  "phone_number": "+15551234567",
-  "tele_state": "FL",
+  "phone_number": "+15555550100",
+  "state": "TE",
+  "tele_state": "TE",
   "pharmacy_id": 47,
   "order_set_id": "OS-2104",
   "webhook_url": "https://yourapp.com/webhooks/qualiphy",
@@ -1376,12 +1431,13 @@ return {"ok": True}
  <div class="codeblock-pane active" id="rec-urgent"><div class="codeblock-body">{
   "api_key": "YOUR_API_KEY",
   "exams": [3104],
-  "first_name": "Jordan",
-  "last_name": "Patel",
-  "email": "jordan@example.com",
+  "first_name": "Test",
+  "last_name": "Prescription Approve",
+  "email": "test@example.com",
   "dob": "1991-02-18",
-  "phone_number": "+15551234567",
-  "tele_state": "TX",
+  "phone_number": "+15555550100",
+  "state": "TE",
+  "tele_state": "TE",
   "custom_pharmacy": 1,
   "ncpdpid": "1234567",
   "pharmacy_name": "CVS Pharmacy #5821",
@@ -1678,19 +1734,20 @@ return {"ok": True}
  <h2>Going to Production</h2>
  <p>A pre-launch checklist. Run through this before flipping your integration on for real patients.</p>
  <ul style="list-style:none;padding-left:0">
- <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Webhook handler tested end-to-end against the approve and reject paths</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Full integration validated end-to-end via <a href="#testing">Test mode</a> (state &amp; tele_state set to <code>TE</code>, expected outcomes confirmed via webhook)</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span><code>state</code> and <code>tele_state</code> now driven by the patient's real address (no hardcoded <code>TE</code> left in code paths)</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Patient name fields use real patient data (no <code>Test Approve</code> / <code>Test Reject</code> fixtures left over)</span></li>
+ <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Webhook handler tested against approve and reject paths</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Production API key stored in your secrets manager (not in source control)</span></li>
- <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span><code>tele_state</code> is sourced from patient address, not clinic address</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Idempotency check on <code>patient_exam_id</code> in webhook handler</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Error monitoring on the <code>/exam_invite</code> call (4xx and 5xx)</span></li>
- <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Patient name validation: real names only - test fixtures left in production waste real provider time</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>Subscribed to API change notifications</span></li>
  <li style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--indigo);font-size:14px">☐</span><span>For Rx programs: pharmacy routing values stored on the patient/subscription record, not hardcoded</span></li>
  </ul>
 
  <div class="cb cb-success" style="margin-top:24px">
  <div class="cb-icon">✓</div>
- <div class="cb-body"><strong>Ready to ship?</strong> Once your test exam clears the full pipeline, swap any test patient details for real ones and you're live. We recommend rolling out gradually - feature-flag the integration on for a small percentage of patients first.</div>
+ <div class="cb-body"><strong>Ready to ship?</strong> Once your test exam clears the full pipeline, swap <code>state</code>/<code>tele_state</code> from <code>TE</code> to the patient's real state, replace test names with real patient data, and you're live. Roll out gradually — feature-flag the integration on for a small percentage of patients first.</div>
  </div>
 </section>
 
@@ -1703,8 +1760,8 @@ return {"ok": True}
 
 </main>
 
-<!-- ============ RIGHT RAIL: sample request preview ============ -->
-<aside class="right-rail" id="right-rail" aria-label="Sample request preview">
+<!-- ============ RIGHT RAIL: live API tester (test-mode by default) ============ -->
+<aside class="right-rail" id="right-rail" aria-label="API tester">
  <div class="right-rail-inner">
  <div class="rail-key">
  <label class="rail-key-label" for="docs-api-key">
@@ -1733,7 +1790,7 @@ return {"ok": True}
  <button class="btn btn-outline btn-sm" id="rail-copy-curl" type="button">Copy cURL</button>
  <button class="btn btn-ghost btn-sm" id="rail-reset" type="button">Reset</button>
  </div>
- <div class="rail-prod-note">Sends a live request to the API using the key above. Use test patient details (e.g. <code>johndoe@example.com</code>) — anything you provision is real until cancelled.</div>
+ <div class="rail-prod-note">Sends a live request using the key above. Samples default to <a href="#testing">Test mode</a> (<code>state: "TE"</code>, name <code>Test Approve</code>) so no real provider is paged and no patient is contacted. Edit values freely to test different outcomes — see <a href="#testing">Testing your integration</a> for the full naming guide.</div>
  <div class="rail-response" id="rail-response" hidden>
  <div class="rail-response-meta">
  <span class="rail-response-status" id="rail-response-status">200 OK</span>

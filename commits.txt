@@ -21,3 +21,4 @@ Qualiphy API Docs - change log
 2026-04-28 — Make right-rail preview-only (no live send) — copy cURL + edit payload, no billable side effects
 2026-04-28 — Right-rail Test button: client-side mock responses per endpoint, echoes payload, no network call
 2026-04-28 — Restore live API tester (Try now) — fires real requests, drops alarming warnings/confirms
+2026-04-28 — Default all /exam_invite samples to Test state (TE/TE, "Test Approve" naming); add Testing section
