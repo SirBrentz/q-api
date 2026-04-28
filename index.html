@@ -1903,14 +1903,23 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
 // Theme toggle
 (function(){
  const btn = document.getElementById('theme-toggle');
- if (!btn) return;
  function set(theme){
  document.documentElement.setAttribute('data-theme', theme);
  try { localStorage.setItem('qaliphy-docs-theme', theme); } catch(e){}
  }
+ if (btn) {
  btn.addEventListener('click', () => {
  const cur = document.documentElement.getAttribute('data-theme') || 'light';
  set(cur === 'dark' ? 'light' : 'dark');
+ });
+ }
+ // Cross-tab sync: if the quick-start tab toggles theme, mirror it here without reload.
+ window.addEventListener('storage', (e) => {
+ if (e.key !== 'qaliphy-docs-theme' || !e.newValue) return;
+ const next = e.newValue === 'dark' ? 'dark' : 'light';
+ if (next !== document.documentElement.getAttribute('data-theme')) {
+ document.documentElement.setAttribute('data-theme', next);
+ }
  });
 })();
 
@@ -2061,7 +2070,23 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  if (!sourceId) return '';
  const src = document.getElementById(sourceId);
  if (!src) return '';
- return src.dataset.original || extractText(src);
+ const raw = src.dataset.original || extractText(src);
+ return extractJsonPayload(raw);
+ }
+
+ // Source panes for some endpoints contain a full cURL command; the textarea
+ // needs just the JSON body, otherwise Send hits "Unexpected token 'c'..." on
+ // JSON.parse. If the text is already JSON, pass it through; otherwise pull
+ // the body out of `-d '...'` (handles single- or double-quoted forms).
+ function extractJsonPayload(text){
+ if (!text) return '';
+ const trimmed = text.trim();
+ if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
+ const single = trimmed.match(/-d\s+'([\s\S]*?)'\s*$/);
+ if (single) return single[1].trim();
+ const dbl = trimmed.match(/-d\s+"([\s\S]*?)"\s*$/);
+ if (dbl) return dbl[1].trim();
+ return trimmed;
  }
 
  function getApiKey(){

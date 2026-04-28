@@ -594,14 +594,23 @@ const gv=id=>{const e=$(id);return e?e.value.trim():''};
 /* ===== THEME TOGGLE ===== */
 (function(){
  const btn = document.getElementById('theme-toggle');
- if (!btn) return;
  function set(theme){
  document.documentElement.setAttribute('data-theme', theme);
  try { localStorage.setItem('qaliphy-docs-theme', theme); } catch(e){}
  }
+ if (btn) {
  btn.addEventListener('click', () => {
  const cur = document.documentElement.getAttribute('data-theme') || 'light';
  set(cur === 'dark' ? 'light' : 'dark');
+ });
+ }
+ // Cross-tab sync: if the main docs tab toggles theme, mirror it here without reload.
+ window.addEventListener('storage', (e) => {
+ if (e.key !== 'qaliphy-docs-theme' || !e.newValue) return;
+ const next = e.newValue === 'dark' ? 'dark' : 'light';
+ if (next !== document.documentElement.getAttribute('data-theme')) {
+ document.documentElement.setAttribute('data-theme', next);
+ }
  });
 })();
 

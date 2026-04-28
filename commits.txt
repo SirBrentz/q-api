@@ -1,0 +1,19 @@
+Qualiphy API Docs - change log
+==============================
+
+2026-04-25 — initial upload of static docs (3369831, 3e40491, 26462d7)
+2026-04-26 — additional asset uploads (8a19c50, fc095ae, 4ed7d4d, 9eae110)
+2026-04-27 — Remove LINKS section and footer URL from generated PDFs (06ca2d9)
+2026-04-27 — Fix email error showing on initial load in quick-start (4d943b6)
+2026-04-27 — Add variant dropdown to webhook payload examples (b3c4344)
+2026-04-27 — Remove sandbox references; hardcode production base URL (1129ea3)
+2026-04-27 — Add sidebar API key field that auto-fills code samples (c9ce282)
+2026-04-27 — Reorder sections: API Reference up, Core Concepts to bottom (ba5a7de)
+2026-04-27 — Rewrite recipes per Emma's feedback; rename + restructure sections (dc0741c)
+2026-04-27 — Move Quidget CTA to top of page; link Get API access to clinic settings (ff204ce)
+2026-04-27 — Add dark mode to quick-start; share localStorage key with main docs (4ea953d)
+2026-04-27 — Add sticky right-rail sample payload (3-column docs layout) (d95325f)
+2026-04-27 — Move API key field to top block; restyle Quidget CTA; rename header (e23a3d6)
+2026-04-27 — Convert right rail into a live API tester (aececac)
+2026-04-27 — Move API key field into the right rail (sticky with the tester) (9bd4c6c)
+2026-04-28 — Fix Send in right-rail tester for cURL-wrapped sample sources; sync theme across tabs
