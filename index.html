@@ -2183,10 +2183,47 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  });
  }
 
+ // Client-side abuse guards (defense in depth — server still rate-limits).
+ // - Throttle: stops button-mashing and trivial autoclick scripts.
+ // - Session cap: caps blast-radius of any one docs session.
+ // - Confirm: forces a click-through on real-money mutating endpoints.
+ const SEND_THROTTLE_MS = 2000;
+ const SEND_SESSION_CAP = 50;
+ const MUTATING_ENDPOINTS = {
+ '/api/exam_invite': 'send a real exam invite to a licensed provider — this triggers a billable consultation',
+ '/api/exam_invite_cancel': 'cancel a real exam invite'
+ };
+ let lastSendAt = 0;
+ let sendCount = 0;
+
  // Send the request
  if (sendBtn) {
  sendBtn.addEventListener('click', async () => {
  if (!getApiKey()) { setKeyWarning(); return; }
+
+ // Per-session cap
+ if (sendCount >= SEND_SESSION_CAP) {
+ showResponse({
+ status: 'Send limit reached',
+ statusClass: 'is-error',
+ bodyText: `You've sent ${SEND_SESSION_CAP} requests from this docs session. Refresh the page to send more, or run requests directly via cURL.`,
+ timeMs: 0
+ });
+ return;
+ }
+
+ // Throttle
+ const since = Date.now() - lastSendAt;
+ if (since < SEND_THROTTLE_MS) {
+ const wait = Math.max(1, Math.ceil((SEND_THROTTLE_MS - since) / 1000));
+ showResponse({
+ status: 'Slow down',
+ statusClass: 'is-error',
+ bodyText: `Please wait ${wait}s between requests.`,
+ timeMs: 0
+ });
+ return;
+ }
 
  // Validate JSON first
  let payload;
@@ -2196,6 +2233,15 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  showResponse({ status: 'Invalid JSON', statusClass: 'is-error', bodyText: e.message, timeMs: 0 });
  return;
  }
+
+ // Confirm on mutating endpoints (real-world side effects)
+ const mutatingMsg = MUTATING_ENDPOINTS[currentEndpoint];
+ if (mutatingMsg && !window.confirm(`This will ${mutatingMsg}.\n\nContinue?`)) {
+ return;
+ }
+
+ lastSendAt = Date.now();
+ sendCount++;
 
  const url = API_BASE + currentEndpoint;
  sendBtn.disabled = true;
