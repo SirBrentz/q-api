@@ -19,3 +19,4 @@ Qualiphy API Docs - change log
 2026-04-28 — Fix Send in right-rail tester for cURL-wrapped sample sources; sync theme across tabs
 2026-04-28 — Right-rail tester abuse guards: 2s throttle, 50/session cap, confirm() on mutating endpoints
 2026-04-28 — Make right-rail preview-only (no live send) — copy cURL + edit payload, no billable side effects
+2026-04-28 — Right-rail Test button: client-side mock responses per endpoint, echoes payload, no network call
