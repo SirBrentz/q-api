@@ -1703,8 +1703,8 @@ return {"ok": True}
 
 </main>
 
-<!-- ============ RIGHT RAIL: live API tester ============ -->
-<aside class="right-rail" id="right-rail" aria-label="API tester">
+<!-- ============ RIGHT RAIL: sample request preview ============ -->
+<aside class="right-rail" id="right-rail" aria-label="Sample request preview">
  <div class="right-rail-inner">
  <div class="rail-key">
  <label class="rail-key-label" for="docs-api-key">
@@ -1712,10 +1712,10 @@ return {"ok": True}
  <button type="button" class="rail-key-clear" id="docs-api-key-clear" aria-label="Clear API key">Clear</button>
  </label>
  <input class="rail-key-input" id="docs-api-key" type="text" placeholder="Paste API key" autocomplete="off" spellcheck="false" aria-describedby="docs-api-key-hint">
- <div class="rail-key-hint" id="docs-api-key-hint">Persists in this browser session. Required to send requests; auto-fills <code>YOUR_API_KEY</code> across the docs.</div>
+ <div class="rail-key-hint" id="docs-api-key-hint">Persists in this browser session and auto-fills <code>YOUR_API_KEY</code> across the docs.</div>
  </div>
 
- <div class="right-rail-h">Try it now</div>
+ <div class="right-rail-h">Sample request</div>
  <div class="right-rail-title" id="right-rail-title">Browse a recipe or endpoint</div>
  <div class="right-rail-sub" id="right-rail-sub"></div>
 
@@ -1726,24 +1726,13 @@ return {"ok": True}
  </div>
  <textarea class="rail-tester-input" id="rail-payload" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Request payload"></textarea>
  <div class="rail-tester-actions">
- <button class="btn btn-primary btn-sm" id="rail-send" type="button">
- <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
- Send
- </button>
- <button class="btn btn-outline btn-sm" id="rail-reset" type="button">Reset</button>
  <button class="btn btn-outline btn-sm" id="rail-copy-curl" type="button">Copy cURL</button>
+ <button class="btn btn-ghost btn-sm" id="rail-reset" type="button">Reset</button>
  </div>
- <div class="rail-prod-note">Production API — every successful request runs for real. Use carefully on mutating endpoints.</div>
- <div class="rail-response" id="rail-response" hidden>
- <div class="rail-response-meta">
- <span class="rail-response-status" id="rail-response-status">200 OK</span>
- <span class="rail-response-time" id="rail-response-time">0 ms</span>
- </div>
- <pre class="rail-response-body" id="rail-response-body"></pre>
- </div>
+ <div class="rail-prod-note">Preview only — edit the payload, copy the cURL, and run it from your terminal. Scroll to the endpoint's <strong>Response</strong> section to see what a successful reply looks like.</div>
  </div>
 
- <div class="right-rail-empty" id="right-rail-empty">Scroll into a recipe or API endpoint to load a sample request. You can edit the payload here and send it directly using your API key.</div>
+ <div class="right-rail-empty" id="right-rail-empty">Scroll into a recipe or API endpoint to load a sample request. Edit the payload here and copy it as cURL to run from your terminal.</div>
  </div>
 </aside>
 
@@ -2013,7 +2002,10 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  }
 })();
 
-// ============ Right-rail live API tester ============
+// ============ Right-rail sample-request preview (read-only / copy-only) ============
+// This rail is intentionally NOT a live tester. Copying a cURL and running it
+// from the user's terminal is the only way to send. That keeps the docs page
+// from being able to trigger billable side-effects on /api/exam_invite etc.
 (function(){
  const rail = document.getElementById('right-rail');
  if (!rail) return;
@@ -2025,13 +2017,8 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  const methodEl = document.getElementById('rail-method');
  const endpointEl = document.getElementById('rail-endpoint');
  const payloadEl = document.getElementById('rail-payload');
- const sendBtn = document.getElementById('rail-send');
  const resetBtn = document.getElementById('rail-reset');
  const copyCurlBtn = document.getElementById('rail-copy-curl');
- const responseEl = document.getElementById('rail-response');
- const responseStatus = document.getElementById('rail-response-status');
- const responseTime = document.getElementById('rail-response-time');
- const responseBody = document.getElementById('rail-response-body');
  const apiKeyInput = document.getElementById('docs-api-key');
 
  const API_BASE = 'https://api.qualiphy.me';
@@ -2099,10 +2086,6 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  return text.replaceAll('YOUR_API_KEY', key);
  }
 
- function setKeyWarning(){
- if (sendBtn) sendBtn.disabled = !getApiKey();
- }
-
  function clearActiveCard(){
  document.querySelectorAll('.docs-section[id^="recipe-"] .recipe.is-active-payload')
  .forEach(c => c.classList.remove('is-active-payload'));
@@ -2136,23 +2119,13 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  if (card) card.classList.add('is-active-payload');
  }
 
- function showResponse(opts){
- const { status, statusClass = 'is-2xx', bodyText = '', timeMs = 0 } = opts;
- responseStatus.textContent = status;
- responseStatus.className = 'rail-response-status ' + statusClass;
- responseTime.textContent = (timeMs >= 0 ? timeMs : 0) + ' ms';
- responseBody.textContent = bodyText;
- responseEl.hidden = false;
- }
-
- // Track user edits
+ // Track user edits so scroll/key changes don't clobber a manual edit
  if (payloadEl) payloadEl.addEventListener('input', () => { isDirty = true; });
 
  // Re-apply API key to the payload when the user types a key (only if the
  // user hasn't manually edited the textarea).
  if (apiKeyInput) {
  apiKeyInput.addEventListener('input', () => {
- setKeyWarning();
  if (isDirty || !currentSectionId) return;
  const cfg = PAYLOAD_MAP[currentSectionId];
  if (!cfg) return;
@@ -2165,7 +2138,6 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  resetBtn.addEventListener('click', () => {
  if (!currentSectionId) return;
  setRail(currentSectionId, { force: true });
- responseEl.hidden = true;
  });
  }
 
@@ -2180,116 +2152,6 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  copyCurlBtn.textContent = 'Copied!';
  setTimeout(() => { copyCurlBtn.textContent = orig; }, 1500);
  });
- });
- }
-
- // Client-side abuse guards (defense in depth — server still rate-limits).
- // - Throttle: stops button-mashing and trivial autoclick scripts.
- // - Session cap: caps blast-radius of any one docs session.
- // - Confirm: forces a click-through on real-money mutating endpoints.
- const SEND_THROTTLE_MS = 2000;
- const SEND_SESSION_CAP = 50;
- const MUTATING_ENDPOINTS = {
- '/api/exam_invite': 'send a real exam invite to a licensed provider — this triggers a billable consultation',
- '/api/exam_invite_cancel': 'cancel a real exam invite'
- };
- let lastSendAt = 0;
- let sendCount = 0;
-
- // Send the request
- if (sendBtn) {
- sendBtn.addEventListener('click', async () => {
- if (!getApiKey()) { setKeyWarning(); return; }
-
- // Per-session cap
- if (sendCount >= SEND_SESSION_CAP) {
- showResponse({
- status: 'Send limit reached',
- statusClass: 'is-error',
- bodyText: `You've sent ${SEND_SESSION_CAP} requests from this docs session. Refresh the page to send more, or run requests directly via cURL.`,
- timeMs: 0
- });
- return;
- }
-
- // Throttle
- const since = Date.now() - lastSendAt;
- if (since < SEND_THROTTLE_MS) {
- const wait = Math.max(1, Math.ceil((SEND_THROTTLE_MS - since) / 1000));
- showResponse({
- status: 'Slow down',
- statusClass: 'is-error',
- bodyText: `Please wait ${wait}s between requests.`,
- timeMs: 0
- });
- return;
- }
-
- // Validate JSON first
- let payload;
- try {
- payload = JSON.parse(payloadEl.value);
- } catch (e) {
- showResponse({ status: 'Invalid JSON', statusClass: 'is-error', bodyText: e.message, timeMs: 0 });
- return;
- }
-
- // Confirm on mutating endpoints (real-world side effects)
- const mutatingMsg = MUTATING_ENDPOINTS[currentEndpoint];
- if (mutatingMsg && !window.confirm(`This will ${mutatingMsg}.\n\nContinue?`)) {
- return;
- }
-
- lastSendAt = Date.now();
- sendCount++;
-
- const url = API_BASE + currentEndpoint;
- sendBtn.disabled = true;
- const origLabel = sendBtn.innerHTML;
- sendBtn.innerHTML = 'Sending&hellip;';
- const t0 = performance.now();
-
- try {
- const res = await fetch(url, {
- method: currentMethod,
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(payload)
- });
- const dt = Math.round(performance.now() - t0);
- let bodyText;
- const ct = res.headers.get('content-type') || '';
- try {
- if (ct.includes('application/json')) {
- bodyText = JSON.stringify(await res.json(), null, 2);
- } else {
- bodyText = await res.text();
- }
- } catch (_) {
- bodyText = '[Response body could not be read]';
- }
- const cls = res.status < 300 ? 'is-2xx' : res.status < 500 ? 'is-4xx' : 'is-5xx';
- showResponse({
- status: res.status + ' ' + (res.statusText || ''),
- statusClass: cls,
- bodyText,
- timeMs: dt
- });
- } catch (err) {
- const dt = Math.round(performance.now() - t0);
- // Most browser CORS / network failures surface as TypeError "Failed to fetch"
- const isCors = err && err.name === 'TypeError';
- showResponse({
- status: isCors ? 'Blocked (CORS / network)' : 'Error',
- statusClass: 'is-error',
- bodyText: isCors
- ? "The browser blocked this request before it reached the server. Most often this is because api.qualiphy.me hasn't added this docs origin to its CORS allowlist. Use 'Copy cURL' above and run the request from your terminal, or have engineering enable CORS for this origin."
- : (err && err.message) || String(err),
- timeMs: dt
- });
- } finally {
- sendBtn.disabled = !getApiKey();
- sendBtn.innerHTML = origLabel;
- }
  });
  }
 
@@ -2327,8 +2189,6 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  const el = document.getElementById(id);
  if (el) io.observe(el);
  });
-
- setKeyWarning();
 })();
 </script>
 

@@ -18,3 +18,4 @@ Qualiphy API Docs - change log
 2026-04-27 — Move API key field into the right rail (sticky with the tester) (9bd4c6c)
 2026-04-28 — Fix Send in right-rail tester for cURL-wrapped sample sources; sync theme across tabs
 2026-04-28 — Right-rail tester abuse guards: 2s throttle, 50/session cap, confirm() on mutating endpoints
+2026-04-28 — Make right-rail preview-only (no live send) — copy cURL + edit payload, no billable side effects
