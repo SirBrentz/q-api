@@ -166,8 +166,10 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .ci{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .12s;margin-bottom:6px}
 .ci:hover{background:var(--lavender-mist)}
 .ci.on{background:var(--lavender-mist)}
-.cbox{width:20px;height:20px;border-radius:6px;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;font-size:12px;font-weight:700;color:#fff;background:#fff}
+.cbox{width:20px;height:20px;border-radius:6px;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;background:#fff}
+.cbox::after{content:"";display:block;width:10px;height:6px;border:solid #fff;border-width:0 0 2.2px 2.2px;transform:rotate(-45deg) translateY(-1.2px);opacity:0;transition:opacity .12s}
 .ci.on .cbox{border-color:var(--indigo);background:var(--indigo)}
+.ci.on .cbox::after{opacity:1}
 .cl{font-family:var(--font-h);font-size:14.5px;font-weight:600;line-height:1.4;color:var(--ink)}
 .cs{font-size:12.5px;color:var(--text-lt);margin-top:2px;line-height:1.5}
 
@@ -239,6 +241,14 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .ep-chip:hover{background:#fff;border-color:var(--indigo);color:var(--indigo-hover)}
 .ep-chip.webhook{color:var(--emerald);background:var(--emerald-bg);border-color:rgba(4,120,87,.18)}
 .ep-chip.webhook:hover{background:#fff;color:var(--emerald)}
+.ep-chip{cursor:pointer;font:inherit;font-family:var(--font-m);font-size:11.5px;font-weight:500;line-height:inherit}
+.ep-chip.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.ep-chip.active:hover{background:var(--indigo-hover);color:#fff;border-color:var(--indigo-hover)}
+.ep-sample-panel{margin-top:12px;display:none}
+.ep-sample-panel.open{display:block}
+.ep-sample-panel-h{font-family:var(--font-m);font-size:11px;color:var(--text-lt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.ep-sample-panel-link{display:inline-block;margin-top:8px;font-size:12.5px;color:var(--indigo);text-decoration:none;border-bottom:1px dashed currentColor}
+.ep-sample-panel-link:hover{color:var(--indigo-hover)}
 
 /* CHECKLIST */
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-mid);padding:6px 0;line-height:1.55}
@@ -454,9 +464,21 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
  <div class="od">Send the treatment order to a specific retail or compounding pharmacy. Patient picks up or has it shipped. Best when patients have a preferred local pharmacy.</div>
  <div class="orad"></div>
  </div>
- <div class="oc" data-v="provider-choice" onclick="pickSingle('pharmacy',this)">
- <div class="ot">Let the provider decide</div>
- <div class="od">The licensed provider picks the best pharmacy and treatment plan during the consultation, based on the patient's needs. Most flexible.</div>
+ </div>
+
+ <div class="section-sep"></div>
+ <h2 style="font-size:1.18rem;margin-bottom:6px">Should the provider be able to override your pharmacy or dosage choices during the consultation?</h2>
+ <p class="sub">If yes, the licensed provider can pick a different pharmacy or treatment package on the fly &mdash; useful when patient needs vary. Otherwise the consultation follows the selections you ship in the payload.</p>
+
+ <div class="og" id="g-providerOverride">
+ <div class="oc" data-v="no" onclick="pickSingle('providerOverride',this)">
+ <div class="ot">No &mdash; follow my settings <span class="otag otag-rec">Default</span></div>
+ <div class="od">The provider works within the pharmacy and order set you preselect. No <code>provider_pos_selection</code> in the payload.</div>
+ <div class="orad"></div>
+ </div>
+ <div class="oc" data-v="yes" onclick="pickSingle('providerOverride',this)">
+ <div class="ot">Yes &mdash; let the provider decide</div>
+ <div class="od">The provider can swap pharmacy or dosage during the consultation. Sets <code>provider_pos_selection: 3</code>.</div>
  <div class="orad"></div>
  </div>
  </div>
@@ -489,16 +511,12 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
 
  <div class="fg">
  <label class="fl">Which states will your patients be in?</label>
- <div class="fh">Select all states your clinic will serve. Qualiphy supports 48 states + D.C. (Alabama and Mississippi excluded).</div>
+ <div class="fh">Select all states your clinic will serve. Qualiphy supports 48 states + D.C.</div>
  <div class="state-actions">
  <span class="state-toggle" id="state-all" onclick="toggleAllStates()">Select all</span>
  <span class="state-count" id="state-count">0 selected</span>
  </div>
  <div class="state-grid" id="state-grid"></div>
- <div class="cb cb-warn" style="margin-top:14px;margin-bottom:0">
- <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Pass the patient's state in <code>tele_state</code></strong>, not your clinic's state. This matches the right providers and pharmacies. <a href="../#states">More on this &rarr;</a></div>
- </div>
  </div>
 
  <div class="section-sep"></div>
@@ -537,7 +555,7 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
  <p class="sub">All optional. Most teams ship the basics first and add these later.</p>
 
  <div class="ci" id="ck-prefill" onclick="toggleCheck(this)">
- <div class="cbox">&check;</div>
+ <div class="cbox" aria-hidden="true"></div>
  <div>
  <div class="cl">Pre-fill patient screening answers from our intake form</div>
  <div class="cs">If you already collect health info on your site, pass it through so patients don't answer twice. Uses <code>/exam_questions</code> + <code>/exam_submit_answers</code>.</div>
@@ -545,7 +563,7 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
  </div>
 
  <div class="ci" id="ck-attach" onclick="toggleCheck(this)">
- <div class="cbox">&check;</div>
+ <div class="cbox" aria-hidden="true"></div>
  <div>
  <div class="cl">Upload patient documents to Qualiphy automatically</div>
  <div class="cs">Send lab results, ID photos, or prior records via the API so the provider has them during the screening. Uses <code>/exam_upload_attachment</code>.</div>
@@ -553,7 +571,7 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
  </div>
 
  <div class="ci" id="ck-redirect" onclick="toggleCheck(this)">
- <div class="cl-wrap"><div class="cbox">&check;</div></div>
+ <div class="cbox" aria-hidden="true"></div>
  <div>
  <div class="cl">Redirect patients back to our site after the screening</div>
  <div class="cs">Send patients to your own confirmation page (or a different one based on outcome). Uses the <code>redirect_*</code> fields on <code>/exam_invite</code>.</div>
@@ -577,13 +595,189 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
 
 <script>
 /* ===== STATE ===== */
-const US_STATES=['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
-const STATE_NAMES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'D.C.',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+const US_STATES=['AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+const STATE_NAMES={AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'D.C.',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
 const LABELS=['About you','Services','Details','Options','Plan'];
+
+/* ===== ENDPOINT SAMPLES (used by chips + PDF) ===== */
+const ENDPOINT_SAMPLES = {
+ exam_list: {
+ path: '/api/exam_list',
+ anchor: 'ep-exam-list',
+ request: `curl -X POST https://api.qualiphy.me/api/exam_list \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY"}'`,
+ response: `{
+ "exams": [
+ { "exam_id": 4226, "title": "GFE Aesthetic", "exam_type_id": 1 },
+ { "exam_id": 1292, "title": "GLP-1 Weight Loss", "exam_type_id": 2 }
+ ]
+}`
+ },
+ exam_invite: {
+ path: '/api/exam_invite',
+ anchor: 'ep-exam-invite',
+ request: `curl -X POST https://api.qualiphy.me/api/exam_invite \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY","exams":[4226],"first_name":"Test","last_name":"Approve","email":"test@yourclinic.com","dob":"1990-06-30","phone_number":"+15551234567","tele_state":"TE","webhook_url":"YOUR_WEBHOOK_URL"}'`,
+ response: `{
+ "http_code": 200,
+ "meeting_url": "https://app.qualiphy.me/meeting/...",
+ "meeting_uuid": "abc-123-def-456",
+ "patient_exams": [
+ { "patient_exam_id": 4844, "exam_title": "GFE Aesthetic", "exam_id": 4226 }
+ ]
+}`
+ },
+ exam_questions: {
+ path: '/api/exam_questions',
+ anchor: 'ep-exam-questions',
+ request: `curl -X POST https://api.qualiphy.me/api/exam_questions \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY","exam_id":4226}'`,
+ response: `{
+ "questions": [
+ { "no": 1, "question": "Are you currently pregnant?", "type": "yes_no" },
+ { "no": 2, "question": "List any current medications.", "type": "text" }
+ ]
+}`
+ },
+ exam_submit_answers: {
+ path: '/api/exam_submit_answers',
+ anchor: 'ep-exam-submit',
+ request: `curl -X POST https://api.qualiphy.me/api/exam_submit_answers \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY","patient_exam_id":4844,"answers":[{"no":1,"answer":"No"},{"no":2,"answer":"None"}]}'`,
+ response: `{ "http_code": 200, "patient_exam_id": 4844, "submitted": true }`
+ },
+ exam_upload_attachment: {
+ path: '/api/exam_upload_attachment',
+ anchor: 'ep-exam-upload',
+ request: `curl -X POST https://api.qualiphy.me/api/exam_upload_attachment \\
+ -H "Content-Type: multipart/form-data" \\
+ -F "api_key=YOUR_API_KEY" \\
+ -F "patient_exam_id=4844" \\
+ -F "file=@./labs.pdf"`,
+ response: `{ "http_code": 200, "attachment_id": 9182, "uploaded": true }`
+ },
+ exam_invite_resend: {
+ path: '/api/exam_invite_resend',
+ anchor: 'ep-exam-resend',
+ request: `curl -X POST https://api.qualiphy.me/api/exam_invite_resend \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY","patient_exam_id":4844}'`,
+ response: `{ "http_code": 200, "resent": true }`
+ },
+ partner_pharmacy_list: {
+ path: '/api/partner_pharmacy_list',
+ anchor: 'ep-pharmacy-list',
+ request: `curl -X POST https://api.qualiphy.me/api/partner_pharmacy_list \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY"}'`,
+ response: `{
+ "pharmacies": [
+ { "pharmacy_id": 17, "name": "Empower Pharmacy", "type": "compounding" },
+ { "pharmacy_id": 22, "name": "Strive Pharmacy", "type": "compounding" }
+ ]
+}`
+ },
+ partner_pharmacy_treatment_packages: {
+ path: '/api/partner_pharmacy_treatment_packages',
+ anchor: 'ep-pharmacy-packages',
+ request: `curl -X POST https://api.qualiphy.me/api/partner_pharmacy_treatment_packages \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY","pharmacy_id":17,"exam_id":1292}'`,
+ response: `{
+ "treatment_packages": [
+ {
+ "order_set_id": "OS-2104",
+ "exam_pos_id": 4861,
+ "drug_name": "Semaglutide",
+ "strength": "2mg",
+ "size": "2mL",
+ "duration_days": 30,
+ "price": 29900
+ }
+ ]
+}`
+ },
+ custom_pharmacy_search: {
+ path: '/api/custom_pharmacy_search',
+ anchor: 'ep-pharmacy-search',
+ request: `curl -X POST https://api.qualiphy.me/api/custom_pharmacy_search \\
+ -H "Content-Type: application/json" \\
+ -d '{"api_key":"YOUR_API_KEY","search":"CVS","zip_code":"10001"}'`,
+ response: `{
+ "pharmacies": [
+ {
+ "ncpdpid": "3318547",
+ "name": "CVS Pharmacy #4382",
+ "address_line_1": "342 W 23rd St",
+ "city": "New York",
+ "state": "NY",
+ "zip_code": "10011",
+ "phone": "2127757582"
+ }
+ ]
+}`
+ }
+};
+
+/* ===== WEBHOOK EVENT SAMPLES ===== */
+const WEBHOOK_SAMPLES = {
+ event1: `{
+ "event": 1,
+ "reason": "Initial consultation complete",
+ "exam_id": "exam-001",
+ "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+ "exam_name": "General Health Check",
+ "exam_status": "Approved",
+ "rx_status": "Pharmacy Confirmed",
+ "patient_email": "patient@example.com",
+ "patient_phone_number": "5551234567",
+ "patient_exam_id": "patient-exam-789",
+ "provider_name": "NP Liza",
+ "additional_data": "{\\"order_id\\":\\"WC-12847\\"}",
+ "questions_answers": [
+ { "no": 1, "question": "How are you feeling?", "answer": "Good." }
+ ]
+}`,
+ event2: `{
+ "event": 2,
+ "exam_id": 1292,
+ "exam_name": "GLP-1 Weight Loss",
+ "exam_status": "Approved",
+ "rx_status": "Pharmacy Confirmed",
+ "patient_exam_id": 149784,
+ "provider_name": "NP Liza",
+ "prescribed_os_id": 486,
+ "prescription": [
+ {
+ "prescription_id": 3320,
+ "drug_name": "Semaglutide",
+ "strength": "2mg",
+ "directions": "Inject 0.25mg subcutaneously weekly.",
+ "duration_days": 30,
+ "refill_amount": 2,
+ "pharmacy_name": "Choose Your Pharmacy"
+ }
+ ]
+}`,
+ event3: `{
+ "event": 3,
+ "patient_exam_id": "patient-exam-789",
+ "prescription_id": "12345",
+ "tracking_number": "123ABC456DEF",
+ "delivery_service": "Overnight",
+ "pharmacy_location": "Main Street Location",
+ "order_id": "1234567890"
+}`
+};
 
 let step=0;
 let useCases=new Set();
 let pharmacy='';
+let providerOverride='no';
 let invite='qualiphy';
 let states=new Set();
 let opts={prefill:false,attach:false,redirect:false};
@@ -717,13 +911,20 @@ function pickSingle(group,el){
  el.classList.add('sel');
  if(group==='pharmacy') pharmacy=v;
  if(group==='invite') invite=v;
+ if(group==='providerOverride') providerOverride=v;
  validate();
 }
 function updateRxSection(){
  const need=useCases.has('rx')||useCases.has('urgent');
  $('rx-section').classList.toggle('hidden',!need);
  $('req-uc').style.display=useCases.has('urgent')?'':'none';
- if(!need){pharmacy='';$('g-pharmacy').querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));}
+ if(!need){
+   pharmacy='';
+   providerOverride='no';
+   $('g-pharmacy').querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));
+   $('g-providerOverride').querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));
+   const def=$('g-providerOverride').querySelector('.oc[data-v="no"]'); if(def) def.classList.add('sel');
+ }
 }
 
 /* ===== STEP 2 ===== */
@@ -800,10 +1001,11 @@ function buildResult(){
  if(isRx)ucLabels.push('Rx');
  if(isUrg)ucLabels.push('Urgent Care');
 
- const phLabels={partner:'Partner pharmacy',custom:'Custom pharmacy','provider-choice':'Provider chooses'};
+ const phLabels={partner:'Partner pharmacy',custom:'Custom pharmacy'};
  const phLabel=needsRx?(phLabels[pharmacy]||'Not selected'):'N/A (no Rx)';
 
  const inviteLabel=invite==='qualiphy'?'Qualiphy default (email + SMS)':'Custom (we send our own)';
+ const overrideLabel=needsRx?(providerOverride==='yes'?'Provider can override':'Follow my settings'):'N/A';
 
  // Recipe match - which docs recipe is closest?
  let recipeAnchor='recipe-gfe';
@@ -812,9 +1014,8 @@ function buildResult(){
  else if(opts.prefill) recipeAnchor='recipe-prefill';
  else if(invite==='custom') recipeAnchor='recipe-custom-invite';
 
- // Sample payload
- const examFirst = examIds[0] || 'YOUR_EXAM_ID';
- const teleState = stateArr[0] || 'NY';
+ // Sample payload (lives in production; "test" routing comes from tele_state="TE" + Test Approve)
+ const teleState = stateArr[0] || 'TE';
  const payload = {
  api_key: 'YOUR_API_KEY',
  exams: examIds.length ? examIds.map(x=>parseInt(x,10)||x) : ['YOUR_EXAM_ID'],
@@ -823,36 +1024,34 @@ function buildResult(){
  email: 'test@yourclinic.com',
  dob: '1990-06-30',
  phone_number: '+15551234567',
- tele_state: teleState
+ tele_state: teleState,
+ webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if(wh) payload.webhook_url = wh;
- else payload.webhook_url = 'YOUR_WEBHOOK_URL';
- if(opts.redirect){payload.redirect_approve='https://yoursite.com/cleared';payload.redirect_reject='https://yoursite.com/needs-followup';}
- if(pharmacy==='partner'){payload.pharmacy_id='PHARMACY_ID';payload.exam_pos_id='PACKAGE_ID';}
+ if(pharmacy==='partner'){payload.pharmacy_id='PHARMACY_ID';payload.order_set_id='PACKAGE_ID';}
  if(pharmacy==='custom'){payload.custom_pharmacy=1;payload.ncpdpid='PHARMACY_NCPDPID';payload.pharmacy_name='Pharmacy Name';payload.pharmacy_state=teleState;}
- if(pharmacy==='provider-choice'){payload.provider_pos_selection=3;}
+ if(needsRx && providerOverride==='yes') payload.provider_pos_selection=3;
+ if(opts.redirect){
+ payload.redirect_approve='https://yoursite.com/cleared';
+ payload.redirect_reject='https://yoursite.com/rejected';
+ payload.redirect_na='https://yoursite.com/technical_problem';
+ payload.redirect_missed='https://yoursite.com/missed_exam';
+ }
 
  const payloadStr = JSON.stringify(payload, null, 2);
- const curlSample = `curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${payloadStr}'`;
+ const curlSample = `curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${payloadStr}'`;
 
- // Portal checklist (the {portal} token is replaced with a link to app.qualiphy.me when rendered)
- const portal=['Sign in to the {portal} at app.qualiphy.me','Retrieve your API key from Settings → API','Confirm your exams are configured under Exam List'];
- if(needsRx) portal.push('Sign Prescriptive Services agreement (one-time)');
- if(invite==='custom') portal.push('Email your Qualiphy rep to disable default invite emails');
- portal.push('Verify your provider network covers the selected states');
-
- // Endpoint chip mapping → docs anchor
- const docsAnchor = {
- exam_invite:'ep-exam-invite',
- exam_list:'ep-exam-list',
- exam_questions:'ep-exam-questions',
- exam_submit_answers:'ep-exam-submit',
- exam_upload_attachment:'ep-exam-upload',
- exam_invite_resend:'ep-exam-resend',
- partner_pharmacy_list:'ep-pharmacy-list',
- partner_pharmacy_treatment_packages:'ep-pharmacy-packages',
- custom_pharmacy_search:'ep-pharmacy-search'
- };
+ // Portal checklist
+ const portal=[
+ 'Sign in to the {portal} at app.qualiphy.me',
+ 'Retrieve your API key from <strong>Settings &rarr; API</strong>',
+ 'If Qualiphy created custom exams for you, make sure they appear within your portal',
+ 'Sign the general agreement'
+ ];
+ if(needsRx) portal.push('Have your MD sign the Rx Prescriptive Services agreement');
+ if(invite==='custom'){
+ portal.push("Email your Qualiphy rep to disable default invite emails. If you don't have one, contact <a href=\"mailto:Ellie@qualiphy.me\">Ellie@qualiphy.me</a> or <a href=\"mailto:Lala@qualiphy.me\">Lala@qualiphy.me</a>. This will <strong>only</strong> disable automated communications coming from Qualiphy to your patient.");
+ portal.push("Adjust providers' ability to directly reach out to patients by going to <strong>Settings &rarr; Notification Settings</strong> and choosing which communications to add or remove.");
+ }
 
  // States summary
  let stateSum;
@@ -862,7 +1061,23 @@ function buildResult(){
  else stateSum=`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3})`;
 
  // Email body
- const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payload, opts);
+ const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payload, opts, overrideLabel);
+
+ // Section numbering — pre-step-3 cards expand the count when partner pharmacy is selected
+ const showPharmacyDiscovery = pharmacy === 'partner';
+ let n = 0;
+ const num = () => ++n;
+ const portalN = num();         // 1
+ const endpointsN = num();      // 2
+ const examListN = num();       // 3
+ const pharmacyListN = showPharmacyDiscovery ? num() : null;
+ const packagesN = showPharmacyDiscovery ? num() : null;
+ const sampleCallN = num();
+ const testN = num();
+ const webhookN = num();
+
+ // Stash sample data for the chip click handler
+ window._eps = Array.from(eps);
 
  // Render
  const c = $('s4');
@@ -888,6 +1103,7 @@ function buildResult(){
  <div class="summary-i"><div class="summary-l">Company</div><div class="summary-v">${esc(co||' - ')}</div></div>
  <div class="summary-i"><div class="summary-l">Services</div><div class="summary-v">${esc(ucLabels.join(', '))}</div></div>
  <div class="summary-i"><div class="summary-l">Pharmacy</div><div class="summary-v">${esc(phLabel)}</div></div>
+ <div class="summary-i"><div class="summary-l">Provider override</div><div class="summary-v">${esc(overrideLabel)}</div></div>
  <div class="summary-i"><div class="summary-l">Invite delivery</div><div class="summary-v">${esc(inviteLabel)}</div></div>
  <div class="summary-i"><div class="summary-l">Exam IDs</div><div class="summary-v">${examIds.length?esc(examIds.join(', ')):'<span style="color:var(--text-lt);font-weight:500">Not yet configured</span>'}</div></div>
  <div class="summary-i"><div class="summary-l">States</div><div class="summary-v">${esc(stateSum)}</div></div>
@@ -895,28 +1111,48 @@ function buildResult(){
  </div>
 
  <div class="rs">
- <div class="rs-h"><div class="rs-num">1</div><h3 class="rs-t">Set up your Qualiphy account</h3></div>
+ <div class="rs-h"><div class="rs-num">${portalN}</div><h3 class="rs-t">Set up your Qualiphy account</h3></div>
  <p class="rs-d">Complete these in the <a href="https://app.qualiphy.me" target="_blank" rel="noopener">Qualiphy portal</a> before your dev team starts coding.</p>
  <div style="margin-top:10px">
- ${portal.map(t=>`<div class="chk"><div class="chk-box"></div><div>${esc(t).replace('{portal}','<a href="https://app.qualiphy.me/" target="_blank" rel="noopener">Qualiphy portal</a>')}</div></div>`).join('')}
+ ${portal.map(t=>`<div class="chk"><div class="chk-box"></div><div>${t.replace('{portal}','<a href="https://app.qualiphy.me/" target="_blank" rel="noopener">Qualiphy portal</a>')}</div></div>`).join('')}
  </div>
  </div>
 
  <div class="rs">
- <div class="rs-h"><div class="rs-num">2</div><h3 class="rs-t">Endpoints your integration will use</h3></div>
- <p class="rs-d">Click any endpoint to jump to its detailed reference in the docs.</p>
+ <div class="rs-h"><div class="rs-num">${endpointsN}</div><h3 class="rs-t">Endpoints your integration will use</h3></div>
+ <p class="rs-d">Click any endpoint to see a sample request and response inline. Each chip also links through to the full reference in the docs.</p>
  <div class="ep-chips">
- ${Array.from(eps).map(e=>`<a href="../#${docsAnchor[e]||''}" class="ep-chip">/${e}</a>`).join('')}
+ ${Array.from(eps).map(e=>`<button class="ep-chip" type="button" onclick="toggleEpSample(this,'${e}')">/${e}</button>`).join('')}
  ${epWebhook?`<a href="../#ep-exam-webhook" class="ep-chip webhook">webhook handler</a>`:''}
  </div>
+ <div class="ep-sample-panel" id="ep-sample-panel"></div>
  </div>
 
  <div class="rs">
- <div class="rs-h"><div class="rs-num">3</div><h3 class="rs-t">Sample API call</h3></div>
- <p class="rs-d">This is a sandbox-ready <code>/exam_invite</code> using the magic name <code>Test Approve</code> so a real provider auto-approves your test. Replace placeholder values with real data when you go to production.</p>
+ <div class="rs-h"><div class="rs-num">${examListN}</div><h3 class="rs-t">Find your exam IDs</h3></div>
+ <p class="rs-d">Call <code>/exam_list</code> to get every exam configured on your account. Store the IDs you'll send patients through &mdash; they're stable. <em>Skip this step if Qualiphy has already given you the exam IDs you need.</em></p>
+ ${renderSamplePair('exam_list')}
+ </div>
+
+ ${showPharmacyDiscovery?`
+ <div class="rs">
+ <div class="rs-h"><div class="rs-num">${pharmacyListN}</div><h3 class="rs-t">Find your pharmacy IDs</h3></div>
+ <p class="rs-d">Call <code>/partner_pharmacy_list</code> to discover the partner pharmacies your account can route to. Pick the <code>pharmacy_id</code> values you want to use. <em>Skip this step if Qualiphy has already given you the pharmacy ID you need.</em></p>
+ ${renderSamplePair('partner_pharmacy_list')}
+ </div>
+
+ <div class="rs">
+ <div class="rs-h"><div class="rs-num">${packagesN}</div><h3 class="rs-t">Find your <code>order_set_id</code> for treatment packages</h3></div>
+ <p class="rs-d">Call <code>/partner_pharmacy_treatment_packages</code> with the <code>pharmacy_id</code> from the previous step and the <code>exam_id</code> from <code>/exam_list</code>. The <code>order_set_id</code> values returned correspond to specific drug + dosage packages.</p>
+ ${renderSamplePair('partner_pharmacy_treatment_packages')}
+ </div>`:''}
+
+ <div class="rs">
+ <div class="rs-h"><div class="rs-num">${sampleCallN}</div><h3 class="rs-t">Send the patient invite</h3></div>
+ <p class="rs-d">Production-ready <code>/exam_invite</code>. The patient name <code>Test Approve</code> tells the provider to auto-approve your test &mdash; swap in real patient details when you go live.</p>
  <div class="codeblock">
  <div class="codeblock-head">
- <div class="codeblock-meta"><span class="method-pill">POST</span><span>sandbox-api.qualiphy.me/api/exam_invite</span></div>
+ <div class="codeblock-meta"><span class="method-pill">POST</span><span>api.qualiphy.me/api/exam_invite</span></div>
  <button class="copy-btn" onclick="copyCurl(this)">Copy</button>
  </div>
  <div class="codeblock-body" id="curl-body">${esc(curlSample)}</div>
@@ -928,20 +1164,22 @@ function buildResult(){
  </div>
 
  <div class="rs">
- <div class="rs-h"><div class="rs-num">4</div><h3 class="rs-t">Test before going live</h3></div>
- <p class="rs-d">Sandbox uses real providers reviewing test patients. The API path is identical to production - just a different base URL.</p>
+ <div class="rs-h"><div class="rs-num">${testN}</div><h3 class="rs-t">Test before going live</h3></div>
+ <p class="rs-d">Real providers review your test patients. The pipeline is identical to live traffic &mdash; the only difference is the values you send.</p>
  <ul style="margin:8px 0 0;padding-left:0;list-style:none">
- <li class="chk"><div class="chk-box"></div><div>Use <code>https://sandbox-api.qualiphy.me/</code> as the base URL</div></li>
- <li class="chk"><div class="chk-box"></div><div>Set <code>tele_state</code> to <code>"TE"</code> in test payloads</div></li>
- <li class="chk"><div class="chk-box"></div><div>Use magic names: <code>Test Approve</code> / <code>Test Reject</code>${needsRx?' / <code>Test Prescription Approve</code>':''}</div></li>
- <li class="chk"><div class="chk-box"></div><div>Approvals process in 2-24 hours on weekdays. <a href="../#sandbox">Sandbox details &rarr;</a></div></li>
+ <li class="chk"><div class="chk-box"></div><div>Set <code>tele_state</code> to <code>"TE"</code> in test payloads to route to the test provider pool</div></li>
+ <li class="chk"><div class="chk-box"></div><div>Use names that accurately describe the scenario you want the provider to follow: <code>Test Approve</code> / <code>Test Reject</code>${needsRx?' / <code>Test Prescription Approve</code> / <code>Test Prescription Reject</code>':''}</div></li>
+ <li class="chk"><div class="chk-box"></div><div>Approvals process in 2&ndash;24 hours on weekdays</div></li>
  </ul>
  </div>
 
  <div class="rs">
- <div class="rs-h"><div class="rs-num">5</div><h3 class="rs-t">Receiving results</h3></div>
- <p class="rs-d">When a provider completes the exam, Qualiphy POSTs the result to your <code>webhook_url</code>. Your handler should respond with <code>200</code> immediately and process the payload asynchronously to avoid retries.</p>
- <p class="rs-d" style="margin-top:8px">${needsRx?'For Rx exams, the payload includes treatment details and tracking info. ':''}Full payload schema and best practices: <a href="../#ep-exam-webhook">webhook reference &rarr;</a> &middot; <a href="../#webhooks-best">webhook best practices &rarr;</a></p>
+ <div class="rs-h"><div class="rs-num">${webhookN}</div><h3 class="rs-t">Receiving results</h3></div>
+ <p class="rs-d">When a provider completes the exam, Qualiphy POSTs to your <code>webhook_url</code>. Your handler should be built to ingest these three different payloads (one for every step of the patient's journey in Qualiphy):</p>
+ ${renderWebhookSample('event1','event: 1 · Consultation Complete')}
+ ${needsRx?renderWebhookSample('event2','event: 2 · Prescription Confirmed'):''}
+ ${needsRx?renderWebhookSample('event3','event: 3 · Prescription Tracking'):''}
+ <p class="rs-d" style="margin-top:8px">Full payload schema and best practices: <a href="../#ep-exam-webhook">webhook reference &rarr;</a> &middot; <a href="../#webhooks-best">webhook best practices &rarr;</a></p>
  </div>
 
  ${recipeAnchor?`<div class="cb cb-info" style="margin-top:14px">
@@ -955,6 +1193,59 @@ function buildResult(){
  window._curlText = curlSample;
 }
 
+function renderSamplePair(name){
+ const s = ENDPOINT_SAMPLES[name]; if(!s) return '';
+ return `<div class="codeblock" style="margin-top:10px">
+ <div class="codeblock-head">
+ <div class="codeblock-meta"><span class="method-pill">POST</span><span>api.qualiphy.me${esc(s.path)}</span></div>
+ </div>
+ <div class="codeblock-body">${esc(s.request)}</div>
+ </div>
+ <div class="codeblock" style="margin-top:8px">
+ <div class="codeblock-head">
+ <div class="codeblock-meta"><span style="color:rgba(255,255,255,.7);font-family:var(--font-m);font-size:11px">200 OK</span></div>
+ </div>
+ <div class="codeblock-body">${esc(s.response)}</div>
+ </div>
+ <p style="font-size:12.5px;margin-top:6px"><a href="../#${s.anchor}" target="_blank" rel="noopener">Full reference &rarr;</a></p>`;
+}
+
+function renderWebhookSample(key,label){
+ const body = WEBHOOK_SAMPLES[key]; if(!body) return '';
+ return `<div class="codeblock" style="margin-top:10px">
+ <div class="codeblock-head">
+ <div class="codeblock-meta"><span class="method-pill">POST</span><span>${esc(label)}</span></div>
+ </div>
+ <div class="codeblock-body">${esc(body)}</div>
+ </div>`;
+}
+
+function toggleEpSample(btn,name){
+ const panel = $('ep-sample-panel'); if(!panel) return;
+ const wasActive = btn.classList.contains('active');
+ document.querySelectorAll('.ep-chip.active').forEach(c=>c.classList.remove('active'));
+ if(wasActive){
+ panel.classList.remove('open');
+ panel.innerHTML='';
+ return;
+ }
+ btn.classList.add('active');
+ const s = ENDPOINT_SAMPLES[name];
+ if(!s){ panel.classList.remove('open'); panel.innerHTML=''; return; }
+ panel.classList.add('open');
+ panel.innerHTML = `<div class="ep-sample-panel-h">${esc(s.path)} &middot; sample request</div>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-meta"><span class="method-pill">POST</span><span>api.qualiphy.me${esc(s.path)}</span></div></div>
+ <div class="codeblock-body">${esc(s.request)}</div>
+ </div>
+ <div class="ep-sample-panel-h" style="margin-top:14px">${esc(s.path)} &middot; sample response</div>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-meta"><span style="color:rgba(255,255,255,.7);font-family:var(--font-m);font-size:11px">200 OK</span></div></div>
+ <div class="codeblock-body">${esc(s.response)}</div>
+ </div>
+ <a class="ep-sample-panel-link" href="../#${s.anchor}" target="_blank" rel="noopener">Full reference for ${esc(s.path)} &rarr;</a>`;
+}
+
 function recipeName(a){
  return ({
  'recipe-gfe':'GFE for an Aesthetic Treatment',
@@ -965,9 +1256,37 @@ function recipeName(a){
  })[a]||'Recipes';
 }
 
-function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payload,opts){
+function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payload,opts,overrideLabel){
  const stateSum=stateArr.length===0?'Not yet selected':(stateArr.length===US_STATES.length?'All 49 supported jurisdictions':(stateArr.length<=6?stateArr.join(', '):`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3} more)`));
+ const needsRx = useCases.has('rx')||useCases.has('urgent');
+ const showPharmacyDiscovery = pharmacy === 'partner';
+
  const epList=Array.from(eps).map(e=>` - /${e}`).join('\n');
+
+ // Section numbering
+ let n=0; const num=()=>++n;
+ const s1=num(); const s2=num(); const s3=num();
+ const s4=showPharmacyDiscovery?num():null;
+ const s5=showPharmacyDiscovery?num():null;
+ const s6=num(); const s7=num(); const s8=num();
+
+ const portalLines = [
+ ' - Retrieve API key from Settings -> API',
+ ' - If Qualiphy created custom exams for you, make sure they appear within your portal',
+ ' - Sign the general agreement'
+ ];
+ if(needsRx) portalLines.push(' - Have your MD sign the Rx Prescriptive Services agreement');
+ if(invite==='custom'){
+ portalLines.push(' - Email your Qualiphy rep to disable default invite emails. If you don\'t have one,');
+ portalLines.push('   contact Ellie@qualiphy.me or Lala@qualiphy.me. This ONLY disables automated');
+ portalLines.push('   communications from Qualiphy to your patient.');
+ portalLines.push(' - Adjust providers\' direct-message ability via Settings -> Notification Settings.');
+ }
+
+ const sampleSection = (n,title,key) => {
+ const s = ENDPOINT_SAMPLES[key]; if(!s) return '';
+ return `\n============================================================\n${n}. ${title.toUpperCase()}\n============================================================\nSample request:\n\n${s.request}\n\nSample response:\n\n${s.response}\n`;
+ };
 
  return `Hi,
 
@@ -976,40 +1295,38 @@ ${nm} just generated this Qualiphy API integration plan for ${co}. Sending it yo
 ============================================================
 SUMMARY
 ============================================================
-Company: ${co}
-Services: ${ucLabels.join(', ')}
-Pharmacy: ${phLabel}
-Invite delivery: ${inviteLabel}
-Exam IDs: ${examIds.length?examIds.join(', '):'Not yet configured'}
-States: ${stateSum}
-Webhook URL: ${wh||'Not yet set'}
+Company:           ${co}
+Services:          ${ucLabels.join(', ')}
+Pharmacy:          ${phLabel}
+Provider override: ${overrideLabel||'N/A'}
+Invite delivery:   ${inviteLabel}
+Exam IDs:          ${examIds.length?examIds.join(', '):'Not yet configured'}
+States:            ${stateSum}
+Webhook URL:       ${wh||'Not yet set'}
 
 ============================================================
-1. PORTAL SETUP
+${s1}. PORTAL SETUP
 ============================================================
 Complete in the Qualiphy portal at https://app.qualiphy.me
 
- - Retrieve API key from Settings → API
- - Confirm exams are configured under Exam List
- - Sign agreements (GFE, plus Prescriptive Services if Rx)
- - Verify provider network covers selected states
-${invite==='custom'?' - Email Qualiphy rep to disable default invite emails\n':''}
+ - Sign in to the Qualiphy portal at app.qualiphy.me
+${portalLines.join('\n')}
+
 ============================================================
-2. ENDPOINTS YOU WILL USE
+${s2}. ENDPOINTS YOU WILL USE
 ============================================================
 Full docs at https://docs.qualiphy.me/
 
 ${epList}
  - webhook handler (POST endpoint on YOUR side that Qualiphy will call)
-
+${sampleSection(s3,'Find your exam IDs','exam_list')}${showPharmacyDiscovery?sampleSection(s4,'Find your pharmacy IDs','partner_pharmacy_list')+sampleSection(s5,'Find your order_set_ids','partner_pharmacy_treatment_packages'):''}
 ============================================================
-3. SAMPLE /exam_invite CALL (SANDBOX)
+${s6}. SEND THE PATIENT INVITE
 ============================================================
-Uses magic name "Test Approve" so a real provider auto-approves
-your test. The pipeline is identical to production -- just swap
-sandbox-api.qualiphy.me for api.qualiphy.me.
+Patient name "Test Approve" tells the provider to auto-approve
+your test. Swap in real patient details when going live.
 
-curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \\
+curl -X POST https://api.qualiphy.me/api/exam_invite \\
  -H "Content-Type: application/json" \\
  -d '${JSON.stringify(payload,null,2)}'
 
@@ -1017,27 +1334,39 @@ IMPORTANT: tele_state must be the PATIENT's state, not the
 clinic's. This is the #1 most common integration bug.
 
 ============================================================
-4. TESTING
+${s7}. TEST BEFORE GOING LIVE
 ============================================================
-Base URL: https://sandbox-api.qualiphy.me/
-tele_state: "TE"
-Magic names: Test Approve / Test Reject${needsRxBool()?' / Test Prescription Approve':''}
-Turnaround: 2-24 hours on weekdays (real providers review)
+tele_state:   "TE" (routes to the test provider pool)
+Test names:   Test Approve / Test Reject${needsRx?' / Test Prescription Approve / Test Prescription Reject':''}
+Turnaround:   2-24 hours on weekdays (real providers review)
+
+Use names that accurately describe the scenario you want the
+provider to follow.
 
 ============================================================
-5. RECEIVING RESULTS
+${s8}. RECEIVING RESULTS
 ============================================================
-Qualiphy POSTs exam results to your webhook_url. Your handler
-should respond 200 immediately and process asynchronously.
-Schema: https://docs.qualiphy.me/#ep-exam-webhook
+Your handler should be built to ingest three different payloads
+(one for every step of the patient's journey in Qualiphy):
+
+--- Event 1: Consultation Complete ---
+${WEBHOOK_SAMPLES.event1}
+${needsRx?`
+--- Event 2: Prescription Confirmed ---
+${WEBHOOK_SAMPLES.event2}
+
+--- Event 3: Prescription Tracking ---
+${WEBHOOK_SAMPLES.event3}
+`:''}
+Schema:        https://docs.qualiphy.me/#ep-exam-webhook
 Best practices: https://docs.qualiphy.me/#webhooks-best
 
 ============================================================
 LINKS
 ============================================================
 API docs: https://docs.qualiphy.me/
-Portal: https://app.qualiphy.me/
-Postman: https://api-docs.qualiphy.me/postman/qualiphy-api-collection.json
+Portal:   https://app.qualiphy.me/
+Postman:  https://api-docs.qualiphy.me/postman/qualiphy-api-collection.json
 
 Questions? Reply to this email or contact ${nm}.
 
@@ -1251,9 +1580,10 @@ function downloadPdf(){
  const examIds = getExamIds();
  const stateArr = Array.from(states).sort();
  const ucLabels = []; if (isGfe) ucLabels.push('GFE'); if (isRx) ucLabels.push('Rx'); if (isUrg) ucLabels.push('Urgent Care');
- const phLabels = { partner: 'Partner pharmacy', custom: 'Custom pharmacy', 'provider-choice': 'Provider chooses' };
+ const phLabels = { partner: 'Partner pharmacy', custom: 'Custom pharmacy' };
  const phLabel = needsRx ? (phLabels[pharmacy] || 'Not selected') : 'N/A (no Rx)';
  const inviteLabel = invite === 'qualiphy' ? 'Qualiphy default (email + SMS)' : 'Custom (we send our own)';
+ const overrideLabel = needsRx ? (providerOverride === 'yes' ? 'Provider can override' : 'Follow my settings') : 'N/A';
  const stateSum = stateArr.length === 0 ? 'Not yet selected' : (stateArr.length === US_STATES.length ? 'All 49 supported jurisdictions' : (stateArr.length <= 6 ? stateArr.join(', ') : `${stateArr.length} states (${stateArr.slice(0, 3).join(', ')}, +${stateArr.length - 3} more)`));
 
  // Endpoints used
@@ -1263,6 +1593,19 @@ function downloadPdf(){
  if (opts.prefill) { eps.add('exam_questions'); eps.add('exam_submit_answers'); }
  if (opts.attach) eps.add('exam_upload_attachment');
  eps.add('exam_invite');
+
+ const showPharmacyDiscovery = pharmacy === 'partner';
+
+ // Section numbering
+ let n = 0; const num = () => ++n;
+ const portalN = num();
+ const endpointsN = num();
+ const examListN = num();
+ const pharmacyListN = showPharmacyDiscovery ? num() : null;
+ const packagesN = showPharmacyDiscovery ? num() : null;
+ const sampleCallN = num();
+ const testN = num();
+ const webhookN = num();
 
  // ===== HEADER =====
  doc.setFont('helvetica', 'bold');
@@ -1294,39 +1637,64 @@ function downloadPdf(){
  kvRow('Contact', `${nm}${em ? ' - ' + em : ''}`);
  kvRow('Services', ucLabels.join(', ') || '-');
  kvRow('Pharmacy routing', phLabel);
+ kvRow('Provider override', overrideLabel);
  kvRow('Invite delivery', inviteLabel);
  kvRow('Exam IDs', examIds.length ? examIds.join(', ') : 'Not yet configured');
  kvRow('States', stateSum);
  kvRow('Webhook URL', wh || 'Not yet set');
 
  // ===== SECTION 1: Portal setup =====
- sectionHeader('Set up your Qualiphy account', 1);
+ sectionHeader('Set up your Qualiphy account', portalN);
  text('Complete these in the Qualiphy portal at app.qualiphy.me before development begins.', { size: 10, color: C.mid });
  space(4);
 
  const portal = ['Sign in to the Qualiphy portal at app.qualiphy.me',
  'Retrieve your API key from Settings -> API',
- 'Confirm your exams are configured under Exam List'];
- if (needsRx) portal.push('Sign Prescriptive Services agreement (one-time)');
- if (invite === 'custom') portal.push('Email your Qualiphy rep to disable default invite emails');
- portal.push('Verify your provider network covers the selected states');
+ 'If Qualiphy created custom exams for you, make sure they appear within your portal',
+ 'Sign the general agreement'];
+ if (needsRx) portal.push('Have your MD sign the Rx Prescriptive Services agreement');
+ if (invite === 'custom') {
+ portal.push('Email your Qualiphy rep to disable default invite emails. If you do not have one, contact Ellie@qualiphy.me or Lala@qualiphy.me. This ONLY disables automated communications from Qualiphy to your patient.');
+ portal.push('Adjust providers\' direct-message ability via Settings -> Notification Settings.');
+ }
  portal.forEach(checkbox);
 
- // ===== SECTION 2: Endpoints =====
- sectionHeader('Endpoints your integration will use', 2);
- text('Reference these in the API docs at docs.qualiphy.me.', { size: 10, color: C.mid });
+ // ===== SECTION 2: Endpoints (with inlined samples per Emma's feedback) =====
+ sectionHeader('Endpoints your integration will use', endpointsN);
+ text('Reference these in the API docs at docs.qualiphy.me. Sample request and response for each endpoint follows.', { size: 10, color: C.mid });
  space(2);
  Array.from(eps).forEach(e => bullet(`/${e}`));
  bullet('webhook handler (POST endpoint on YOUR side that Qualiphy calls)');
 
- // ===== SECTION 3: Sample call =====
- sectionHeader('Sample API call', 3);
- text('Sandbox-ready /exam_invite using the magic name "Test Approve" so a real provider auto-approves your test. Switch sandbox-api.qualiphy.me to api.qualiphy.me when going to production.', { size: 10, color: C.mid });
+ // ===== SECTION 3: Find your exam IDs =====
+ sectionHeader('Find your exam IDs', examListN);
+ text('Call /exam_list to get every exam configured on your account. Skip if Qualiphy has already given you the exam IDs.', { size: 10, color: C.mid });
+ space(4);
+ codeBlock(ENDPOINT_SAMPLES.exam_list.request, 'POST /api/exam_list');
+ codeBlock(ENDPOINT_SAMPLES.exam_list.response, 'sample response');
+
+ // ===== Optional: pharmacy discovery sections =====
+ if (showPharmacyDiscovery) {
+ sectionHeader('Find your pharmacy IDs', pharmacyListN);
+ text('Call /partner_pharmacy_list to discover the partner pharmacies your account can route to. Skip if Qualiphy has already given you the pharmacy ID.', { size: 10, color: C.mid });
+ space(4);
+ codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_list.request, 'POST /api/partner_pharmacy_list');
+ codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_list.response, 'sample response');
+
+ sectionHeader('Find your order_set_ids for treatment packages', packagesN);
+ text('Call /partner_pharmacy_treatment_packages with the pharmacy_id and exam_id from the previous steps. order_set_id maps to a specific drug + dosage package.', { size: 10, color: C.mid });
+ space(4);
+ codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_treatment_packages.request, 'POST /api/partner_pharmacy_treatment_packages');
+ codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_treatment_packages.response, 'sample response');
+ }
+
+ // ===== Send the patient invite =====
+ sectionHeader('Send the patient invite', sampleCallN);
+ text('Production-ready /exam_invite. The patient name "Test Approve" tells the provider to auto-approve your test. Swap in real patient details when going live.', { size: 10, color: C.mid });
  space(4);
 
  // Build the same payload the on-screen sample shows
- const examFirst = examIds[0] || 'YOUR_EXAM_ID';
- const teleState = stateArr[0] || 'NY';
+ const teleState = stateArr[0] || 'TE';
  const payload = {
  api_key: 'YOUR_API_KEY',
  exams: examIds.length ? examIds.map(x => parseInt(x, 10) || x) : ['YOUR_EXAM_ID'],
@@ -1338,33 +1706,39 @@ function downloadPdf(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if (opts.redirect) { payload.redirect_approve = 'https://yoursite.com/cleared'; payload.redirect_reject = 'https://yoursite.com/needs-followup'; }
- if (pharmacy === 'partner') { payload.pharmacy_id = 'PHARMACY_ID'; payload.exam_pos_id = 'PACKAGE_ID'; }
+ if (pharmacy === 'partner') { payload.pharmacy_id = 'PHARMACY_ID'; payload.order_set_id = 'PACKAGE_ID'; }
  if (pharmacy === 'custom') { payload.custom_pharmacy = 1; payload.ncpdpid = 'PHARMACY_NCPDPID'; payload.pharmacy_name = 'Pharmacy Name'; payload.pharmacy_state = teleState; }
- if (pharmacy === 'provider-choice') payload.provider_pos_selection = 3;
- const curl = `curl -X POST https://sandbox-api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(payload, null, 2)}'`;
+ if (needsRx && providerOverride === 'yes') payload.provider_pos_selection = 3;
+ if (opts.redirect) {
+ payload.redirect_approve = 'https://yoursite.com/cleared';
+ payload.redirect_reject = 'https://yoursite.com/rejected';
+ payload.redirect_na = 'https://yoursite.com/technical_problem';
+ payload.redirect_missed = 'https://yoursite.com/missed_exam';
+ }
+ const curl = `curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(payload, null, 2)}'`;
 
- codeBlock(curl, 'POST sandbox-api.qualiphy.me/api/exam_invite');
+ codeBlock(curl, 'POST api.qualiphy.me/api/exam_invite');
  callout('Important: tele_state must be the PATIENT\'s state, not your clinic\'s. This is the most common integration bug.', 'warn');
 
- // ===== SECTION 4: Testing =====
- sectionHeader('Test before going live', 4);
- text('Sandbox uses real providers reviewing test patients. The pipeline is identical to production, just a different base URL.', { size: 10, color: C.mid });
+ // ===== Test before going live =====
+ sectionHeader('Test before going live', testN);
+ text('Real providers review your test patients. The pipeline is identical to live traffic; only the values you send differ.', { size: 10, color: C.mid });
  space(4);
- checkbox('Use https://sandbox-api.qualiphy.me/ as the base URL');
- checkbox('Set tele_state to "TE" in test payloads');
- checkbox(`Use magic names: Test Approve / Test Reject${needsRx ? ' / Test Prescription Approve' : ''}`);
- checkbox('Approvals process in 2-24 hours on weekdays (real providers review)');
+ checkbox('Set tele_state to "TE" to route to the test provider pool');
+ checkbox(`Use names that accurately describe the scenario: Test Approve / Test Reject${needsRx ? ' / Test Prescription Approve / Test Prescription Reject' : ''}`);
+ checkbox('Approvals process in 2-24 hours on weekdays');
 
- // ===== SECTION 5: Webhooks =====
- sectionHeader('Receiving results', 5);
- text('Qualiphy POSTs exam results to your webhook_url at three lifecycle moments. Your handler must dispatch on the "event" field.', { size: 10, color: C.mid });
+ // ===== Receiving results =====
+ sectionHeader('Receiving results', webhookN);
+ text('Your handler should be built to ingest these three different payloads (one for every step of the patient\'s journey in Qualiphy):', { size: 10, color: C.mid });
  space(4);
- bullet('Event 1: Consultation Complete (every exam)');
- bullet('Event 2: Prescription Confirmed (Rx exams only - full prescription schema)');
- bullet('Event 3: Prescription Tracking (carrier, tracking number)');
+ codeBlock(WEBHOOK_SAMPLES.event1, 'event: 1 - Consultation Complete');
+ if (needsRx) {
+ codeBlock(WEBHOOK_SAMPLES.event2, 'event: 2 - Prescription Confirmed');
+ codeBlock(WEBHOOK_SAMPLES.event3, 'event: 3 - Prescription Tracking');
+ }
  space(4);
- text('Your handler should respond 200 immediately and process the payload asynchronously to avoid retries.', { size: 10, color: C.mid });
+ text('Always switch on the event field. Full schema and best practices: docs.qualiphy.me/#ep-exam-webhook', { size: 10, color: C.mid });
 
  // Footer (every page)
  const pageCount = doc.internal.getNumberOfPages();
@@ -1392,7 +1766,7 @@ function downloadPdf(){
 }
 
 function restart(){
- step=0;useCases.clear();states.clear();pharmacy='';invite='qualiphy';
+ step=0;useCases.clear();states.clear();pharmacy='';providerOverride='no';invite='qualiphy';
  opts={prefill:false,attach:false,redirect:false};
  ['f-co','f-nm','f-em','f-wh'].forEach(id=>{const e=$(id);if(e)e.value='';});
  document.querySelectorAll('.oc.sel').forEach(c=>c.classList.remove('sel'));
@@ -1403,6 +1777,8 @@ function restart(){
  // Default invite preselect
  document.querySelectorAll('#g-invite .oc').forEach(c=>{if(c.dataset.v==='qualiphy')c.classList.add('sel');});
  invite='qualiphy';
+ // Default providerOverride preselect
+ document.querySelectorAll('#g-providerOverride .oc').forEach(c=>{if(c.dataset.v==='no')c.classList.add('sel');});
  showStep();
  validate();
 }
@@ -1412,6 +1788,8 @@ buildStateGrid();
 updateStateCount();
 // Default invite preselect (qualiphy)
 document.querySelectorAll('#g-invite .oc').forEach(c=>{if(c.dataset.v==='qualiphy')c.classList.add('sel');});
+// Default providerOverride preselect (no)
+document.querySelectorAll('#g-providerOverride .oc').forEach(c=>{if(c.dataset.v==='no')c.classList.add('sel');});
 showStep();
 
 // Hamburger

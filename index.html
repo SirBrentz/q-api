@@ -1259,6 +1259,30 @@ return {"ok": True}
  <span class="endpoint-path">/api/partner_pharmacy_list</span>
  </div>
  <p>Lists Qualiphy's partner compounding pharmacies available for your account. Returns each pharmacy's <code>pharmacy_id</code>, which you'll pass into <code>/exam_invite</code> for Rx programs.</p>
+
+ <h4>Parameters</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/partner_pharmacy_list</span></div><button class="copy-btn" onclick="copyCode(this,'pl-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="pl-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/partner_pharmacy_list \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_API_KEY"}'</div></div>
+ </div>
+
+ <h4>Sample response</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">200 OK</span></div><button class="copy-btn" onclick="copyCode(this,'pl-resp')">Copy</button></div>
+ <div class="codeblock-pane active" id="pl-resp"><div class="codeblock-body">{
+  "pharmacies": [
+    { "pharmacy_id": 17, "name": "Empower Pharmacy", "type": "compounding" },
+    { "pharmacy_id": 22, "name": "Strive Pharmacy", "type": "compounding" }
+  ]
+}</div></div>
+ </div>
 </section>
 
 <section class="endpoint" id="ep-pharmacy-packages">
@@ -1267,6 +1291,39 @@ return {"ok": True}
  <span class="endpoint-path">/api/partner_pharmacy_treatment_packages</span>
  </div>
  <p>Lists treatment packages (drug + dosage combinations + pricing) available at a specific partner pharmacy. Returns <code>order_set_id</code> values for use with <code>/exam_invite</code>. <span style="color:var(--text-lt)">Legacy <code>exam_pos_id</code> is still returned alongside for older integrations.</span></p>
+
+ <h4>Parameters</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>pharmacy_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">From <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a>.</div></div>
+ <div class="param-row"><div class="param-name"><code>exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">The Rx exam from <a href="#ep-exam-list"><code>/exam_list</code></a> you want packages for.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/partner_pharmacy_treatment_packages</span></div><button class="copy-btn" onclick="copyCode(this,'pp-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="pp-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/partner_pharmacy_treatment_packages \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_API_KEY","pharmacy_id":17,"exam_id":1292}'</div></div>
+ </div>
+
+ <h4>Sample response</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">200 OK</span></div><button class="copy-btn" onclick="copyCode(this,'pp-resp')">Copy</button></div>
+ <div class="codeblock-pane active" id="pp-resp"><div class="codeblock-body">{
+  "treatment_packages": [
+    {
+      "order_set_id": "OS-2104",
+      "exam_pos_id": 4861,
+      "drug_name": "Semaglutide",
+      "strength": "2mg",
+      "size": "2mL",
+      "duration_days": 30,
+      "price": 29900
+    }
+  ]
+}</div></div>
+ </div>
 </section>
 
 <section class="endpoint" id="ep-pharmacy-search">
@@ -1275,6 +1332,40 @@ return {"ok": True}
  <span class="endpoint-path">/api/custom_pharmacy_search</span>
  </div>
  <p>Look up any U.S. pharmacy by name, location, or NCPDPID. Returns full address and identifier fields you'll need for <code>/exam_invite</code> when using custom pharmacy routing.</p>
+
+ <h4>Parameters</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>search</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Pharmacy name fragment (e.g. <code>"CVS"</code>).</div></div>
+ <div class="param-row"><div class="param-name"><code>zip_code</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Five-digit ZIP for proximity filtering.</div></div>
+ <div class="param-row"><div class="param-name"><code>ncpdpid</code><div class="param-meta"><span class="param-type">string</span><span class="param-opt">Optional</span></div></div><div class="param-desc">Direct NCPDPID lookup. Pass alone to fetch a known pharmacy by ID.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/custom_pharmacy_search</span></div><button class="copy-btn" onclick="copyCode(this,'ps-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="ps-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/custom_pharmacy_search \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_API_KEY","search":"CVS","zip_code":"10001"}'</div></div>
+ </div>
+
+ <h4>Sample response</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">200 OK</span></div><button class="copy-btn" onclick="copyCode(this,'ps-resp')">Copy</button></div>
+ <div class="codeblock-pane active" id="ps-resp"><div class="codeblock-body">{
+  "pharmacies": [
+    {
+      "ncpdpid": "3318547",
+      "name": "CVS Pharmacy #4382",
+      "address_line_1": "342 W 23rd St",
+      "city": "New York",
+      "state": "NY",
+      "zip_code": "10011",
+      "phone": "2127757582"
+    }
+  ]
+}</div></div>
+ </div>
 </section>
 
 <!-- ============ RECIPES ============ -->

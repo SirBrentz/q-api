@@ -22,3 +22,27 @@ Qualiphy API Docs - change log
 2026-04-28 — Right-rail Test button: client-side mock responses per endpoint, echoes payload, no network call
 2026-04-28 — Restore live API tester (Try now) — fires real requests, drops alarming warnings/confirms
 2026-04-28 — Default all /exam_invite samples to Test state (TE/TE, "Test Approve" naming); add Testing section
+2026-04-30 — Quick Start round of feedback (Emma + Brent):
+              · delete the duplicate /integrations flow; quick-start is the canonical wizard
+              · pull "Let the provider decide" out of pharmacy radios into its own yes/no question
+                (sets provider_pos_selection: 3 when yes); update payload + summary card
+              · drop AL and MS from the state grid; remove tele_state cb-warn below the grid
+              · fix wonky third checkbox on "Any of these sound useful" (the orphan cl-wrap
+                wrapper); replace the white-on-white ✓ hack with a clean CSS-drawn checkmark
+              · Generated plan output: rebuild portal checklist (split agreement into general
+                + Rx Prescriptive Services line; reword exam-list step; expand the custom-invite
+                row into the Ellie/Lala contact block + Settings → Notification Settings line;
+                drop the "verify provider network" line)
+              · insert pre-step-3 sections in the plan when partner pharmacy is chosen:
+                Find your exam IDs / pharmacy IDs / order_set_ids — each with sample request +
+                sample response inline (also in PDF + Copy plan)
+              · /exam_invite curl: switch order_set_id (was legacy exam_pos_id), include all
+                four redirect_* URLs, target api.qualiphy.me (no sandbox URL anywhere)
+              · drop "magic names" wording in favor of "names that accurately describe the
+                scenario you want the provider to follow"; drop the Sandbox details link
+              · Receiving results section: replace the single 200-and-async sentence with the
+                three-event handler explanation; render event 1/2/3 sample payloads inline
+              · endpoint chips become click-to-show-sample (HTML); PDF + Copy plan inline the
+                samples in workflow order
+              · Main API docs: add sample request + response code blocks to /partner_pharmacy_list,
+                /partner_pharmacy_treatment_packages, and /custom_pharmacy_search (Emma's note)
