@@ -1015,7 +1015,7 @@ function buildResult(){
  else if(invite==='custom') recipeAnchor='recipe-custom-invite';
 
  // Sample payload (lives in production; "test" routing comes from tele_state="TE" + Test Approve)
- const teleState = stateArr[0] || 'TE';
+ const teleState = 'TE';
  const payload = {
  api_key: 'YOUR_API_KEY',
  exams: examIds.length ? examIds.map(x=>parseInt(x,10)||x) : ['YOUR_EXAM_ID'],
@@ -1694,7 +1694,7 @@ function downloadPdf(){
  space(4);
 
  // Build the same payload the on-screen sample shows
- const teleState = stateArr[0] || 'TE';
+ const teleState = 'TE';
  const payload = {
  api_key: 'YOUR_API_KEY',
  exams: examIds.length ? examIds.map(x => parseInt(x, 10) || x) : ['YOUR_EXAM_ID'],

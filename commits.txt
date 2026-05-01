@@ -46,3 +46,6 @@ Qualiphy API Docs - change log
                 samples in workflow order
               · Main API docs: add sample request + response code blocks to /partner_pharmacy_list,
                 /partner_pharmacy_treatment_packages, and /custom_pharmacy_search (Emma's note)
+2026-04-30 — Quick Start /exam_invite sample: hardcode tele_state to "TE" (was using stateArr[0],
+              which surfaced as "AK" once the user picked states); applies to both the on-screen
+              sample and the PDF plan
