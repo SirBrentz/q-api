@@ -18,6 +18,150 @@
 
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-WGKMC7NC');</script>
 
+<!-- ============ Q-API TRACKER · BEGIN ============ -->
+<script>
+window.QAPI_TRACK_CONFIG = {
+  WEBHOOK_URL: "REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL",
+  SHARED_SECRET: "qapi-9j2k-trk-bx88-2026"
+};
+(function(){
+  var cfg = window.QAPI_TRACK_CONFIG;
+  if (!cfg.WEBHOOK_URL || cfg.WEBHOOK_URL.indexOf('REPLACE') === 0) return;
+  var vid = localStorage.getItem('qapi_vid');
+  if (!vid) { vid = Date.now().toString(36) + Math.random().toString(36).slice(2,11); localStorage.setItem('qapi_vid', vid); }
+  var sessionStart = Date.now();
+  var p = new URLSearchParams(window.location.search);
+  var utms = { utm_source: p.get('utm_source')||'', utm_medium: p.get('utm_medium')||'', utm_campaign: p.get('utm_campaign')||'' };
+  var geo = { city:'', region:'', country:'' };
+  var viewedSections = {};
+  var scrollMaxFired = 0;
+
+  function send(event, data, useBeacon){
+    var payload = {
+      secret: cfg.SHARED_SECRET, session_id: vid, event: event,
+      timestamp: new Date().toISOString(),
+      elapsed_sec: Math.round((Date.now()-sessionStart)/1000),
+      referrer: document.referrer || 'direct',
+      user_agent: navigator.userAgent,
+      viewport: window.innerWidth + 'x' + window.innerHeight,
+      path: window.location.pathname,
+      utms: utms, geo: geo, data: data || {}
+    };
+    var body = JSON.stringify(payload);
+    if (useBeacon && navigator.sendBeacon) {
+      try { navigator.sendBeacon(cfg.WEBHOOK_URL, new Blob([body], { type: 'text/plain' })); return; } catch(e){}
+    }
+    try {
+      fetch(cfg.WEBHOOK_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body: body });
+    } catch(e){}
+  }
+  window.qtrack = send;
+
+  (function resolveGeo(){
+    var apis = [
+      { url:'https://get.geojs.io/v1/ip/geo.json', map:function(d){ return { city:d.city||'', region:d.region||'', country:d.country||'' }; }},
+      { url:'https://ipapi.co/json/',              map:function(d){ return { city:d.city||'', region:d.region||'', country:d.country_name||'' }; }},
+      { url:'https://freeipapi.com/api/json',      map:function(d){ return { city:d.cityName||'', region:d.regionName||'', country:d.countryName||'' }; }}
+    ];
+    function next(i){
+      if (i >= apis.length) return;
+      fetch(apis[i].url).then(function(r){ return r.json(); }).then(function(d){
+        var m = apis[i].map(d);
+        if (m.city || m.region) { geo = m; send('location_resolved', m); } else { next(i+1); }
+      }).catch(function(){ next(i+1); });
+    }
+    next(0);
+  })();
+
+  function fireLoad(){ send('page_loaded', { utms: utms }); }
+  if (document.readyState !== 'loading') fireLoad();
+  else document.addEventListener('DOMContentLoaded', fireLoad);
+
+  function startSectionObserver(){
+    var sections = document.querySelectorAll('section[id], .docs-section[id], .endpoint[id]');
+    if (!sections.length || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var id = e.target.id;
+        if (!id || viewedSections[id]) return;
+        viewedSections[id] = 1;
+        send('section_viewed', { section_id: id });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px', threshold: 0 });
+    sections.forEach(function(s){ io.observe(s); });
+  }
+  if (document.readyState !== 'loading') startSectionObserver();
+  else document.addEventListener('DOMContentLoaded', startSectionObserver);
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.copy-btn');
+    if (btn) {
+      var paneId = '';
+      var block = btn.closest('.codeblock');
+      if (block) {
+        var active = block.querySelector('.codeblock-pane.active') || block.querySelector('.codeblock-pane');
+        if (active && active.id) paneId = active.id;
+      }
+      if (!paneId) {
+        var sec = btn.closest('section[id]');
+        paneId = sec ? sec.id + '-copy' : 'qs-copy';
+      }
+      send('code_copied', { pane_id: paneId });
+      return;
+    }
+    var tab = e.target.closest && e.target.closest('.codeblock-tab');
+    if (tab) {
+      send('tab_switched', { tab_id: tab.dataset.tab || tab.textContent.trim() });
+      return;
+    }
+    var link = e.target.closest && e.target.closest('a[href]');
+    if (link) {
+      var href = link.getAttribute('href') || '';
+      if (/^https?:\/\//i.test(href) && href.indexOf(window.location.host) === -1) {
+        send('external_link_clicked', { url: href.slice(0, 200) });
+      }
+    }
+  }, true);
+
+  (function watchSearch(){
+    function attach(){
+      var input = document.getElementById('docsSearch');
+      if (!input) return;
+      var t = null;
+      input.addEventListener('input', function(){
+        clearTimeout(t);
+        t = setTimeout(function(){
+          var q = input.value.trim();
+          if (q.length >= 2) send('search_query', { query: q });
+        }, 600);
+      });
+    }
+    if (document.readyState !== 'loading') attach();
+    else document.addEventListener('DOMContentLoaded', attach);
+  })();
+
+  window.addEventListener('scroll', function(){
+    var doc = document.documentElement;
+    var scrolled = (window.scrollY + window.innerHeight) / doc.scrollHeight;
+    var pct = Math.round(scrolled * 100);
+    [25, 50, 75, 100].forEach(function(t){
+      if (pct >= t && scrollMaxFired < t) {
+        scrollMaxFired = t;
+        send('scroll_depth', { pct: t });
+      }
+    });
+  }, { passive: true });
+
+  function fireUnload(){
+    send('page_unloaded', { total_duration_sec: Math.round((Date.now()-sessionStart)/1000), scroll_max: scrollMaxFired }, true);
+  }
+  window.addEventListener('pagehide', fireUnload);
+  window.addEventListener('beforeunload', fireUnload);
+})();
+</script>
+<!-- ============ Q-API TRACKER · END   ============ -->
+
 <title>Integration Quick Start - Qualiphy API</title>
 <meta name="description" content="Answer a few questions about your clinic's needs and we'll generate a custom integration plan for the Qualiphy API. Email it to your dev team or share with your developer.">
 <meta name="robots" content="index, follow">

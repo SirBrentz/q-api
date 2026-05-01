@@ -1,0 +1,425 @@
+================================================================================
+QUALIPHY API DOCS · OBSERVABILITY DASHBOARD · SETUP
+================================================================================
+
+What this does
+--------------
+The pages at docs.qualiphy.me/ and docs.qualiphy.me/quick-start/ now ship a
+small tracker block. Each visitor gets a persistent visitor ID stored in
+localStorage; events the visitor generates (page load, section views, code
+copies, search queries, tab switches, scroll depth, page unload, etc.) are
+posted fire-and-forget to a Google Apps Script web app you control. The web
+app upserts a single row per visitor into a Google Sheet.
+
+The dashboard at docs.qualiphy.me/dashboard/ is password-gated. After login
+it pulls the same Google Sheet through the same Apps Script (GET request
+with a shared secret) and renders it Grafana-style.
+
+Three things to wire up:
+  (A) Create the Google Sheet
+  (B) Paste the Apps Script + deploy it as a web app
+  (C) Drop the deployed /exec URL into three places in the repo
+
+
+================================================================================
+A) CREATE THE GOOGLE SHEET
+================================================================================
+
+1. Go to sheets.new (signed in as the Google account that should own the data).
+2. Rename the file: "Qualiphy API Docs · Telemetry"
+3. Rename the first tab: "Sessions"
+4. Paste this row into A1 (it is the column header — the Apps Script writes
+   into these exact columns and the dashboard reads from them):
+
+Session ID	Started At	Last Activity	Path	Referrer	Device	Browser	UTM Source	UTM Medium	UTM Campaign	City	State	Country	Sections Viewed	Sections List	Last Section	Code Copies	Top Copies	Search Queries	Search Terms	Tab Switches	External Clicks	Scroll Max	Duration (sec)	Total Events	Variant
+
+   (Tabs separate the columns. Paste the whole line into A1 — Sheets will
+   spread it across A1:Z1 automatically.)
+
+5. Optional but recommended: freeze row 1 (View > Freeze > 1 row).
+6. Note the sheet's URL. You don't need to share it publicly — the Apps Script
+   runs as you, so it can read/write the sheet on your behalf.
+
+
+================================================================================
+B) PASTE THE APPS SCRIPT + DEPLOY
+================================================================================
+
+1. From the same Google Sheet, open Extensions > Apps Script. A new tab opens
+   with an empty Code.gs file.
+
+2. Delete whatever's in Code.gs and paste the entire block below (from
+   "===== BEGIN Code.gs =====" through "===== END Code.gs ====="):
+
+
+===== BEGIN Code.gs =====
+/**
+ * Qualiphy API Docs telemetry endpoint.
+ *
+ * doPost(e)  — receives events from the docs pages, upserts a row per visitor.
+ * doGet(e)   — returns all rows as JSON when ?action=data&secret=... matches.
+ *
+ * The shared secret here MUST match the secret used by:
+ *   - q-api/index.html and q-api/quick-start/index.html (in the tracker block)
+ *   - q-api/dashboard/index.html (in CONFIG.SHARED_SECRET)
+ */
+const SHARED_SECRET = 'qapi-9j2k-trk-bx88-2026';
+const SHEET_NAME    = 'Sessions';
+
+const COLS = [
+  'Session ID','Started At','Last Activity','Path','Referrer','Device','Browser',
+  'UTM Source','UTM Medium','UTM Campaign','City','State','Country',
+  'Sections Viewed','Sections List','Last Section',
+  'Code Copies','Top Copies','Search Queries','Search Terms',
+  'Tab Switches','External Clicks','Scroll Max','Duration (sec)','Total Events','Variant'
+];
+
+function getSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.getRange(1, 1, 1, COLS.length).setValues([COLS]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function getRowMap_(sh) {
+  const last = sh.getLastRow();
+  const map = {};
+  if (last < 2) return map;
+  const ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    const id = String(ids[i][0] || '').trim();
+    if (id) map[id] = i + 2; // 1-based row, header row is 1
+  }
+  return map;
+}
+
+function readRow_(sh, rowNum) {
+  const vals = sh.getRange(rowNum, 1, 1, COLS.length).getValues()[0];
+  const obj = {};
+  COLS.forEach((c, i) => { obj[c] = vals[i]; });
+  return obj;
+}
+
+function writeRow_(sh, rowNum, obj) {
+  const vals = COLS.map(c => (c in obj ? obj[c] : ''));
+  sh.getRange(rowNum, 1, 1, COLS.length).setValues([vals]);
+}
+
+function appendRow_(sh, obj) {
+  const vals = COLS.map(c => (c in obj ? obj[c] : ''));
+  sh.appendRow(vals);
+}
+
+/**
+ * Parse the User-Agent string into a coarse device + browser bucket.
+ * Good enough for "is this person on mobile" filtering — not a full UA library.
+ */
+function classifyUA_(ua) {
+  ua = String(ua || '');
+  let device = 'Desktop';
+  if (/iPad|Tablet/i.test(ua)) device = 'Tablet';
+  else if (/Mobile|iPhone|Android/i.test(ua)) device = 'Mobile';
+  let browser = 'Other';
+  if (/Edg\//i.test(ua)) browser = 'Edge';
+  else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = 'Chrome';
+  else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = 'Safari';
+  else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+  return { device, browser };
+}
+
+function safeJson_(s, fallback) {
+  if (!s) return fallback;
+  if (typeof s === 'object') return s;
+  try { return JSON.parse(s); } catch (e) { return fallback; }
+}
+
+function doPost(e) {
+  let body = {};
+  try {
+    body = JSON.parse(e.postData.contents || '{}');
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'bad json' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (body.secret !== SHARED_SECRET) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'unauthorized' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const sid = String(body.session_id || '').trim();
+  if (!sid) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'no session_id' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const sh = getSheet_();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const rowMap = getRowMap_(sh);
+    const isNew = !(sid in rowMap);
+    const rowNum = isNew ? sh.getLastRow() + 1 : rowMap[sid];
+    const cur = isNew ? {} : readRow_(sh, rowNum);
+
+    // Initialize on first event
+    if (isNew) {
+      cur['Session ID'] = sid;
+      cur['Started At'] = body.timestamp || new Date().toISOString();
+    }
+    cur['Last Activity'] = body.timestamp || new Date().toISOString();
+
+    // Seed identity from any event that carries them (page_loaded usually)
+    if (body.path && !cur['Path']) cur['Path'] = body.path;
+    if (body.referrer && !cur['Referrer']) cur['Referrer'] = body.referrer;
+    if (body.user_agent && (!cur['Device'] || !cur['Browser'])) {
+      const ua = classifyUA_(body.user_agent);
+      cur['Device'] = cur['Device'] || ua.device;
+      cur['Browser'] = cur['Browser'] || ua.browser;
+    }
+    if (body.utms) {
+      if (body.utms.utm_source && !cur['UTM Source'])     cur['UTM Source']   = body.utms.utm_source;
+      if (body.utms.utm_medium && !cur['UTM Medium'])     cur['UTM Medium']   = body.utms.utm_medium;
+      if (body.utms.utm_campaign && !cur['UTM Campaign']) cur['UTM Campaign'] = body.utms.utm_campaign;
+    }
+    if (body.geo) {
+      if (body.geo.city && !cur['City'])       cur['City']    = body.geo.city;
+      if (body.geo.region && !cur['State'])    cur['State']   = body.geo.region;
+      if (body.geo.country && !cur['Country']) cur['Country'] = body.geo.country;
+    }
+    if (body.variant && !cur['Variant']) cur['Variant'] = body.variant;
+
+    cur['Total Events'] = (Number(cur['Total Events']) || 0) + 1;
+
+    const ev = String(body.event || '');
+    const data = body.data || {};
+
+    if (ev === 'section_viewed' && data.section_id) {
+      const list = String(cur['Sections List'] || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (list.indexOf(String(data.section_id)) === -1) {
+        list.push(String(data.section_id));
+        cur['Sections List'] = list.join(',');
+        cur['Sections Viewed'] = list.length;
+      }
+      cur['Last Section'] = String(data.section_id);
+    }
+    else if (ev === 'code_copied' && data.pane_id) {
+      cur['Code Copies'] = (Number(cur['Code Copies']) || 0) + 1;
+      const copies = safeJson_(cur['Top Copies'], {});
+      copies[String(data.pane_id)] = (Number(copies[String(data.pane_id)]) || 0) + 1;
+      cur['Top Copies'] = JSON.stringify(copies);
+    }
+    else if (ev === 'search_query' && data.query) {
+      cur['Search Queries'] = (Number(cur['Search Queries']) || 0) + 1;
+      const terms = safeJson_(cur['Search Terms'], []);
+      const term = String(data.query).slice(0, 80);
+      // De-dupe consecutive identical terms (common as user types) + cap to 50
+      if (terms[terms.length - 1] !== term) terms.push(term);
+      while (terms.length > 50) terms.shift();
+      cur['Search Terms'] = JSON.stringify(terms);
+    }
+    else if (ev === 'tab_switched') {
+      cur['Tab Switches'] = (Number(cur['Tab Switches']) || 0) + 1;
+    }
+    else if (ev === 'external_link_clicked') {
+      cur['External Clicks'] = (Number(cur['External Clicks']) || 0) + 1;
+    }
+    else if (ev === 'scroll_depth' && typeof data.pct === 'number') {
+      cur['Scroll Max'] = Math.max(Number(cur['Scroll Max']) || 0, Math.round(data.pct));
+    }
+    else if (ev === 'page_unloaded') {
+      if (typeof data.total_duration_sec === 'number') {
+        cur['Duration (sec)'] = Math.max(Number(cur['Duration (sec)']) || 0, Math.round(data.total_duration_sec));
+      }
+    }
+    else if (ev === 'location_resolved') {
+      if (data.city && !cur['City'])       cur['City']    = data.city;
+      if (data.region && !cur['State'])    cur['State']   = data.region;
+      if (data.country && !cur['Country']) cur['Country'] = data.country;
+    }
+
+    // Always update Duration from elapsed_sec if it's larger than what's there
+    if (typeof body.elapsed_sec === 'number') {
+      cur['Duration (sec)'] = Math.max(Number(cur['Duration (sec)']) || 0, Math.round(body.elapsed_sec));
+    }
+
+    if (isNew) appendRow_(sh, cur);
+    else writeRow_(sh, rowNum, cur);
+
+    return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function doGet(e) {
+  const params = (e && e.parameter) || {};
+  if (params.secret !== SHARED_SECRET) {
+    return ContentService.createTextOutput(JSON.stringify({ error: 'unauthorized' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (params.action !== 'data') {
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, hint: 'use ?action=data&secret=...' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  const sh = getSheet_();
+  const last = sh.getLastRow();
+  const sessions = [];
+  if (last >= 2) {
+    const vals = sh.getRange(2, 1, last - 1, COLS.length).getValues();
+    vals.forEach(row => {
+      const obj = {};
+      COLS.forEach((c, i) => {
+        let v = row[i];
+        if (v instanceof Date) v = v.toISOString();
+        obj[c] = v;
+      });
+      sessions.push(obj);
+    });
+  }
+  return ContentService.createTextOutput(JSON.stringify({
+    ok: true,
+    updated: new Date().toISOString(),
+    sessions: sessions
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+===== END Code.gs =====
+
+
+3. Save the script (Ctrl+S or the floppy-disk icon). Name the project
+   "Qualiphy API Docs Telemetry" when prompted.
+
+4. Deploy:
+     a. Click Deploy > New deployment.
+     b. Click the gear icon > Web app.
+     c. Description: "v1"
+        Execute as: Me (your account)
+        Who has access: Anyone   <-- this is required for the docs pages
+                                     to POST anonymously. The shared secret
+                                     in the script body keeps the endpoint
+                                     practically locked to your code.
+     d. Click Deploy.
+     e. Google will ask you to authorize. Click "Authorize access", pick the
+        same Google account, and on the "Google hasn't verified this app"
+        screen click Advanced > Go to <project name> (unsafe) > Allow.
+     f. Copy the Web app URL it shows you. It looks like:
+        https://script.google.com/macros/s/AKfycb.................../exec
+        Save it somewhere — you need it for step C.
+
+
+================================================================================
+C) DROP THE WEB APP URL INTO THREE PLACES IN THE REPO
+================================================================================
+
+Three files reference a placeholder. Open each, search for the placeholder
+string, and replace it with your /exec URL from step B.4.f:
+
+  1. q-api/dashboard/index.html
+       Find:    REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL
+       Replace with your /exec URL.
+
+  2. q-api/index.html
+       Find:    REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL
+       Replace with your /exec URL.
+
+  3. q-api/quick-start/index.html
+       Find:    REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL
+       Replace with your /exec URL.
+
+That's the only edit. The shared secret is already wired up on both ends —
+both the tracker block and the dashboard already use 'qapi-9j2k-trk-bx88-2026'
+to match the value in Code.gs above.
+
+Then commit and push:
+
+  git add .
+  git commit -m "Wire up API docs telemetry endpoint"
+  git push
+
+
+================================================================================
+D) ACCESSING THE DASHBOARD
+================================================================================
+
+URL:        https://docs.qualiphy.me/dashboard/  (or wherever this repo deploys)
+Password:   qualiphyapi2026
+
+The password lives at the top of q-api/dashboard/index.html in the CONFIG
+block (DASHBOARD_PW). It's a soft gate — anyone determined who reads the
+HTML source can extract it. Don't put truly sensitive things in this dashboard.
+
+
+================================================================================
+E) SMOKE TESTING THAT EVERYTHING WORKS
+================================================================================
+
+1. After deploying the script and dropping the URL into the three files,
+   open the docs site (any page).
+
+2. Open your Google Sheet. You should see a new row appear within ~1–2
+   seconds. The "Started At", "Path", "Referrer", "Device", "Browser",
+   and "UTM Source" columns should populate immediately.
+
+3. In the docs page, click around — view a few endpoints, click Copy on
+   a code block, type something into the search box. Watch your row in
+   the sheet update:
+     - "Sections Viewed" / "Sections List" grows as you scroll past sections
+     - "Code Copies" / "Top Copies" increments on each Copy click
+     - "Search Queries" / "Search Terms" increments per debounced query
+
+4. Visit https://docs.qualiphy.me/dashboard/. Enter qualiphyapi2026.
+   You should see your test session in the Recent Sessions table at the
+   bottom of the page. The dashboard auto-refreshes every 30 seconds.
+
+5. If the dashboard shows "no webhook" or "err" next to the live indicator
+   in the top-right, you forgot step C.1 (the dashboard's CONFIG.WEBHOOK_URL
+   still has the placeholder).
+
+
+================================================================================
+F) TROUBLESHOOTING
+================================================================================
+
+"unauthorized" in the doGet response
+  The dashboard's CONFIG.SHARED_SECRET doesn't match SHARED_SECRET in the
+  Apps Script. Both should be 'qapi-9j2k-trk-bx88-2026'. Check both ends.
+
+Tracker doesn't write rows when I visit the page
+  Open browser DevTools > Network, reload the page, look for a request to
+  script.google.com/macros/.../exec. If it 404s, your /exec URL is wrong.
+  If it 200s but no row appears, double-check that the SHARED_SECRET in
+  the tracker block matches the script.
+
+Geo columns stay blank
+  The tracker tries three free IP-geolocation services (geojs, ipapi,
+  freeipapi). If none responds in time, geo stays blank. This is normal
+  and shouldn't block any other tracking.
+
+I want to start fresh / clear the data
+  Open the Sheet, select all rows below row 1, right-click > Delete rows.
+  Or rename the "Sessions" tab — the script will create a new empty tab
+  on the next event.
+
+I want to rotate the secret
+  1. Edit SHARED_SECRET in Code.gs and redeploy (Deploy > Manage deployments
+     > pencil icon > new version).
+  2. Edit CONFIG.SHARED_SECRET in q-api/dashboard/index.html.
+  3. Edit QAPI_TRACK_CONFIG.SHARED_SECRET in q-api/index.html and
+     q-api/quick-start/index.html.
+
+I want to remove the tracker entirely
+  In each of the three files, delete the script block bounded by the
+  comments:
+    /* ============ Q-API TRACKER · BEGIN ============ */
+    ...
+    /* ============ Q-API TRACKER · END   ============ */
+  And delete q-api/dashboard/ entirely.
+
+
+================================================================================
+THAT'S IT.
+================================================================================
