@@ -7,9 +7,10 @@ What this does
 The pages at docs.qualiphy.me/ and docs.qualiphy.me/quick-start/ now ship a
 small tracker block. Each visitor gets a persistent visitor ID stored in
 localStorage; events the visitor generates (page load, section views, code
-copies, search queries, tab switches, scroll depth, page unload, etc.) are
-posted fire-and-forget to a Google Apps Script web app you control. The web
-app upserts a single row per visitor into a Google Sheet.
+copies, search queries, tab switches, scroll depth, page unload, plus every
+option they pick in the Quick Start plan builder) are posted fire-and-forget
+to a Google Apps Script web app you control. The web app upserts a single
+row per visitor into a Google Sheet.
 
 The dashboard at docs.qualiphy.me/dashboard/ is password-gated. After login
 it pulls the same Google Sheet through the same Apps Script (GET request
@@ -25,16 +26,20 @@ Three things to wire up:
 A) CREATE THE GOOGLE SHEET
 ================================================================================
 
+If you already have a v1 sheet from the earlier deploy, you can reuse it
+exactly as-is — the v2 script self-extends the header row, so missing
+columns will be appended automatically the first time it runs. Skip to (B).
+
+If you're setting up fresh:
+
 1. Go to sheets.new (signed in as the Google account that should own the data).
 2. Rename the file: "Qualiphy API Docs · Telemetry"
 3. Rename the first tab: "Sessions"
-4. Paste this row into A1 (it is the column header — the Apps Script writes
-   into these exact columns and the dashboard reads from them):
+4. Leave the sheet empty — the v2 script will write the full header row
+   the first time it runs. You can also paste the headers yourself if you
+   prefer; here they are for reference (tab-separated):
 
-Session ID	Started At	Last Activity	Path	Referrer	Device	Browser	UTM Source	UTM Medium	UTM Campaign	City	State	Country	Sections Viewed	Sections List	Last Section	Code Copies	Top Copies	Search Queries	Search Terms	Tab Switches	External Clicks	Scroll Max	Duration (sec)	Total Events	Variant
-
-   (Tabs separate the columns. Paste the whole line into A1 — Sheets will
-   spread it across A1:Z1 automatically.)
+Session ID	Started At	Last Activity	Path	Referrer	Device	Browser	UTM Source	UTM Medium	UTM Campaign	City	State	Country	Sections Viewed	Sections List	Last Section	Code Copies	Top Copies	Search Queries	Search Terms	Tab Switches	Tab Languages	External Clicks	Scroll Max	Duration (sec)	Total Events	Variant	Use Cases	Pharmacy Choice	Provider Override	Invite Method	Optional Features	States Selected	States List	Has Webhook URL	Has Exam IDs	Quick Start Step	Quick Start Completed
 
 5. Optional but recommended: freeze row 1 (View > Freeze > 1 row).
 6. Note the sheet's URL. You don't need to share it publicly — the Apps Script
@@ -46,18 +51,25 @@ B) PASTE THE APPS SCRIPT + DEPLOY
 ================================================================================
 
 1. From the same Google Sheet, open Extensions > Apps Script. A new tab opens
-   with an empty Code.gs file.
+   with an empty Code.gs file. (Or if you already have v1, open the existing
+   project the same way.)
 
-2. Delete whatever's in Code.gs and paste the entire block below (from
-   "===== BEGIN Code.gs =====" through "===== END Code.gs ====="):
+2. Replace whatever's in Code.gs with the entire block below (from
+   "===== BEGIN Code.gs (v2) =====" through "===== END Code.gs (v2) =====")
+   and save. The script auto-extends the sheet's column list, so old data
+   from a v1 sheet stays put — new columns just append to the right.
 
 
-===== BEGIN Code.gs =====
+===== BEGIN Code.gs (v2) =====
 /**
- * Qualiphy API Docs telemetry endpoint.
+ * Qualiphy API Docs telemetry endpoint (v2).
  *
  * doPost(e)  — receives events from the docs pages, upserts a row per visitor.
  * doGet(e)   — returns all rows as JSON when ?action=data&secret=... matches.
+ *
+ * v2 schema additions vs v1: Use Cases, Pharmacy Choice, Provider Override,
+ * Invite Method, Optional Features, States Selected, States List, Has Webhook
+ * URL, Has Exam IDs, Quick Start Step, Quick Start Completed, Tab Languages.
  *
  * The shared secret here MUST match the secret used by:
  *   - q-api/index.html and q-api/quick-start/index.html (in the tracker block)
@@ -66,12 +78,18 @@ B) PASTE THE APPS SCRIPT + DEPLOY
 const SHARED_SECRET = 'qapi-9j2k-trk-bx88-2026';
 const SHEET_NAME    = 'Sessions';
 
+// Full v2 schema. The script auto-appends any of these that are missing
+// from the existing sheet header row (preserves v1 data).
 const COLS = [
   'Session ID','Started At','Last Activity','Path','Referrer','Device','Browser',
   'UTM Source','UTM Medium','UTM Campaign','City','State','Country',
   'Sections Viewed','Sections List','Last Section',
   'Code Copies','Top Copies','Search Queries','Search Terms',
-  'Tab Switches','External Clicks','Scroll Max','Duration (sec)','Total Events','Variant'
+  'Tab Switches','Tab Languages','External Clicks','Scroll Max',
+  'Duration (sec)','Total Events','Variant',
+  'Use Cases','Pharmacy Choice','Provider Override','Invite Method',
+  'Optional Features','States Selected','States List',
+  'Has Webhook URL','Has Exam IDs','Quick Start Step','Quick Start Completed'
 ];
 
 function getSheet_() {
@@ -82,42 +100,73 @@ function getSheet_() {
     sh.getRange(1, 1, 1, COLS.length).setValues([COLS]);
     sh.setFrozenRows(1);
   }
+  ensureColumns_(sh);
   return sh;
 }
 
-function getRowMap_(sh) {
+/**
+ * Extends the header row with any columns from COLS that aren't there yet.
+ * Existing data and column positions are preserved; new columns append to
+ * the right. This is what makes a v1→v2 redeploy non-destructive.
+ */
+function ensureColumns_(sh) {
+  const lastCol = sh.getLastColumn();
+  let header = lastCol > 0 ? sh.getRange(1, 1, 1, lastCol).getValues()[0].map(String) : [];
+  const missing = COLS.filter(c => header.indexOf(c) === -1);
+  if (!missing.length) return;
+  if (lastCol === 0) {
+    // Empty sheet - write the whole COLS row
+    sh.getRange(1, 1, 1, COLS.length).setValues([COLS]);
+    sh.setFrozenRows(1);
+  } else {
+    sh.getRange(1, lastCol + 1, 1, missing.length).setValues([missing]);
+  }
+}
+
+function headerMap_(sh) {
+  const lastCol = sh.getLastColumn();
+  const header = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  const map = {};
+  header.forEach((name, i) => { if (name) map[name] = i + 1; });
+  return { map: map, width: header.length };
+}
+
+function getRowMap_(sh, hMap) {
   const last = sh.getLastRow();
   const map = {};
   if (last < 2) return map;
-  const ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  const sidCol = hMap.map['Session ID'] || 1;
+  const ids = sh.getRange(2, sidCol, last - 1, 1).getValues();
   for (let i = 0; i < ids.length; i++) {
     const id = String(ids[i][0] || '').trim();
-    if (id) map[id] = i + 2; // 1-based row, header row is 1
+    if (id) map[id] = i + 2;
   }
   return map;
 }
 
-function readRow_(sh, rowNum) {
-  const vals = sh.getRange(rowNum, 1, 1, COLS.length).getValues()[0];
+function readRow_(sh, rowNum, hMap) {
+  const vals = sh.getRange(rowNum, 1, 1, hMap.width).getValues()[0];
   const obj = {};
-  COLS.forEach((c, i) => { obj[c] = vals[i]; });
+  Object.keys(hMap.map).forEach(name => { obj[name] = vals[hMap.map[name] - 1]; });
   return obj;
 }
 
-function writeRow_(sh, rowNum, obj) {
-  const vals = COLS.map(c => (c in obj ? obj[c] : ''));
-  sh.getRange(rowNum, 1, 1, COLS.length).setValues([vals]);
+function writeRow_(sh, rowNum, obj, hMap) {
+  const row = new Array(hMap.width).fill('');
+  Object.keys(obj).forEach(name => {
+    if (hMap.map[name]) row[hMap.map[name] - 1] = obj[name];
+  });
+  sh.getRange(rowNum, 1, 1, hMap.width).setValues([row]);
 }
 
-function appendRow_(sh, obj) {
-  const vals = COLS.map(c => (c in obj ? obj[c] : ''));
-  sh.appendRow(vals);
+function appendRow_(sh, obj, hMap) {
+  const row = new Array(hMap.width).fill('');
+  Object.keys(obj).forEach(name => {
+    if (hMap.map[name]) row[hMap.map[name] - 1] = obj[name];
+  });
+  sh.appendRow(row);
 }
 
-/**
- * Parse the User-Agent string into a coarse device + browser bucket.
- * Good enough for "is this person on mobile" filtering — not a full UA library.
- */
 function classifyUA_(ua) {
   ua = String(ua || '');
   let device = 'Desktop';
@@ -137,6 +186,15 @@ function safeJson_(s, fallback) {
   try { return JSON.parse(s); } catch (e) { return fallback; }
 }
 
+function csvAdd_(curStr, value) {
+  const list = String(curStr || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (list.indexOf(value) === -1) list.push(value);
+  return list.join(',');
+}
+function csvRemove_(curStr, value) {
+  return String(curStr || '').split(',').map(s => s.trim()).filter(Boolean).filter(v => v !== value).join(',');
+}
+
 function doPost(e) {
   let body = {};
   try {
@@ -149,7 +207,6 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'unauthorized' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
-
   const sid = String(body.session_id || '').trim();
   if (!sid) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'no session_id' }))
@@ -160,19 +217,18 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    const rowMap = getRowMap_(sh);
+    const hMap = headerMap_(sh);
+    const rowMap = getRowMap_(sh, hMap);
     const isNew = !(sid in rowMap);
     const rowNum = isNew ? sh.getLastRow() + 1 : rowMap[sid];
-    const cur = isNew ? {} : readRow_(sh, rowNum);
+    const cur = isNew ? {} : readRow_(sh, rowNum, hMap);
 
-    // Initialize on first event
     if (isNew) {
       cur['Session ID'] = sid;
       cur['Started At'] = body.timestamp || new Date().toISOString();
     }
     cur['Last Activity'] = body.timestamp || new Date().toISOString();
 
-    // Seed identity from any event that carries them (page_loaded usually)
     if (body.path && !cur['Path']) cur['Path'] = body.path;
     if (body.referrer && !cur['Referrer']) cur['Referrer'] = body.referrer;
     if (body.user_agent && (!cur['Device'] || !cur['Browser'])) {
@@ -216,13 +272,17 @@ function doPost(e) {
       cur['Search Queries'] = (Number(cur['Search Queries']) || 0) + 1;
       const terms = safeJson_(cur['Search Terms'], []);
       const term = String(data.query).slice(0, 80);
-      // De-dupe consecutive identical terms (common as user types) + cap to 50
       if (terms[terms.length - 1] !== term) terms.push(term);
       while (terms.length > 50) terms.shift();
       cur['Search Terms'] = JSON.stringify(terms);
     }
     else if (ev === 'tab_switched') {
       cur['Tab Switches'] = (Number(cur['Tab Switches']) || 0) + 1;
+      if (data.language) {
+        const langs = safeJson_(cur['Tab Languages'], {});
+        langs[String(data.language)] = (Number(langs[String(data.language)]) || 0) + 1;
+        cur['Tab Languages'] = JSON.stringify(langs);
+      }
     }
     else if (ev === 'external_link_clicked') {
       cur['External Clicks'] = (Number(cur['External Clicks']) || 0) + 1;
@@ -240,14 +300,61 @@ function doPost(e) {
       if (data.region && !cur['State'])    cur['State']   = data.region;
       if (data.country && !cur['Country']) cur['Country'] = data.country;
     }
+    /* ----- Quick Start plan-builder events ----- */
+    else if (ev === 'option_selected') {
+      const g = String(data.group || ''), v = String(data.value || '');
+      if (g === 'useCase')               cur['Use Cases']         = csvAdd_(cur['Use Cases'], v);
+      else if (g === 'pharmacy')         cur['Pharmacy Choice']   = v;
+      else if (g === 'providerOverride') cur['Provider Override'] = v;
+      else if (g === 'invite')           cur['Invite Method']     = v;
+      else if (g === 'optionalFeature')  cur['Optional Features'] = csvAdd_(cur['Optional Features'], v);
+    }
+    else if (ev === 'option_deselected') {
+      const g = String(data.group || ''), v = String(data.value || '');
+      if (g === 'useCase')               cur['Use Cases']         = csvRemove_(cur['Use Cases'], v);
+      else if (g === 'optionalFeature')  cur['Optional Features'] = csvRemove_(cur['Optional Features'], v);
+      // pharmacy / providerOverride / invite are single-choice, not deselected
+    }
+    else if (ev === 'qs_states_changed') {
+      cur['States Selected'] = Number(data.count) || 0;
+      if (data.list !== undefined) cur['States List'] = String(data.list).slice(0, 500);
+    }
+    else if (ev === 'qs_step_advanced') {
+      cur['Quick Start Step'] = Math.max(Number(cur['Quick Start Step']) || 0, Number(data.to) || 0);
+      if (Number(data.to) >= 4) cur['Quick Start Completed'] = 'Yes';
+    }
+    else if (ev === 'qs_step_back') {
+      // Don't lower the high-water mark, but record we went back if useful.
+    }
+    else if (ev === 'qs_completed') {
+      cur['Quick Start Step'] = 4;
+      cur['Quick Start Completed'] = 'Yes';
+    }
+    else if (ev === 'qs_field_filled') {
+      if (data.field === 'webhook') cur['Has Webhook URL'] = 'Yes';
+      if (data.field === 'examIds') cur['Has Exam IDs']    = 'Yes';
+    }
+    else if (ev === 'qs_restart') {
+      // Wipe plan-builder fields so the same visitor can re-answer fresh.
+      cur['Use Cases'] = '';
+      cur['Pharmacy Choice'] = '';
+      cur['Provider Override'] = '';
+      cur['Invite Method'] = '';
+      cur['Optional Features'] = '';
+      cur['States Selected'] = '';
+      cur['States List'] = '';
+      cur['Has Webhook URL'] = '';
+      cur['Has Exam IDs'] = '';
+      cur['Quick Start Step'] = '';
+      cur['Quick Start Completed'] = '';
+    }
 
-    // Always update Duration from elapsed_sec if it's larger than what's there
     if (typeof body.elapsed_sec === 'number') {
       cur['Duration (sec)'] = Math.max(Number(cur['Duration (sec)']) || 0, Math.round(body.elapsed_sec));
     }
 
-    if (isNew) appendRow_(sh, cur);
-    else writeRow_(sh, rowNum, cur);
+    if (isNew) appendRow_(sh, cur, hMap);
+    else writeRow_(sh, rowNum, cur, hMap);
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -267,16 +374,18 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
   const sh = getSheet_();
+  const hMap = headerMap_(sh);
   const last = sh.getLastRow();
   const sessions = [];
   if (last >= 2) {
-    const vals = sh.getRange(2, 1, last - 1, COLS.length).getValues();
+    const vals = sh.getRange(2, 1, last - 1, hMap.width).getValues();
+    const headerNames = Object.keys(hMap.map).sort((a, b) => hMap.map[a] - hMap.map[b]);
     vals.forEach(row => {
       const obj = {};
-      COLS.forEach((c, i) => {
-        let v = row[i];
+      headerNames.forEach(name => {
+        let v = row[hMap.map[name] - 1];
         if (v instanceof Date) v = v.toISOString();
-        obj[c] = v;
+        obj[name] = v;
       });
       sessions.push(obj);
     });
@@ -287,36 +396,34 @@ function doGet(e) {
     sessions: sessions
   })).setMimeType(ContentService.MimeType.JSON);
 }
-===== END Code.gs =====
+===== END Code.gs (v2) =====
 
 
-3. Save the script (Ctrl+S or the floppy-disk icon). Name the project
-   "Qualiphy API Docs Telemetry" when prompted.
+3. Save the script (Ctrl+S).
 
-4. Deploy:
-     a. Click Deploy > New deployment.
-     b. Click the gear icon > Web app.
-     c. Description: "v1"
-        Execute as: Me (your account)
-        Who has access: Anyone   <-- this is required for the docs pages
-                                     to POST anonymously. The shared secret
-                                     in the script body keeps the endpoint
-                                     practically locked to your code.
+4. Deploy a new version. If this is your first deploy, follow the v1
+   directions: Deploy > New deployment > gear > Web app > Execute as Me /
+   Who has access Anyone. If you already have a deployment from v1:
+     a. Click Deploy > Manage deployments.
+     b. Click the pencil icon on your existing deployment.
+     c. Change "Version" to "New version" and put "v2" in the description.
      d. Click Deploy.
-     e. Google will ask you to authorize. Click "Authorize access", pick the
-        same Google account, and on the "Google hasn't verified this app"
-        screen click Advanced > Go to <project name> (unsafe) > Allow.
-     f. Copy the Web app URL it shows you. It looks like:
-        https://script.google.com/macros/s/AKfycb.................../exec
-        Save it somewhere — you need it for step C.
+   This keeps the same /exec URL — no need to update the three repo files.
+
+5. (Optional, if you skipped step A.4) The v2 script will write the full
+   header row automatically the first time an event arrives at an empty
+   sheet, so you can leave it blank and let the script provision it.
 
 
 ================================================================================
-C) DROP THE WEB APP URL INTO THREE PLACES IN THE REPO
+C) DROP THE WEB APP URL INTO THREE PLACES IN THE REPO (v1 only)
 ================================================================================
 
-Three files reference a placeholder. Open each, search for the placeholder
-string, and replace it with your /exec URL from step B.4.f:
+If you already wired up the /exec URL during v1, skip this — v2 reuses
+the same URL.
+
+If you haven't yet, three files reference a placeholder. Open each, search
+for the placeholder string, and replace it with your /exec URL:
 
   1. q-api/dashboard/index.html
        Find:    REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL
@@ -329,10 +436,6 @@ string, and replace it with your /exec URL from step B.4.f:
   3. q-api/quick-start/index.html
        Find:    REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL
        Replace with your /exec URL.
-
-That's the only edit. The shared secret is already wired up on both ends —
-both the tracker block and the dashboard already use 'qapi-9j2k-trk-bx88-2026'
-to match the value in Code.gs above.
 
 Then commit and push:
 
@@ -354,34 +457,63 @@ HTML source can extract it. Don't put truly sensitive things in this dashboard.
 
 
 ================================================================================
-E) SMOKE TESTING THAT EVERYTHING WORKS
+E) WHAT v2 ADDED OVER v1
 ================================================================================
 
-1. After deploying the script and dropping the URL into the three files,
-   open the docs site (any page).
+v2 adds full plan-builder analytics from the quick-start questionnaire so
+you can see what people are actually trying to build:
 
-2. Open your Google Sheet. You should see a new row appear within ~1–2
-   seconds. The "Started At", "Path", "Referrer", "Device", "Browser",
-   and "UTM Source" columns should populate immediately.
+  Use Cases            — gfe / rx / urgent (multi)
+  Pharmacy Choice      — partner / custom
+  Provider Override    — yes / no
+  Invite Method        — qualiphy / custom
+  Optional Features    — prefill / attach / redirect (multi)
+  States Selected      — count + comma list
+  Has Webhook URL      — Yes if they entered one
+  Has Exam IDs         — Yes if they typed any exam IDs
+  Quick Start Step     — 0..4 highest reached
+  Quick Start Completed— Yes when they reach the result page
+  Tab Languages        — JSON {curl: n, node: n, python: n} per session
 
-3. In the docs page, click around — view a few endpoints, click Copy on
+The dashboard renders these in a new "Quick Start Plan Intent" section
+plus a Code Language Preference panel.
+
+
+================================================================================
+F) SMOKE TESTING THAT EVERYTHING WORKS
+================================================================================
+
+1. After (re)deploying the script, open any docs page. Within ~1–2 seconds
+   a row should appear (or update) in your Sheet. The "Started At", "Path",
+   "Referrer", "Device", "Browser", and "UTM Source" columns populate
+   immediately.
+
+2. In the docs page, click around — view a few endpoints, click Copy on
    a code block, type something into the search box. Watch your row in
    the sheet update:
      - "Sections Viewed" / "Sections List" grows as you scroll past sections
      - "Code Copies" / "Top Copies" increments on each Copy click
      - "Search Queries" / "Search Terms" increments per debounced query
+     - "Tab Languages" tracks which curl/node/python tabs you toggle
 
-4. Visit https://docs.qualiphy.me/dashboard/. Enter qualiphyapi2026.
-   You should see your test session in the Recent Sessions table at the
-   bottom of the page. The dashboard auto-refreshes every 30 seconds.
+3. Visit /quick-start/ and answer the questionnaire. As you click options:
+     - "Use Cases" fills in (e.g. "gfe,rx")
+     - "Pharmacy Choice", "Provider Override", "Invite Method" populate
+     - "Optional Features" tracks the checkboxes
+     - "States Selected" / "States List" track the state grid
+     - "Quick Start Step" climbs as you advance
+     - "Quick Start Completed" flips to "Yes" when you generate the plan
 
-5. If the dashboard shows "no webhook" or "err" next to the live indicator
-   in the top-right, you forgot step C.1 (the dashboard's CONFIG.WEBHOOK_URL
-   still has the placeholder).
+4. Visit /dashboard/. Enter qualiphyapi2026. The new "Quick Start Plan
+   Intent" panels should populate from your test session.
+
+5. If the dashboard shows "no webhook" or "err" next to the live indicator,
+   you forgot step C.1 (the dashboard's CONFIG.WEBHOOK_URL still has the
+   placeholder).
 
 
 ================================================================================
-F) TROUBLESHOOTING
+G) TROUBLESHOOTING
 ================================================================================
 
 "unauthorized" in the doGet response

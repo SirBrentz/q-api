@@ -123,7 +123,10 @@ window.QAPI_TRACK_CONFIG = {
     }
     var tab = e.target.closest && e.target.closest('.codeblock-tab');
     if (tab) {
-      send('tab_switched', { tab_id: tab.dataset.tab || tab.textContent.trim() });
+      var tid = tab.dataset.tab || tab.textContent.trim();
+      var s = String(tid).toLowerCase();
+      var language = /curl/.test(s) ? 'curl' : /node|^js$|javascript/.test(s) ? 'node' : /python|\bpy\b/.test(s) ? 'python' : '';
+      send('tab_switched', { tab_id: tid, language: language });
       return;
     }
     var link = e.target.closest && e.target.closest('a[href]');

@@ -520,6 +520,99 @@ a:hover{text-decoration:underline}
     </div>
   </div>
 
+  <!-- Quick Start Plan Intent (hidden when no QS data yet) -->
+  <div class="panel section-gap" id="planIntentPanel" style="display:none">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Quick Start Funnel
+      </div>
+      <div class="panel-meta" id="qsFunnelMeta">land → build plan</div>
+    </div>
+    <div class="panel-body-tight" id="qsFunnel"></div>
+  </div>
+
+  <div class="grid grid-3 section-gap" id="planRow1" style="display:none">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Use Cases
+        </div>
+        <div class="panel-meta">multi-select</div>
+      </div>
+      <div class="panel-body" id="planUseCases"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 14l-7 7-7-7M19 4l-7 7-7-7"/></svg>
+          Pharmacy Choice
+        </div>
+        <div class="panel-meta">rx + urgent paths</div>
+      </div>
+      <div class="panel-body" id="planPharmacy"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Optional Features
+        </div>
+        <div class="panel-meta">extras requested</div>
+      </div>
+      <div class="panel-body" id="planOptionalFeatures"></div>
+    </div>
+  </div>
+
+  <div class="grid grid-3 section-gap" id="planRow2" style="display:none">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Provider Override
+        </div>
+        <div class="panel-meta">consultation autonomy</div>
+      </div>
+      <div class="panel-body" id="planProviderOverride"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><polyline points="22 6 12 13 2 6"/></svg>
+          Invite Method
+        </div>
+        <div class="panel-meta">who messages the patient</div>
+      </div>
+      <div class="panel-body" id="planInvite"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Code Language Preference
+        </div>
+        <div class="panel-meta">curl · node · python</div>
+      </div>
+      <div class="panel-body" id="planLanguages"></div>
+    </div>
+  </div>
+
+  <div class="panel section-gap" id="planStatesPanel" style="display:none">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        States Selected in Plans
+      </div>
+      <div class="panel-meta" id="planStatesMeta">cumulative across plan-builder sessions</div>
+    </div>
+    <div class="panel-body" id="planTopStates"></div>
+  </div>
+
   <!-- Search queries -->
   <div class="panel section-gap">
     <div class="panel-header">
@@ -666,11 +759,24 @@ function normalizeSession(s){
     searchCount: Number(s['Search Queries']) || 0,
     searchTerms: s['Search Terms'] || '',
     tabSwitches: Number(s['Tab Switches']) || 0,
+    tabLanguages: s['Tab Languages'] || '',
     externalClicks: Number(s['External Clicks']) || 0,
     scrollMax: Number(s['Scroll Max']) || 0,
     duration: Number(s['Duration (sec)']) || 0,
     totalEvents: Number(s['Total Events']) || 0,
     variant: s['Variant'] || '',
+    // Quick Start plan-builder
+    useCases: s['Use Cases'] || '',
+    pharmacyChoice: s['Pharmacy Choice'] || '',
+    providerOverride: s['Provider Override'] || '',
+    inviteMethod: s['Invite Method'] || '',
+    optionalFeatures: s['Optional Features'] || '',
+    statesSelected: Number(s['States Selected']) || 0,
+    statesList: s['States List'] || '',
+    hasWebhookUrl: s['Has Webhook URL'] === 'Yes',
+    hasExamIds: s['Has Exam IDs'] === 'Yes',
+    qsStep: Number(s['Quick Start Step']) || 0,
+    qsCompleted: s['Quick Start Completed'] === 'Yes',
   };
 }
 function setRefreshState(st){
@@ -698,6 +804,7 @@ function render(){
   renderFunnel(rows);
   renderBreakdowns(rows);
   renderDeviceEngagement(rows);
+  renderPlanIntent(rows);
   renderSearchQueries(rows);
   renderSourceMatrix(rows);
   renderHourHeatmap(rows);
@@ -1098,6 +1205,144 @@ function renderSearchQueries(rows){
   ).join('') + '</div>';
 }
 
+/* ============ QUICK START PLAN INTENT ============ */
+// Friendly labels for option values so the dashboard reads like English
+// rather than internal slugs.
+const PLAN_LABELS = {
+  useCase: { gfe: 'Good Faith Exam (GFE)', rx: 'Rx Treatment', urgent: 'Urgent Care' },
+  pharmacy: { partner: 'Qualiphy partner pharmacy', custom: 'Custom (CVS / Walgreens / etc)' },
+  providerOverride: { yes: 'Yes — provider can swap', no: 'No — follow my settings' },
+  invite: { qualiphy: 'Qualiphy sends invites', custom: 'Self-send (custom)' },
+  optionalFeature: { prefill: 'Pre-fill answers', attach: 'Upload patient docs', redirect: 'Custom redirect' },
+};
+function planLabel(group, value){
+  return (PLAN_LABELS[group] && PLAN_LABELS[group][value]) || value;
+}
+
+function renderPlanIntent(rows){
+  // Detect whether ANY session in the window has plan data; if not, hide
+  // the whole plan section so the dashboard still looks clean for clinics
+  // that aren't running the quick-start yet.
+  const hasAny = rows.some(r => r.useCases || r.pharmacyChoice || r.providerOverride
+    || r.inviteMethod || r.optionalFeatures || r.qsStep > 0 || r.statesSelected > 0
+    || r.tabLanguages);
+  ['planIntentPanel','planRow1','planRow2','planStatesPanel'].forEach(id => {
+    const el = $(id); if (el) el.style.display = hasAny ? '' : 'none';
+  });
+  if (!hasAny) return;
+
+  // Use Cases (multi)
+  const useCases = {};
+  rows.forEach(r => { if (!r.useCases) return;
+    String(r.useCases).split(',').forEach(v => {
+      const t = v.trim(); if (!t) return;
+      useCases[planLabel('useCase', t)] = (useCases[planLabel('useCase', t)] || 0) + 1;
+    });
+  });
+  renderBreakdown('planUseCases', useCases, 'cyan', null);
+
+  // Pharmacy choice (single)
+  const pharmacy = {};
+  rows.forEach(r => { if (!r.pharmacyChoice) return;
+    const k = planLabel('pharmacy', r.pharmacyChoice);
+    pharmacy[k] = (pharmacy[k] || 0) + 1;
+  });
+  renderBreakdown('planPharmacy', pharmacy, 'green', null);
+
+  // Provider override (single)
+  const override = {};
+  rows.forEach(r => { if (!r.providerOverride) return;
+    const k = planLabel('providerOverride', r.providerOverride);
+    override[k] = (override[k] || 0) + 1;
+  });
+  renderBreakdown('planProviderOverride', override, 'orange', null);
+
+  // Invite method (single)
+  const invite = {};
+  rows.forEach(r => { if (!r.inviteMethod) return;
+    const k = planLabel('invite', r.inviteMethod);
+    invite[k] = (invite[k] || 0) + 1;
+  });
+  renderBreakdown('planInvite', invite, 'purple', null);
+
+  // Optional features (multi)
+  const features = {};
+  rows.forEach(r => { if (!r.optionalFeatures) return;
+    String(r.optionalFeatures).split(',').forEach(v => {
+      const t = v.trim(); if (!t) return;
+      features[planLabel('optionalFeature', t)] = (features[planLabel('optionalFeature', t)] || 0) + 1;
+    });
+  });
+  renderBreakdown('planOptionalFeatures', features, 'cyan', null);
+
+  // Code language preference (sum across sessions from Tab Languages JSON)
+  const langs = {};
+  rows.forEach(r => {
+    if (!r.tabLanguages) return;
+    try {
+      const obj = typeof r.tabLanguages === 'string' ? JSON.parse(r.tabLanguages) : r.tabLanguages;
+      if (obj && typeof obj === 'object'){
+        Object.entries(obj).forEach(([k, v]) => { langs[k] = (langs[k] || 0) + Number(v || 0); });
+      }
+    } catch(e){}
+  });
+  renderBreakdown('planLanguages', langs, 'green', null);
+
+  // Top states selected (cumulative)
+  const states = {};
+  rows.forEach(r => { if (!r.statesList) return;
+    String(r.statesList).split(',').forEach(v => {
+      const t = v.trim(); if (!t) return;
+      states[t] = (states[t] || 0) + 1;
+    });
+  });
+  // Don't overwhelm with all 49 — top 12 is enough to spot the ICP
+  const topStates = Object.fromEntries(Object.entries(states).sort((a,b) => b[1]-a[1]).slice(0, 12));
+  renderBreakdown('planTopStates', topStates, 'orange', null);
+
+  // Quick Start funnel
+  renderQSFunnel(rows);
+}
+
+function renderQSFunnel(rows){
+  const el = $('qsFunnel');
+  if (!el) return;
+  const onQS = rows.filter(r => /quick-start/.test(r.path) || r.qsStep > 0 || r.useCases || r.qsCompleted);
+  const reached = (n) => onQS.filter(r => r.qsStep >= n || (n <= 4 && r.qsCompleted)).length;
+
+  const steps = [
+    { name: 'Landed on quick-start', count: onQS.length },
+    { name: 'Picked any service', count: onQS.filter(r => r.useCases).length },
+    { name: 'Reached step 2 (details)', count: reached(2) },
+    { name: 'Reached step 3 (extras)', count: reached(3) },
+    { name: 'Generated plan', count: onQS.filter(r => r.qsCompleted || r.qsStep >= 4).length },
+  ];
+
+  $('qsFunnelMeta').textContent = onQS.length + ' quick-start session' + (onQS.length === 1 ? '' : 's');
+
+  el.innerHTML = '';
+  const max = Math.max(...steps.map(s => s.count), 1);
+  steps.forEach((s, i) => {
+    const pct = onQS.length > 0 ? Math.round((s.count / onQS.length) * 100) : 0;
+    const barW = (s.count / max) * 100;
+    el.innerHTML += `
+      <div class="funnel-step funnel-step-${i+1}">
+        <div class="funnel-bar" style="width:${barW}%"></div>
+        <div class="funnel-step-name"><span class="funnel-step-dot"></span>${s.name}</div>
+        <div class="funnel-step-meta">
+          <span class="funnel-step-count">${s.count}</span>
+          <span class="funnel-step-pct">${pct}%</span>
+        </div>
+      </div>
+    `;
+    if (i < steps.length - 1){
+      const drop = s.count - steps[i+1].count;
+      const dropPct = s.count > 0 ? Math.round((drop / s.count) * 100) : 0;
+      el.innerHTML += `<div class="funnel-drop">↓ <strong>${drop}</strong> dropped · ${dropPct}% lost</div>`;
+    }
+  });
+}
+
 /* ============ SOURCE × ENGAGEMENT MATRIX ============ */
 function renderSourceMatrix(rows){
   const tbl = $('srcMatrixTable');
@@ -1305,7 +1550,10 @@ function exportCSV(){
     'UTM Source','UTM Medium','UTM Campaign','City','State','Country',
     'Sections Viewed','Sections List','Last Section',
     'Code Copies','Top Copies','Search Queries','Search Terms',
-    'Tab Switches','External Clicks','Scroll Max','Duration (sec)','Total Events','Variant',
+    'Tab Switches','Tab Languages','External Clicks','Scroll Max','Duration (sec)','Total Events','Variant',
+    'Use Cases','Pharmacy Choice','Provider Override','Invite Method',
+    'Optional Features','States Selected','States List',
+    'Has Webhook URL','Has Exam IDs','Quick Start Step','Quick Start Completed',
   ];
   const esc = (v) => {
     if (v === null || v === undefined) return '';
@@ -1324,7 +1572,10 @@ function exportCSV(){
       r.city, r.state, r.country,
       r.sectionsViewed, r.sectionsList, r.lastSection,
       r.codeCopies, r.topCopies, r.searchCount, r.searchTerms,
-      r.tabSwitches, r.externalClicks, r.scrollMax, r.duration, r.totalEvents, r.variant,
+      r.tabSwitches, r.tabLanguages, r.externalClicks, r.scrollMax, r.duration, r.totalEvents, r.variant,
+      r.useCases, r.pharmacyChoice, r.providerOverride, r.inviteMethod,
+      r.optionalFeatures, r.statesSelected, r.statesList,
+      r.hasWebhookUrl ? 'Yes' : '', r.hasExamIds ? 'Yes' : '', r.qsStep, r.qsCompleted ? 'Yes' : '',
     ].map(esc).join(','));
   });
   const csv = '﻿' + lines.join('\n');

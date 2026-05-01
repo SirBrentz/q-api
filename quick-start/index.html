@@ -112,7 +112,10 @@ window.QAPI_TRACK_CONFIG = {
     }
     var tab = e.target.closest && e.target.closest('.codeblock-tab');
     if (tab) {
-      send('tab_switched', { tab_id: tab.dataset.tab || tab.textContent.trim() });
+      var tid = tab.dataset.tab || tab.textContent.trim();
+      var s = String(tid).toLowerCase();
+      var language = /curl/.test(s) ? 'curl' : /node|^js$|javascript/.test(s) ? 'node' : /python|\bpy\b/.test(s) ? 'python' : '';
+      send('tab_switched', { tab_id: tid, language: language });
       return;
     }
     var link = e.target.closest && e.target.closest('a[href]');
@@ -158,6 +161,130 @@ window.QAPI_TRACK_CONFIG = {
   }
   window.addEventListener('pagehide', fireUnload);
   window.addEventListener('beforeunload', fireUnload);
+
+  // ===== QUICK-START PLAN BUILDER =====
+  // Captures every option a user selects in the questionnaire so the dashboard
+  // can show what people are actually trying to build.
+  function attachQS(){
+    if (!document.getElementById('s0')) return; // not the quick-start page
+    var qsState = { step: 0, fieldsFilled: {}, statesT: null };
+
+    function currentStep(){
+      for (var i = 0; i <= 4; i++){
+        var card = document.getElementById('s' + i);
+        if (card && !card.classList.contains('hidden')) return i;
+      }
+      return 0;
+    }
+
+    // Multi/single option clicks (.oc inside .og[id^=g-])
+    document.addEventListener('click', function(e){
+      var oc = e.target.closest && e.target.closest('.oc[data-v]');
+      if (oc){
+        var og = oc.closest('.og[id^="g-"]');
+        if (!og) return;
+        var group = og.id.replace(/^g-/, '');
+        var value = oc.dataset.v;
+        // Defer one tick so the page's own click handler (pickSingle/pickMulti)
+        // toggles the .sel class first; then we read the resulting state.
+        setTimeout(function(){
+          var selected = oc.classList.contains('sel');
+          send(selected ? 'option_selected' : 'option_deselected', { group: group, value: value, step: qsState.step });
+        }, 0);
+        return;
+      }
+      // Optional features (.ci with id ck-prefill / ck-attach / ck-redirect)
+      var ci = e.target.closest && e.target.closest('.ci[id^="ck-"]');
+      if (ci){
+        var feat = ci.id.replace(/^ck-/, '');
+        setTimeout(function(){
+          var on = ci.classList.contains('on');
+          send(on ? 'option_selected' : 'option_deselected', { group: 'optionalFeature', value: feat, step: 3 });
+        }, 0);
+        return;
+      }
+      // Single state cell (.sc)
+      var sc = e.target.closest && e.target.closest('.sc[data-s]');
+      if (sc){
+        clearTimeout(qsState.statesT);
+        qsState.statesT = setTimeout(function(){
+          var picked = Array.prototype.slice.call(document.querySelectorAll('.sc.on')).map(function(el){ return el.dataset.s; });
+          send('qs_states_changed', { count: picked.length, list: picked.join(',').slice(0, 400) });
+        }, 250);
+        return;
+      }
+      // Select-all toggle for states
+      if (e.target && e.target.id === 'state-all'){
+        clearTimeout(qsState.statesT);
+        qsState.statesT = setTimeout(function(){
+          var picked = Array.prototype.slice.call(document.querySelectorAll('.sc.on')).map(function(el){ return el.dataset.s; });
+          send('qs_states_changed', { count: picked.length, list: picked.join(',').slice(0, 400) });
+        }, 250);
+        return;
+      }
+      // Add another exam row
+      if (e.target && e.target.classList && e.target.classList.contains('add-btn')){
+        send('qs_exam_row_added', {});
+        return;
+      }
+      // Step nav buttons (Continue / Generate / Back)
+      var btn = e.target.closest && e.target.closest('.cnav .btn');
+      if (btn){
+        var label = (btn.textContent || '').toLowerCase();
+        var prevStep = qsState.step;
+        setTimeout(function(){
+          var newStep = currentStep();
+          qsState.step = newStep;
+          if (newStep > prevStep){
+            send('qs_step_advanced', { from: prevStep, to: newStep });
+            if (newStep === 4) send('qs_completed', {});
+          } else if (newStep < prevStep){
+            send('qs_step_back', { from: prevStep, to: newStep });
+          }
+        }, 50);
+        return;
+      }
+      // Restart
+      if (e.target.closest && e.target.closest('.restart-row button')){
+        send('qs_restart', {});
+        qsState.step = 0;
+        qsState.fieldsFilled = {};
+      }
+    }, true);
+
+    // Track which key fields get any input. Fire once per field per session
+    // (avoids spamming on every keystroke).
+    function watchField(id, name){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('blur', function(){
+        if (qsState.fieldsFilled[name]) return;
+        if (String(el.value || '').trim().length > 0){
+          qsState.fieldsFilled[name] = 1;
+          send('qs_field_filled', { field: name });
+        }
+      });
+    }
+    watchField('f-co', 'company');
+    watchField('f-nm', 'name');
+    watchField('f-em', 'email');
+    watchField('f-wh', 'webhook');
+
+    // Exam ID field is dynamic - delegate on the list and fire once when any
+    // exam input first gets a value.
+    document.addEventListener('blur', function(e){
+      var el = e.target;
+      if (!el || !el.closest) return;
+      if (!el.closest('#exam-list')) return;
+      if (qsState.fieldsFilled['examIds']) return;
+      if (String(el.value || '').trim().length > 0){
+        qsState.fieldsFilled['examIds'] = 1;
+        send('qs_field_filled', { field: 'examIds' });
+      }
+    }, true);
+  }
+  if (document.readyState !== 'loading') attachQS();
+  else document.addEventListener('DOMContentLoaded', attachQS);
 })();
 </script>
 <!-- ============ Q-API TRACKER · END   ============ -->

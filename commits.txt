@@ -1,6 +1,28 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-01 — Plan Intent analytics: track every Quick Start option selection
+              Tracker now fires option_selected/option_deselected for use
+              cases (gfe/rx/urgent), pharmacy choice, provider override,
+              invite method, and optional features (prefill/attach/redirect),
+              plus qs_states_changed, qs_step_advanced/back, qs_completed,
+              qs_field_filled, qs_restart. tab_switched also carries a
+              derived language hint (curl/node/python).
+              Apps Script bumped to v2: 12 new columns (Use Cases, Pharmacy
+              Choice, Provider Override, Invite Method, Optional Features,
+              States Selected, States List, Has Webhook URL, Has Exam IDs,
+              Quick Start Step, Quick Start Completed, Tab Languages). New
+              ensureColumns_() self-extends the header row so a v1 sheet
+              redeploy preserves all existing data.
+              Dashboard adds a "Quick Start Plan Intent" section: QS Funnel,
+              Use Cases / Pharmacy Choice / Optional Features, Provider
+              Override / Invite Method / Code Language Preference, States
+              Selected in Plans. The whole section auto-hides when no QS
+              data is present. CSV export updated.
+              Brent must redeploy the Apps Script (Deploy > Manage
+              deployments > pencil > New version) to activate the v2 schema;
+              the /exec URL stays the same.
+
 2026-05-01 — Wire telemetry endpoint URL into the three placeholder slots
               (Apps Script /exec deployed by Brent: AKfycbx4yb...wX4BcN_K4F_k)
 
