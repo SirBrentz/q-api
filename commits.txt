@@ -1,6 +1,26 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Quick Start: always show both partner + custom invite samples
+              for any Rx flow
+              · Send-the-patient-invite section now renders both a
+                partner-pharmacy /exam_invite sample AND a custom-pharmacy
+                /exam_invite sample whenever the plan covers Rx Treatment
+                — regardless of which fulfillment option the user
+                explicitly ticked. Devs always get both reference payloads
+                without hunting through the docs.
+              · Urgent-only flows still show just the custom sample
+                (Urgent Care never routes through partner pharmacies).
+                GFE-only still shows a single plain invite.
+              · Reverted the payload-side drop of pharmacy_id /
+                order_set_id when provider override is on — the partner
+                sample now always shows those placeholder fields so the
+                partner-flow shape stays clear. The discovery endpoint
+                drop (partner_pharmacy_list /
+                partner_pharmacy_treatment_packages from the chips and
+                the "Find your IDs" plan sections) when override = yes
+                still stands; that was the user's actual ask.
+
 2026-05-04 — Quick Start: tighter fulfillment + provider-override behaviour
               · Urgent Care now auto-includes "custom pharmacy" in the
                 effective pharmacy set everywhere (endpoint list, payload,

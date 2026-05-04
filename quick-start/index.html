@@ -1351,9 +1351,10 @@ function buildResult(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- // Skip pharmacy_id/order_set_id when the provider is picking — discovery
- // endpoints are dropped, so the caller has no IDs to pass.
- if(kind === 'partner' && !skipPartnerDiscovery){
+ // Partner sample always includes pharmacy_id / order_set_id placeholders so
+ // the partner-flow shape is clear even when the caller is letting the
+ // provider override at consultation (provider_pos_selection: 3 below).
+ if(kind === 'partner'){
  p.pharmacy_id='PHARMACY_ID';
  p.order_set_id='PACKAGE_ID';
  }
@@ -1373,10 +1374,20 @@ function buildResult(){
  return p;
  }
 
+ // Render BOTH a partner-pharmacy sample and a custom-pharmacy sample for
+ // any flow that includes Rx Treatment — devs get a copy-paste reference for
+ // either fulfillment option without having to hunt them down in the docs.
+ // Urgent-only (no Rx) flows show just the custom sample since Urgent Care
+ // never routes through partner pharmacies. GFE-only shows a plain invite.
  const payloadKinds=[];
- if(ph.has('partner')) payloadKinds.push('partner');
- if(ph.has('custom')) payloadKinds.push('custom');
- if(payloadKinds.length===0) payloadKinds.push('plain');
+ if(isRx){
+ payloadKinds.push('partner');
+ payloadKinds.push('custom');
+ } else if(isUrg){
+ payloadKinds.push('custom');
+ } else {
+ payloadKinds.push('plain');
+ }
  const payloads=payloadKinds.map(buildInvitePayload);
  const curls=payloads.map(p=>`curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(p, null, 2)}'`);
  // Backwards-compat: single payload + curl for any caller that still expects them
@@ -2081,7 +2092,7 @@ function downloadPdf(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if (kind === 'partner' && !skipPartnerDiscovery) { p.pharmacy_id = 'PHARMACY_ID'; p.order_set_id = 'PACKAGE_ID'; }
+ if (kind === 'partner') { p.pharmacy_id = 'PHARMACY_ID'; p.order_set_id = 'PACKAGE_ID'; }
  if (kind === 'custom') { p.custom_pharmacy = 1; p.ncpdpid = 'PHARMACY_NCPDPID'; p.pharmacy_name = 'Pharmacy Name'; p.pharmacy_state = teleState; }
  if (needsRx && providerOverride === 'yes') p.provider_pos_selection = 3;
  if (opts.redirect) {
@@ -2092,10 +2103,18 @@ function downloadPdf(){
  }
  return p;
  };
+ // Always render both partner + custom samples for any Rx flow so the dev
+ // sees both fulfillment reference payloads. Urgent-only → just custom.
+ // GFE-only → plain invite.
  const pdfKinds = [];
- if (ph.has('partner')) pdfKinds.push('partner');
- if (ph.has('custom')) pdfKinds.push('custom');
- if (pdfKinds.length === 0) pdfKinds.push('plain');
+ if (isRx) {
+ pdfKinds.push('partner');
+ pdfKinds.push('custom');
+ } else if (isUrg) {
+ pdfKinds.push('custom');
+ } else {
+ pdfKinds.push('plain');
+ }
 
  pdfKinds.forEach((kind, i) => {
  if (pdfKinds.length > 1) {
