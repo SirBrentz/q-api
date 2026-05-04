@@ -1,6 +1,22 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Right-rail "Recent runs" history
+              Each Try Now request (success, 4xx/5xx, or network error) is
+              now logged to a Recent runs panel pinned at the bottom of the
+              right-rail. Stays put as the user scrolls between endpoints —
+              answers the "I just ran something, where did it go?" issue
+              when the rail repopulates from a different sample on scroll.
+              Stored in sessionStorage (same store as the API key — clears
+              when the tab closes, doesn't leak across browser sessions).
+              Capped at 20 entries, FIFO. Each row collapses to a status
+              pill + endpoint + relative time; click expands to show the
+              full request payload and response body. A "Reuse this
+              payload" button on each row drops the request back into the
+              textarea (and points the rail header at the matching
+              endpoint) so you can edit and re-run without scrolling. A
+              Clear all button (with confirm) wipes the list.
+
 2026-05-04 — Round of copy edits from internal feedback
               · Walkthrough intro: drop the "5 minutes if you already have an
                 API key" line.

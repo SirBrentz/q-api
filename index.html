@@ -398,6 +398,35 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .rail-response-time{font-family:var(--font-m);font-size:10.5px;color:var(--text-lt);letter-spacing:.04em}
 .rail-response-body{padding:14px;background:#0F0D14;color:var(--code-text);font-family:var(--font-m);font-size:11px;line-height:1.65;max-height:280px;overflow:auto;margin:0;white-space:pre-wrap;word-break:break-word}
 
+/* ============ RIGHT-RAIL: RECENT RUNS HISTORY ============ */
+.rail-history{margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+.rail-history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.rail-history-h{font-family:var(--font-m);font-size:9.5px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;margin:0;display:flex;align-items:center;gap:6px}
+.rail-history-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:16px;padding:0 5px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:9.5px;font-weight:700;color:var(--text-mid);letter-spacing:0}
+.rail-history-clear-btn{background:transparent;border:0;color:var(--text-lt);font-family:var(--font-m);font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0}
+.rail-history-clear-btn:hover{color:var(--rose)}
+.rail-history-empty{font-size:11.5px;color:var(--text-vlt);font-style:italic;line-height:1.5;padding:10px 12px;background:var(--surface);border:1px dashed var(--border-mid);border-radius:8px}
+.rail-history-list{display:flex;flex-direction:column;gap:6px}
+.rail-history-item{border:1px solid var(--border);border-radius:8px;background:var(--paper);overflow:hidden;transition:border-color .15s var(--ease)}
+.rail-history-item:hover{border-color:var(--border-mid)}
+.rail-history-item.is-open{border-color:var(--indigo);box-shadow:0 0 0 1px var(--indigo)}
+.rail-history-row{width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:var(--font-m);font-size:11px;color:var(--text)}
+.rail-history-row:hover{background:var(--surface)}
+.rail-history-status{font-family:var(--font-m);font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.04em;flex-shrink:0}
+.rail-history-status.is-2xx{background:var(--emerald-bg);color:var(--emerald)}
+.rail-history-status.is-4xx,.rail-history-status.is-5xx{background:rgba(220,38,38,.12);color:var(--rose)}
+.rail-history-status.is-error{background:rgba(217,119,6,.12);color:var(--amber)}
+.rail-history-endpoint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600}
+.rail-history-time{font-size:10px;color:var(--text-lt);letter-spacing:.02em;flex-shrink:0}
+.rail-history-chev{flex-shrink:0;transition:transform .15s var(--ease);color:var(--text-lt)}
+.rail-history-item.is-open .rail-history-chev{transform:rotate(180deg)}
+.rail-history-detail{padding:0 10px 10px;border-top:1px solid var(--border)}
+.rail-history-section-h{font-family:var(--font-m);font-size:9px;font-weight:600;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;margin:10px 0 4px}
+.rail-history-body{padding:10px;background:#0F0D14;color:var(--code-text);font-family:var(--font-m);font-size:10.5px;line-height:1.55;max-height:160px;overflow:auto;margin:0;white-space:pre-wrap;word-break:break-word;border-radius:6px}
+.rail-history-actions{margin-top:10px;display:flex;gap:6px}
+.rail-history-reuse{font-family:var(--font-m);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 10px;background:var(--surface);border:1px solid var(--border-mid);border-radius:6px;color:var(--text-mid);cursor:pointer}
+.rail-history-reuse:hover{border-color:var(--indigo);color:var(--indigo)}
+
 @media (min-width:1280px){
  .right-rail{display:block}
  /* Recipe inline code blocks stay visible on mobile only; desktop reads from rail */
@@ -2103,6 +2132,15 @@ return {"ok": True}
  </div>
 
  <div class="right-rail-empty" id="right-rail-empty">Scroll into a recipe or API endpoint to load a sample request. Edit the payload here and click <strong>Try now</strong> to send it with your API key.</div>
+
+ <div class="rail-history" id="rail-history">
+ <div class="rail-history-head">
+ <h3 class="rail-history-h">Recent runs <span class="rail-history-count" id="rail-history-count">0</span></h3>
+ <button type="button" class="rail-history-clear-btn" id="rail-history-clear" aria-label="Clear all recent runs">Clear all</button>
+ </div>
+ <div class="rail-history-empty" id="rail-history-empty-state">Your <strong>Try now</strong> requests will appear here so you can reference them after scrolling.</div>
+ <div class="rail-history-list" id="rail-history-list"></div>
+ </div>
  </div>
 </aside>
 
@@ -2550,6 +2588,167 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  responseEl.hidden = false;
  }
 
+ // ============ Recent runs history ============
+ // Logs every Try Now request the user fires (success, 4xx/5xx, network
+ // errors). Persisted in sessionStorage so it survives reloads within
+ // the tab but clears when the tab closes — same store as the API key.
+ const HISTORY_KEY = 'qualiphy-docs-rail-history';
+ const HISTORY_LIMIT = 20;
+ const historyListEl = document.getElementById('rail-history-list');
+ const historyEmptyEl = document.getElementById('rail-history-empty-state');
+ const historyCountEl = document.getElementById('rail-history-count');
+ const historyClearBtn = document.getElementById('rail-history-clear');
+
+ function getHistory(){
+ try {
+ const raw = sessionStorage.getItem(HISTORY_KEY);
+ return raw ? JSON.parse(raw) : [];
+ } catch(_) { return []; }
+ }
+ function saveHistory(arr){
+ try { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); } catch(_){}
+ }
+ function relTime(ts){
+ const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+ if (s < 10) return 'just now';
+ if (s < 60) return s + 's ago';
+ const m = Math.round(s / 60);
+ if (m < 60) return m + 'm ago';
+ const h = Math.round(m / 60);
+ if (h < 24) return h + 'h ago';
+ const d = Math.round(h / 24);
+ return d + 'd ago';
+ }
+ function addHistoryEntry(entry){
+ const arr = getHistory();
+ arr.unshift({ id: Date.now() + ':' + Math.random().toString(36).slice(2, 7), ...entry });
+ if (arr.length > HISTORY_LIMIT) arr.length = HISTORY_LIMIT;
+ saveHistory(arr);
+ renderHistory();
+ }
+ function renderHistory(){
+ if (!historyListEl) return;
+ const arr = getHistory();
+ historyCountEl.textContent = arr.length;
+ historyEmptyEl.hidden = arr.length > 0;
+ historyListEl.innerHTML = '';
+ arr.forEach(e => {
+ const item = document.createElement('div');
+ item.className = 'rail-history-item';
+ item.dataset.id = e.id;
+
+ const row = document.createElement('button');
+ row.type = 'button';
+ row.className = 'rail-history-row';
+ row.setAttribute('aria-expanded', 'false');
+
+ const status = document.createElement('span');
+ status.className = 'rail-history-status ' + (e.statusClass || 'is-2xx');
+ status.textContent = e.status;
+
+ const ep = document.createElement('span');
+ ep.className = 'rail-history-endpoint';
+ ep.textContent = e.endpoint;
+
+ const time = document.createElement('span');
+ time.className = 'rail-history-time';
+ time.textContent = relTime(e.ts);
+
+ const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+ chev.setAttribute('class', 'rail-history-chev');
+ chev.setAttribute('width', '11');
+ chev.setAttribute('height', '11');
+ chev.setAttribute('viewBox', '0 0 24 24');
+ chev.setAttribute('fill', 'none');
+ chev.setAttribute('stroke', 'currentColor');
+ chev.setAttribute('stroke-width', '2.5');
+ chev.setAttribute('stroke-linecap', 'round');
+ chev.setAttribute('stroke-linejoin', 'round');
+ chev.setAttribute('aria-hidden', 'true');
+ const path = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+ path.setAttribute('points', '6 9 12 15 18 9');
+ chev.appendChild(path);
+
+ row.appendChild(status);
+ row.appendChild(ep);
+ row.appendChild(time);
+ row.appendChild(chev);
+
+ const detail = document.createElement('div');
+ detail.className = 'rail-history-detail';
+ detail.hidden = true;
+
+ const reqH = document.createElement('div');
+ reqH.className = 'rail-history-section-h';
+ reqH.textContent = (e.method || 'POST') + ' ' + e.endpoint;
+ const reqBody = document.createElement('pre');
+ reqBody.className = 'rail-history-body';
+ reqBody.textContent = e.payload || '(no payload)';
+
+ const respH = document.createElement('div');
+ respH.className = 'rail-history-section-h';
+ respH.textContent = 'Response · ' + (e.timeMs >= 0 ? e.timeMs : 0) + ' ms';
+ const respBody = document.createElement('pre');
+ respBody.className = 'rail-history-body';
+ respBody.textContent = e.bodyText || '(empty)';
+
+ const actions = document.createElement('div');
+ actions.className = 'rail-history-actions';
+ const reuse = document.createElement('button');
+ reuse.type = 'button';
+ reuse.className = 'rail-history-reuse';
+ reuse.textContent = 'Reuse this payload';
+ reuse.addEventListener('click', ev => {
+ ev.stopPropagation();
+ if (!payloadEl) return;
+ payloadEl.value = e.payload || '';
+ isDirty = true;
+ // Also point the rail at the same endpoint if possible
+ const cfgEntry = Object.entries(PAYLOAD_MAP).find(([, c]) => c.endpoint === e.endpoint);
+ if (cfgEntry) {
+ currentSectionId = cfgEntry[0];
+ currentEndpoint = e.endpoint;
+ currentMethod = e.method || 'POST';
+ if (titleEl) titleEl.textContent = cfgEntry[1].title;
+ if (subEl) subEl.textContent = cfgEntry[1].sub || '';
+ if (methodEl) methodEl.textContent = currentMethod;
+ if (endpointEl) endpointEl.textContent = currentEndpoint;
+ if (testerEl) testerEl.hidden = false;
+ if (emptyEl) emptyEl.hidden = true;
+ }
+ payloadEl.focus();
+ payloadEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+ });
+ actions.appendChild(reuse);
+
+ detail.appendChild(reqH);
+ detail.appendChild(reqBody);
+ detail.appendChild(respH);
+ detail.appendChild(respBody);
+ detail.appendChild(actions);
+
+ row.addEventListener('click', () => {
+ const open = item.classList.toggle('is-open');
+ row.setAttribute('aria-expanded', String(open));
+ detail.hidden = !open;
+ });
+
+ item.appendChild(row);
+ item.appendChild(detail);
+ historyListEl.appendChild(item);
+ });
+ }
+ function clearHistory(){
+ try { sessionStorage.removeItem(HISTORY_KEY); } catch(_){}
+ renderHistory();
+ }
+ if (historyClearBtn) {
+ historyClearBtn.addEventListener('click', () => {
+ if (getHistory().length === 0) return;
+ if (confirm('Clear all recent runs?')) clearHistory();
+ });
+ }
+
  // Re-evaluate Send button state when API key is typed/cleared.
  if (apiKeyInput) {
  apiKeyInput.addEventListener('input', () => setKeyWarning());
@@ -2593,22 +2792,45 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  bodyText = '[Response body could not be read]';
  }
  const cls = res.status < 300 ? 'is-2xx' : res.status < 500 ? 'is-4xx' : 'is-5xx';
+ const statusLabel = res.status + ' ' + (res.statusText || '');
  showResponse({
- status: res.status + ' ' + (res.statusText || ''),
+ status: statusLabel,
  statusClass: cls,
  bodyText,
  timeMs: dt
  });
+ addHistoryEntry({
+ endpoint: currentEndpoint,
+ method: currentMethod,
+ payload: payloadEl.value,
+ status: statusLabel,
+ statusClass: cls,
+ bodyText,
+ timeMs: dt,
+ ts: Date.now()
+ });
  } catch (err) {
  const dt = Math.round(performance.now() - t0);
  const isCors = err && err.name === 'TypeError';
- showResponse({
- status: isCors ? 'Blocked (CORS / network)' : 'Error',
- statusClass: 'is-error',
- bodyText: isCors
+ const statusLabel = isCors ? 'Blocked (CORS / network)' : 'Error';
+ const bodyText = isCors
  ? "The browser blocked this request before it reached the server. This origin may not be in the API's CORS allowlist yet — use Copy cURL and run from your terminal in the meantime."
- : (err && err.message) || String(err),
+ : (err && err.message) || String(err);
+ showResponse({
+ status: statusLabel,
+ statusClass: 'is-error',
+ bodyText,
  timeMs: dt
+ });
+ addHistoryEntry({
+ endpoint: currentEndpoint,
+ method: currentMethod,
+ payload: payloadEl.value,
+ status: statusLabel,
+ statusClass: 'is-error',
+ bodyText,
+ timeMs: dt,
+ ts: Date.now()
  });
  } finally {
  sendBtn.disabled = !getApiKey();
@@ -2653,6 +2875,7 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  });
 
  setKeyWarning();
+ renderHistory();
 })();
 </script>
 
