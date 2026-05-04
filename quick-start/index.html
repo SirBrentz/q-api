@@ -1110,12 +1110,10 @@ function canContinue(){
  if(step===1){
  if(useCases.size===0) return false;
  const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
- // When both rx + urgent are picked, fulfillment is auto-derived (both partner
- // and custom) and the question is hidden, so no validation needed.
- if(isRx&&isUrg) return true;
- // Urgent Care must route to a custom (retail) pharmacy.
- if(isUrg && !pharmacy.has('custom')) return false;
- // Rx-only requires at least one fulfillment type.
+ // Urgent Care auto-includes custom pharmacy in the plan output, so no
+ // validation is needed when Urgent is selected (alone or with anything else).
+ if(isUrg) return true;
+ // Rx-only requires the user to pick at least one fulfillment type.
  if(isRx && pharmacy.size===0) return false;
  return true;
  }
@@ -1198,20 +1196,33 @@ function pickSingle(group,el){
 }
 
 // Effective pharmacy set used by every downstream consumer (plan render,
-// payload generation, endpoint list). When the user picks BOTH rx + urgent
-// at step 1, the fulfillment question is hidden and we auto-derive both
-// fulfillment types here — partner covers Rx, custom covers Urgent Care.
+// payload generation, endpoint list).
+// - Rx + Urgent both selected: auto-derives {partner, custom}.
+// - Urgent selected (alone or with GFE): auto-derives {custom} since
+//   Urgent Care always routes to a retail pharmacy. The user's explicit
+//   selections in `pharmacy` are merged in so they can additionally tick
+//   partner if they want — but they aren't required to.
+// - Rx only: returns the user's explicit selections.
 function getPharmacy(){
- if(useCases.has('rx')&&useCases.has('urgent')) return new Set(['partner','custom']);
+ const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
+ if(isRx&&isUrg) return new Set(['partner','custom']);
+ if(isUrg){
+   const set=new Set(pharmacy);
+   set.add('custom');
+   return set;
+ }
  return pharmacy;
 }
 
 function updateRxSection(){
  const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
  const need=isRx||isUrg;
- const both=isRx&&isUrg;
+ // Fulfillment question only matters for Rx-only flows. Urgent always
+ // auto-uses custom retail pharmacy, so the question is redundant whenever
+ // Urgent is selected (alone, with GFE, or alongside Rx).
+ const showFulfillment=isRx&&!isUrg;
  $('rx-section').classList.toggle('hidden',!need);
- $('pharmacy-block').classList.toggle('hidden',!need||both);
+ $('pharmacy-block').classList.toggle('hidden',!showFulfillment);
  $('req-uc').style.display=isUrg?'':'none';
  if(!need){
    pharmacy.clear();
@@ -1281,12 +1292,16 @@ function buildResult(){
  const examIds=getExamIds();
  const stateArr=Array.from(states).sort();
 
- // Effective pharmacy set (auto-derives both when rx + urgent both selected)
+ // Effective pharmacy set (auto-derives based on use cases — see getPharmacy)
  const ph=getPharmacy();
+ // When the user lets the provider pick the pharmacy/dosage at consultation
+ // time, the partner-pharmacy discovery endpoints aren't needed at integration
+ // time — the provider drives the choice instead of the caller.
+ const skipPartnerDiscovery = providerOverride === 'yes';
 
  // Endpoints to call
  const eps=new Set();
- if(ph.has('partner')){eps.add('partner_pharmacy_list');eps.add('partner_pharmacy_treatment_packages');}
+ if(ph.has('partner') && !skipPartnerDiscovery){eps.add('partner_pharmacy_list');eps.add('partner_pharmacy_treatment_packages');}
  if(ph.has('custom')){eps.add('custom_pharmacy_search');}
  if(opts.prefill){eps.add('exam_questions');eps.add('exam_submit_answers');}
  if(opts.attach){eps.add('exam_upload_attachment');}
@@ -1319,12 +1334,13 @@ function buildResult(){
  else if(opts.prefill) recipeAnchor='recipe-prefill';
  else if(invite==='custom') recipeAnchor='recipe-custom-invite';
 
- // Sample payload (lives in production; "test" routing comes from tele_state="TE" + Test Approve).
- // A single /exam_invite call uses ONE pharmacy flow — when the user picked both, the sample
- // shows the partner-pharmacy fields (the primary Rx flow); custom-pharmacy invites use the
- // alternate field set documented in the docs and called out in the plan summary.
+ // Sample /exam_invite payload(s). When the user has both partner + custom in
+ // the effective pharmacy set, we render TWO payloads — one per fulfillment
+ // flow — so the dev gets a copy-paste sample for each invite type.
+ // (test routing comes from tele_state="TE" + the magic patient name).
  const teleState = 'TE';
- const payload = {
+ function buildInvitePayload(kind){
+ const p = {
  api_key: 'YOUR_API_KEY',
  exams: examIds.length ? examIds.map(x=>parseInt(x,10)||x) : ['YOUR_EXAM_ID'],
  first_name: 'Test',
@@ -1335,18 +1351,37 @@ function buildResult(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if(ph.has('partner')){payload.pharmacy_id='PHARMACY_ID';payload.order_set_id='PACKAGE_ID';}
- else if(ph.has('custom')){payload.custom_pharmacy=1;payload.ncpdpid='PHARMACY_NCPDPID';payload.pharmacy_name='Pharmacy Name';payload.pharmacy_state=teleState;}
- if(needsRx && providerOverride==='yes') payload.provider_pos_selection=3;
+ // Skip pharmacy_id/order_set_id when the provider is picking — discovery
+ // endpoints are dropped, so the caller has no IDs to pass.
+ if(kind === 'partner' && !skipPartnerDiscovery){
+ p.pharmacy_id='PHARMACY_ID';
+ p.order_set_id='PACKAGE_ID';
+ }
+ if(kind === 'custom'){
+ p.custom_pharmacy=1;
+ p.ncpdpid='PHARMACY_NCPDPID';
+ p.pharmacy_name='Pharmacy Name';
+ p.pharmacy_state=teleState;
+ }
+ if(needsRx && providerOverride==='yes') p.provider_pos_selection=3;
  if(opts.redirect){
- payload.redirect_approve='https://yoursite.com/cleared';
- payload.redirect_reject='https://yoursite.com/rejected';
- payload.redirect_na='https://yoursite.com/technical_problem';
- payload.redirect_missed='https://yoursite.com/missed_exam';
+ p.redirect_approve='https://yoursite.com/cleared';
+ p.redirect_reject='https://yoursite.com/rejected';
+ p.redirect_na='https://yoursite.com/technical_problem';
+ p.redirect_missed='https://yoursite.com/missed_exam';
+ }
+ return p;
  }
 
- const payloadStr = JSON.stringify(payload, null, 2);
- const curlSample = `curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${payloadStr}'`;
+ const payloadKinds=[];
+ if(ph.has('partner')) payloadKinds.push('partner');
+ if(ph.has('custom')) payloadKinds.push('custom');
+ if(payloadKinds.length===0) payloadKinds.push('plain');
+ const payloads=payloadKinds.map(buildInvitePayload);
+ const curls=payloads.map(p=>`curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(p, null, 2)}'`);
+ // Backwards-compat: single payload + curl for any caller that still expects them
+ const payload = payloads[0];
+ const curlSample = curls[0];
 
  // Portal checklist
  const portal=[
@@ -1369,10 +1404,12 @@ function buildResult(){
  else stateSum=`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3})`;
 
  // Email body
- const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payload, opts, overrideLabel);
+ const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payloads, payloadKinds, opts, overrideLabel);
 
- // Section numbering — pre-step-3 cards expand the count when partner pharmacy is selected
- const showPharmacyDiscovery = ph.has('partner');
+ // Section numbering — pre-step-3 cards expand the count when partner pharmacy is selected.
+ // Skip the discovery sections entirely if the provider is picking pharmacy/dosage at
+ // consultation time (no point pre-fetching IDs the caller won't use).
+ const showPharmacyDiscovery = ph.has('partner') && !skipPartnerDiscovery;
  let n = 0;
  const num = () => ++n;
  const portalN = num();         // 1
@@ -1457,14 +1494,19 @@ function buildResult(){
 
  <div class="rs">
  <div class="rs-h"><div class="rs-num">${sampleCallN}</div><h3 class="rs-t">Send the patient invite</h3></div>
- <p class="rs-d">Production-ready <code>/exam_invite</code>. The patient name <code>Test Approve</code> tells the provider to auto-approve your test &mdash; swap in real patient details when you go live.</p>
- <div class="codeblock">
+ <p class="rs-d">Production-ready <code>/exam_invite</code>. The patient name <code>Test Approve</code> tells the provider to auto-approve your test &mdash; swap in real patient details when you go live.${curls.length>1?' Two payloads below: one per fulfillment flow.':''}</p>
+ ${curls.map((c,i)=>{
+ const k=payloadKinds[i];
+ const headerLabel = k==='partner' ? ' &middot; Partner pharmacy' : k==='custom' ? ' &middot; Custom pharmacy' : '';
+ const subHead = curls.length>1 ? `<p class="rs-d" style="margin-top:14px;margin-bottom:6px"><strong>${k==='partner' ? 'For partner-pharmacy invites:' : k==='custom' ? 'For custom-pharmacy invites:' : ''}</strong></p>` : '';
+ return `${subHead}<div class="codeblock">
  <div class="codeblock-head">
- <div class="codeblock-meta"><span class="method-pill">POST</span><span>api.qualiphy.me/api/exam_invite</span></div>
- <button class="copy-btn" onclick="copyCurl(this)">Copy</button>
+ <div class="codeblock-meta"><span class="method-pill">POST</span><span>api.qualiphy.me/api/exam_invite${headerLabel}</span></div>
+ <button class="copy-btn" data-curl-idx="${i}" onclick="copyCurl(this)">Copy</button>
  </div>
- <div class="codeblock-body" id="curl-body">${esc(curlSample)}</div>
- </div>
+ <div class="codeblock-body">${esc(c)}</div>
+ </div>`;
+ }).join('')}
  <div class="cb cb-warn" style="margin-top:14px;margin-bottom:0">
  <div class="cb-icon">!</div>
  <div class="cb-body">Use the <strong>patient's</strong> state in <code>tele_state</code>, not your clinic's. <a href="../#states">Why this matters &rarr;</a></div>
@@ -1499,6 +1541,8 @@ function buildResult(){
  // Stash the email body for copy-plan
  window._planText = planText;
  window._curlText = curlSample;
+ window._curlTexts = curls;
+ window._payloadKinds = payloadKinds;
 }
 
 function renderSamplePair(name){
@@ -1564,10 +1608,10 @@ function recipeName(a){
  })[a]||'Recipes';
 }
 
-function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payload,opts,overrideLabel){
+function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payloads,payloadKinds,opts,overrideLabel){
  const stateSum=stateArr.length===0?'Not yet selected':(stateArr.length===US_STATES.length?'All 49 supported jurisdictions':(stateArr.length<=6?stateArr.join(', '):`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3} more)`));
  const needsRx = useCases.has('rx')||useCases.has('urgent');
- const showPharmacyDiscovery = getPharmacy().has('partner');
+ const showPharmacyDiscovery = getPharmacy().has('partner') && providerOverride !== 'yes';
 
  const epList=Array.from(eps).map(e=>` - /${e}`).join('\n');
 
@@ -1632,11 +1676,16 @@ ${sampleSection(s3,'Find your exam IDs','exam_list')}${showPharmacyDiscovery?sam
 ${s6}. SEND THE PATIENT INVITE
 ============================================================
 Patient name "Test Approve" tells the provider to auto-approve
-your test. Swap in real patient details when going live.
+your test. Swap in real patient details when going live.${payloads.length>1?'\nTwo payloads below — one per fulfillment flow.':''}
 
-curl -X POST https://api.qualiphy.me/api/exam_invite \\
- -H "Content-Type: application/json" \\
- -d '${JSON.stringify(payload,null,2)}'
+${payloads.map((p,i)=>{
+ const k=payloadKinds[i];
+ const head=payloads.length>1
+ ? (k==='partner'?'--- For partner-pharmacy invites ---':k==='custom'?'--- For custom-pharmacy invites ---':'')
+ : '';
+ const body=`curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(p,null,2)}'`;
+ return head ? `${head}\n${body}` : body;
+}).join('\n\n')}
 
 IMPORTANT: tele_state must be the PATIENT's state, not the
 clinic's. This is the #1 most common integration bug.
@@ -1685,7 +1734,9 @@ https://docs.qualiphy.me/quick-start/`;
 function needsRxBool(){return useCases.has('rx')||useCases.has('urgent');}
 
 function copyCurl(btn){
- navigator.clipboard.writeText(window._curlText||'').then(()=>{
+ const idx = btn.dataset.curlIdx !== undefined ? parseInt(btn.dataset.curlIdx, 10) : 0;
+ const text = (window._curlTexts && window._curlTexts[idx]) || window._curlText || '';
+ navigator.clipboard.writeText(text).then(()=>{
  const o=btn.textContent;btn.textContent='Copied!';btn.classList.add('copied');
  setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied');},1600);
  });
@@ -1901,15 +1952,20 @@ function downloadPdf(){
  const overrideLabel = needsRx ? (providerOverride === 'yes' ? 'Provider can override' : 'Follow my settings') : 'N/A';
  const stateSum = stateArr.length === 0 ? 'Not yet selected' : (stateArr.length === US_STATES.length ? 'All 49 supported jurisdictions' : (stateArr.length <= 6 ? stateArr.join(', ') : `${stateArr.length} states (${stateArr.slice(0, 3).join(', ')}, +${stateArr.length - 3} more)`));
 
+ // When the user lets the provider pick at consultation time, drop the
+ // partner-pharmacy discovery endpoints — the caller doesn't need pharmacy_id
+ // or order_set_id pre-fetched.
+ const skipPartnerDiscovery = providerOverride === 'yes';
+
  // Endpoints used
  const eps = new Set();
- if (ph.has('partner')) { eps.add('partner_pharmacy_list'); eps.add('partner_pharmacy_treatment_packages'); }
+ if (ph.has('partner') && !skipPartnerDiscovery) { eps.add('partner_pharmacy_list'); eps.add('partner_pharmacy_treatment_packages'); }
  if (ph.has('custom')) eps.add('custom_pharmacy_search');
  if (opts.prefill) { eps.add('exam_questions'); eps.add('exam_submit_answers'); }
  if (opts.attach) eps.add('exam_upload_attachment');
  eps.add('exam_invite');
 
- const showPharmacyDiscovery = ph.has('partner');
+ const showPharmacyDiscovery = ph.has('partner') && !skipPartnerDiscovery;
 
  // Section numbering
  let n = 0; const num = () => ++n;
@@ -2005,12 +2061,16 @@ function downloadPdf(){
 
  // ===== Send the patient invite =====
  sectionHeader('Send the patient invite', sampleCallN);
- text('Production-ready /exam_invite. The patient name "Test Approve" tells the provider to auto-approve your test. Swap in real patient details when going live.', { size: 10, color: C.mid });
+ const inviteIntro = 'Production-ready /exam_invite. The patient name "Test Approve" tells the provider to auto-approve your test. Swap in real patient details when going live.';
+ text(inviteIntro, { size: 10, color: C.mid });
  space(4);
 
- // Build the same payload the on-screen sample shows
+ // Build a payload per fulfillment flow (partner / custom / plain). When the
+ // user picked both partner + custom, we render TWO codeblocks so the dev
+ // gets a copy-paste sample for each invite type.
  const teleState = 'TE';
- const payload = {
+ const buildPdfPayload = (kind) => {
+ const p = {
  api_key: 'YOUR_API_KEY',
  exams: examIds.length ? examIds.map(x => parseInt(x, 10) || x) : ['YOUR_EXAM_ID'],
  first_name: 'Test',
@@ -2021,18 +2081,38 @@ function downloadPdf(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if (ph.has('partner')) { payload.pharmacy_id = 'PHARMACY_ID'; payload.order_set_id = 'PACKAGE_ID'; }
- else if (ph.has('custom')) { payload.custom_pharmacy = 1; payload.ncpdpid = 'PHARMACY_NCPDPID'; payload.pharmacy_name = 'Pharmacy Name'; payload.pharmacy_state = teleState; }
- if (needsRx && providerOverride === 'yes') payload.provider_pos_selection = 3;
+ if (kind === 'partner' && !skipPartnerDiscovery) { p.pharmacy_id = 'PHARMACY_ID'; p.order_set_id = 'PACKAGE_ID'; }
+ if (kind === 'custom') { p.custom_pharmacy = 1; p.ncpdpid = 'PHARMACY_NCPDPID'; p.pharmacy_name = 'Pharmacy Name'; p.pharmacy_state = teleState; }
+ if (needsRx && providerOverride === 'yes') p.provider_pos_selection = 3;
  if (opts.redirect) {
- payload.redirect_approve = 'https://yoursite.com/cleared';
- payload.redirect_reject = 'https://yoursite.com/rejected';
- payload.redirect_na = 'https://yoursite.com/technical_problem';
- payload.redirect_missed = 'https://yoursite.com/missed_exam';
+ p.redirect_approve = 'https://yoursite.com/cleared';
+ p.redirect_reject = 'https://yoursite.com/rejected';
+ p.redirect_na = 'https://yoursite.com/technical_problem';
+ p.redirect_missed = 'https://yoursite.com/missed_exam';
  }
- const curl = `curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(payload, null, 2)}'`;
+ return p;
+ };
+ const pdfKinds = [];
+ if (ph.has('partner')) pdfKinds.push('partner');
+ if (ph.has('custom')) pdfKinds.push('custom');
+ if (pdfKinds.length === 0) pdfKinds.push('plain');
 
- codeBlock(curl, 'POST api.qualiphy.me/api/exam_invite');
+ pdfKinds.forEach((kind, i) => {
+ if (pdfKinds.length > 1) {
+ const sub = kind === 'partner' ? 'For partner-pharmacy invites:' : kind === 'custom' ? 'For custom-pharmacy invites:' : '';
+ if (sub) {
+ if (i > 0) space(4);
+ text(sub, { size: 10, color: C.ink, style: 'bold' });
+ space(2);
+ }
+ }
+ const payload = buildPdfPayload(kind);
+ const labelSuffix = pdfKinds.length > 1
+ ? (kind === 'partner' ? ' (partner pharmacy)' : kind === 'custom' ? ' (custom pharmacy)' : '')
+ : '';
+ const curl = `curl -X POST https://api.qualiphy.me/api/exam_invite \\\n -H "Content-Type: application/json" \\\n -d '${JSON.stringify(payload, null, 2)}'`;
+ codeBlock(curl, `POST api.qualiphy.me/api/exam_invite${labelSuffix}`);
+ });
  callout('Important: tele_state must be the PATIENT\'s state, not your clinic\'s. This is the most common integration bug.', 'warn');
 
  // ===== Test before going live =====

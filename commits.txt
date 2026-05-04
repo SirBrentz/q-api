@@ -1,6 +1,35 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Quick Start: tighter fulfillment + provider-override behaviour
+              · Urgent Care now auto-includes "custom pharmacy" in the
+                effective pharmacy set everywhere (endpoint list, payload,
+                discovery sections, recipe match) without requiring the
+                user to tick the box.
+              · Fulfillment question is now hidden whenever Urgent is
+                selected (alone or alongside anything) — the answer is
+                settled, no need to ask. Only Rx-only flows still show
+                the question.
+              · canContinue: Urgent never blocks step 1 anymore (custom
+                is always derived). Rx-only still requires at least one
+                fulfillment tick.
+              · "Let the provider decide" now drops the partner-pharmacy
+                discovery endpoints (partner_pharmacy_list and
+                partner_pharmacy_treatment_packages) from the plan,
+                hides the "Find your pharmacy IDs" and "Find your
+                order_set_ids" sections, and omits pharmacy_id /
+                order_set_id from the partner-pharmacy payload — the
+                provider picks both at consultation, so pre-fetching them
+                is dead work.
+              · "Send the patient invite" section now renders TWO sample
+                payloads when both partner and custom are in the
+                effective set (sub-headed "For partner-pharmacy invites:"
+                / "For custom-pharmacy invites:"). Applies to the
+                on-screen plan, the email body, and the PDF.
+              · Per-codeblock Copy buttons now know which curl they're
+                copying via data-curl-idx; copyCurl() reads from a curls
+                array stashed on window.
+
 2026-05-04 — Quick Start: pharmacy fulfillment is now multi-select (and
               auto-derived when rx + urgent are both picked)
               · Step 1 "How should treatments be fulfilled?" was a forced
