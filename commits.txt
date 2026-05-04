@@ -1,6 +1,28 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Round of copy edits from internal feedback
+              · Walkthrough intro: drop the "5 minutes if you already have an
+                API key" line.
+              · Walkthrough provider-review timing: clarify that 2-24 hours
+                applies to test exams; real exams process within seconds.
+              · Walkthrough wrap-up cb: tag it as the "standard GFE
+                integration loop" and point readers to scroll down for RX
+                and whitelabeling settings.
+              · Authentication callout: drop "rotate it if it leaks" from
+                the API-key security note.
+              · Authentication "Where to find your key": drop the "or
+                generate a new one" option and remove the entire Rotating
+                keys subsection (no longer surfaced as a self-serve flow).
+              · Testing intro: add caveat that prescriptions still cost
+                money in test mode if you actually want them filled.
+              · Testing async callout: tell readers they can ping their
+                Qualiphy rep to expedite a stuck test exam.
+              · /exam_invite preset block: rename "Four official presets"
+                → "Four possible scenarios" and rewrite each row with
+                pricing/fulfillment specifics ($27.99 GFE flat fee, $49.99
+                Urgent Care, partner-pharmacy shipping-only note, etc.).
+
 2026-05-04 — Right-rail Try Now wired to every outbound API reference
               Previously only /exam_list, /exam_invite, and /exam_invite_cancel
               loaded a sample request when scrolled into. /exam_invite_cancel

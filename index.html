@@ -721,7 +721,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 
 <section class="docs-section" id="walkthrough">
  <h2>Code walkthrough</h2>
- <p>The fastest path from zero to a successfully approved exam. About 5 minutes if you already have an API key.</p>
+ <p>The fastest path from zero to a successfully approved exam.</p>
 
  <div class="cb cb-info">
  <div class="cb-icon">i</div>
@@ -835,11 +835,11 @@ const exams = await res.json();</div></div>
  </div>
 
  <h3>4. Wait for the webhook</h3>
- <p>A licensed provider reviews the patient and approves in 2-24 hours (weekdays). When approved, your <code>webhook_url</code> receives a POST with the result payload. See <a href="#ep-exam-webhook">webhook reference</a> for the schema.</p>
+ <p>A licensed provider reviews the patient and approves in 2-24 hours (for test exams; real exams are processed within seconds). When approved, your <code>webhook_url</code> receives a POST with the result payload. See <a href="#ep-exam-webhook">webhook reference</a> for the schema.</p>
 
  <div class="cb cb-success">
  <div class="cb-icon">✓</div>
- <div class="cb-body"><strong>That's it.</strong> Once your webhook handler logs an approval, you've completed the full integration loop.</div>
+ <div class="cb-body"><strong>That's it.</strong> Once your webhook handler logs an approval, you've completed the full standard GFE integration loop. Scroll down for all RX and whitelabeling settings.</div>
  </div>
 </section>
 
@@ -849,17 +849,14 @@ const exams = await res.json();</div></div>
 
  <div class="cb cb-warn">
  <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Never expose your API key in client-side code.</strong> All API calls should be made from your server. Treat your key like a database password: store it in a secrets manager or environment variable, and rotate it if it leaks.</div>
+ <div class="cb-body"><strong>Never expose your API key in client-side code.</strong> All API calls should be made from your server. Treat your key like a database password: store it in a secrets manager or environment variable.</div>
  </div>
 
  <h3>Where to find your key</h3>
  <ol>
  <li>Sign in to the <a href="https://app.qualiphy.me/app/clinic/settings" target="_blank" rel="noopener">Qualiphy portal Settings</a></li>
- <li>Copy your API key or generate a new one</li>
+ <li>Copy your API key</li>
  </ol>
-
- <h3>Rotating keys</h3>
- <p>You can rotate your API key from the same screen. The new key takes effect immediately. The old key continues to work for a brief grace period so you can update your environment variables without downtime.</p>
 </section>
 
 <!-- ============ TESTING ============ -->
@@ -869,7 +866,7 @@ const exams = await res.json();</div></div>
 
  <div class="cb cb-success">
  <div class="cb-icon">✓</div>
- <div class="cb-body">No real consultations run in test mode. No providers are paged, no patients are contacted, no prescriptions are filled. All <code>/exam_invite</code> samples in this documentation default to test-mode values so you can copy, paste, and run them safely.</div>
+ <div class="cb-body">No real consultations run in test mode. No providers are paged, no patients are contacted, no prescriptions are filled (unless you want them to — in which case you'll have to pay for the medication). All <code>/exam_invite</code> samples in this documentation default to test-mode values so you can copy, paste, and run them safely.</div>
  </div>
 
  <h3>1. Route to the test state</h3>
@@ -901,7 +898,7 @@ const exams = await res.json();</div></div>
 
  <div class="cb cb-warn">
  <div class="cb-icon">!</div>
- <div class="cb-body"><strong>Test exams process asynchronously.</strong> Expect 2–24 hours for a webhook (excluding weekends). Don't block deployments waiting on the response — verify wiring with the immediate <code>/exam_invite</code> 200 response, then poll the webhook log.</div>
+ <div class="cb-body"><strong>Test exams process asynchronously.</strong> Expect 2–24 hours for a webhook (excluding weekends). If you need faster processing, contact your Qualiphy representative and they'll be able to push your exam through sooner. Don't block deployments waiting on the response — verify wiring with the immediate <code>/exam_invite</code> 200 response, then poll the webhook log.</div>
  </div>
 
  <div class="cb cb-info">
@@ -937,13 +934,13 @@ const exams = await res.json();</div></div>
  </div>
  <p>The core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. Most integrations only call this one endpoint.</p>
 
- <h4>Four official presets</h4>
- <p>Qualiphy frames <code>/exam_invite</code> as four named flavors, each with its own field combination. They're all the same endpoint - just different parameter sets:</p>
+ <h4>Four possible scenarios</h4>
+ <p>Qualiphy supports four distinct scenarios through the <code>/exam_invite</code> endpoint, each achieved by passing a specific combination of parameters. While the endpoint remains the same, the parameter sets determine the behavior, as detailed below:</p>
  <div class="param-table">
- <div class="param-row"><div class="param-name">Good Faith Exam &amp; Orders</div><div class="param-desc">Aesthetic GFE for in-clinic procedures. Required: <code>exams</code> + patient identity. No pharmacy fields.</div></div>
- <div class="param-row"><div class="param-name">QualiphyRx Packages</div><div class="param-desc">Rx via partner pharmacy. Adds <code>pharmacy_id</code> and <code>order_set_id</code> for a specific dosage package.</div></div>
- <div class="param-row"><div class="param-name">Urgent Care Visit</div><div class="param-desc">Same-day Rx to a retail pharmacy. Requires custom-pharmacy fields (<code>custom_pharmacy: 1</code>, <code>ncpdpid</code>, <code>pharmacy_*</code> address).</div></div>
- <div class="param-row"><div class="param-name">Choose Your Own Pharmacy</div><div class="param-desc">Patient picks the pharmacy at meeting time. Set <code>custom_pharmacy_patient_choice: 2</code>.</div></div>
+ <div class="param-row"><div class="param-name">Good Faith Exam &amp; Orders</div><div class="param-desc">GFEs for in-clinic procedures or medication clearance only, offered at a flat fee of $27.99 (does not include a prescription). Requires exam selection and patient identity. No pharmacy fields are needed since no prescription is issued.</div></div>
+ <div class="param-row"><div class="param-name">QualiphyRx Packages</div><div class="param-desc">Prescriptions fulfilled through Qualiphy's network of partner pharmacies. This is an all-inclusive option covering the initial consultation, prescription, medication, and shipping (prices vary depending on the medication chosen). After sending the exam invite and completing the consultation, Qualiphy handles prescription routing and provides tracking updates via webhook events. Pickup is not available — shipping only.</div></div>
+ <div class="param-row"><div class="param-name">Urgent Care Visit</div><div class="param-desc">Prescriptions sent to a retail pharmacy for urgent medications, available for pickup or delivery. Priced at $49.99, this includes both the consultation and prescription. Once the prescription is sent, the pharmacy manages fulfillment and notifications — no tracking updates are provided via webhook from Qualiphy.</div></div>
+ <div class="param-row"><div class="param-name">Choose Your Own Pharmacy</div><div class="param-desc">Prescriptions sent to a retail pharmacy selected by you or the patient. Functions similarly to the Urgent Care Visit flow, but supports a broader range of non-emergency medications.</div></div>
  </div>
 
  <h4>Required parameters</h4>
