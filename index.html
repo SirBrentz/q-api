@@ -1354,6 +1354,20 @@ return {"ok": True}
  <span class="endpoint-path">/api/exam_questions</span>
  </div>
  <p>Returns the screening question schema for a given exam ID. Use to build pre-fill UI on your own intake form, or to map your existing intake fields onto the Qualiphy question set.</p>
+
+ <h4>Parameters</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">The exam to fetch questions for. Get the ID from <a href="#ep-exam-list"><code>/exam_list</code></a>.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/exam_questions</span></div><button class="copy-btn" onclick="copyCode(this,'questions-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="questions-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/exam_questions \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_API_KEY","exam_id":4226}'</div></div>
+ </div>
 </section>
 
 <section class="endpoint" id="ep-exam-submit">
@@ -1362,6 +1376,27 @@ return {"ok": True}
  <span class="endpoint-path">/api/exam_submit_answers</span>
  </div>
  <p>Submits answers on behalf of the patient. Pair with <a href="#ep-exam-questions"><code>/exam_questions</code></a> to pre-fill the screening from your own intake data, so patients aren't answering the same questions twice.</p>
+
+ <h4>Parameters</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>patient_exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">From the <code>patient_exams[]</code> array in the original <a href="#ep-exam-invite"><code>/exam_invite</code></a> response.</div></div>
+ <div class="param-row"><div class="param-name"><code>answers</code><div class="param-meta"><span class="param-type">array</span><span class="param-req">Required</span></div></div><div class="param-desc">Array of <code>{ no, question, answer }</code> objects. Numbering should match what <a href="#ep-exam-questions"><code>/exam_questions</code></a> returns for the same exam.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/exam_submit_answers</span></div><button class="copy-btn" onclick="copyCode(this,'submit-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="submit-req"><div class="codeblock-body">{
+  "api_key": "YOUR_API_KEY",
+  "patient_exam_id": 149784,
+  "answers": [
+    { "no": 1, "question": "Are you currently taking any medications?", "answer": "No." },
+    { "no": 2, "question": "Have you had any reactions to anesthesia?", "answer": "No." },
+    { "no": 3, "question": "Are you pregnant or breastfeeding?", "answer": "No." }
+  ]
+}</div></div>
+ </div>
 </section>
 
 <section class="endpoint" id="ep-exam-resend">
@@ -1370,6 +1405,20 @@ return {"ok": True}
  <span class="endpoint-path">/api/exam_invite_resend</span>
  </div>
  <p>Re-sends the invite email and SMS to the patient. Use when a patient says they didn't receive their original invite.</p>
+
+ <h4>Parameters</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>patient_exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">From the <code>patient_exams[]</code> array in the original <a href="#ep-exam-invite"><code>/exam_invite</code></a> response.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/exam_invite_resend</span></div><button class="copy-btn" onclick="copyCode(this,'resend-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="resend-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/exam_invite_resend \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_API_KEY","patient_exam_id":4844}'</div></div>
+ </div>
 </section>
 
 <section class="endpoint" id="ep-exam-cancel">
@@ -1383,6 +1432,14 @@ return {"ok": True}
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>patient_exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">From the <code>patient_exams[]</code> array in the original <a href="#ep-exam-invite"><code>/exam_invite</code></a> response. <strong>Not</strong> the <code>exam_id</code>.</div></div>
  <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ </div>
+
+ <h4>Sample request</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/exam_invite_cancel</span></div><button class="copy-btn" onclick="copyCode(this,'cancel-req')">Copy</button></div>
+ <div class="codeblock-pane active" id="cancel-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/exam_invite_cancel \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_API_KEY","patient_exam_id":4844}'</div></div>
  </div>
 
  <h4>Response</h4>
@@ -2354,7 +2411,13 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
  'recipe-prefill': { title: 'Pre-fill Patient Answers', sub: 'Recipe payload', method: 'POST', endpoint: '/api/exam_submit_answers', source: 'rec-prefill' },
  'ep-exam-list': { title: '/api/exam_list', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_list', source: 'qs1-curl' },
  'ep-exam-invite': { title: '/api/exam_invite', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_invite', source: 'qs2-curl' },
- 'ep-exam-cancel': { title: '/api/exam_invite_cancel', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_invite_cancel', source: null }
+ 'ep-exam-questions': { title: '/api/exam_questions', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_questions', source: 'questions-req' },
+ 'ep-exam-submit': { title: '/api/exam_submit_answers', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_submit_answers', source: 'submit-req' },
+ 'ep-exam-resend': { title: '/api/exam_invite_resend', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_invite_resend', source: 'resend-req' },
+ 'ep-exam-cancel': { title: '/api/exam_invite_cancel', sub: 'Sample request', method: 'POST', endpoint: '/api/exam_invite_cancel', source: 'cancel-req' },
+ 'ep-pharmacy-list': { title: '/api/partner_pharmacy_list', sub: 'Sample request', method: 'POST', endpoint: '/api/partner_pharmacy_list', source: 'pl-req' },
+ 'ep-pharmacy-packages': { title: '/api/partner_pharmacy_treatment_packages', sub: 'Sample request', method: 'POST', endpoint: '/api/partner_pharmacy_treatment_packages', source: 'pp-req' },
+ 'ep-pharmacy-search': { title: '/api/custom_pharmacy_search', sub: 'Sample request', method: 'POST', endpoint: '/api/custom_pharmacy_search', source: 'ps-req' }
  };
 
  let currentSectionId = null;

@@ -1,6 +1,21 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Right-rail Try Now wired to every outbound API reference
+              Previously only /exam_list, /exam_invite, and /exam_invite_cancel
+              loaded a sample request when scrolled into. /exam_invite_cancel
+              had source: null so its rail was empty.
+              Added inline curl request samples (and parameter tables where
+              missing) for /exam_invite_cancel, /exam_invite_resend,
+              /exam_questions, and /exam_submit_answers; pointed PAYLOAD_MAP
+              at those plus the existing pl-req/pp-req/ps-req sources, so
+              all seven sendable endpoints now populate the right rail with
+              an editable, runnable sample.
+              Skipped /api/exam_upload_attachment (multipart, JSON-only rail
+              can't represent it cleanly) and the inbound webhook section
+              (Qualiphy POSTs to your URL — no Try Now target) — those keep
+              their existing inline samples.
+
 2026-05-01 — Plan Intent analytics: track every Quick Start option selection
               Tracker now fires option_selected/option_deselected for use
               cases (gfe/rx/urgent), pharmacy choice, provider override,
