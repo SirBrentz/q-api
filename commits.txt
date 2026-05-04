@@ -1,6 +1,31 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Quick Start: pharmacy fulfillment is now multi-select (and
+              auto-derived when rx + urgent are both picked)
+              · Step 1 "How should treatments be fulfilled?" was a forced
+                single-pick (partner OR custom). Switched to multi-select
+                (oc-multi) so a clinic running Rx and Urgent Care from the
+                same Qualiphy account can tick both fulfillment types.
+              · When the user picks BOTH Rx Treatment and Urgent Care at
+                the use-case step, the fulfillment question now hides
+                entirely — the answer is implicitly "both" (partner for
+                Rx, custom for Urgent), so the question is just noise.
+                getPharmacy() derives {partner, custom} for downstream
+                consumers in that case.
+              · For Rx-only or Urgent-only selections the question stays
+                visible and accepts one or both.
+              · canContinue updated: skip the pharmacy gate when both rx
+                + urgent are selected; require at least one selection
+                otherwise; keep the "Custom required for Urgent Care"
+                rule when Urgent is selected without Rx.
+              · pharmacy state migrated from string to Set; the HTML
+                render, email body, PDF builder, and restart() all read
+                the effective set via getPharmacy(). Sample /exam_invite
+                payload prefers partner-pharmacy fields when both are in
+                play (the primary Rx flow); the plan summary calls out
+                that custom-pharmacy invites use the alternate field set.
+
 2026-05-04 — Right-rail "Recent runs" history
               Each Try Now request (success, 4xx/5xx, or network error) is
               now logged to a Recent runs panel pinned at the bottom of the

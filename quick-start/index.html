@@ -720,20 +720,22 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
 
  <!-- Conditional pharmacy section -->
  <div id="rx-section" class="hidden">
+ <div id="pharmacy-block">
  <div class="section-sep"></div>
  <h2 style="font-size:1.18rem;margin-bottom:6px">How should treatments be fulfilled?</h2>
- <p class="sub">For Rx and Urgent Care exams, choose how the patient gets their medication.</p>
+ <p class="sub">For Rx and Urgent Care exams, choose how the patient gets their medication. Tick all that apply &mdash; you can run both flows from the same Qualiphy account.</p>
 
  <div class="og" id="g-pharmacy">
- <div class="oc" data-v="partner" onclick="pickSingle('pharmacy',this)">
+ <div class="oc oc-multi" data-v="partner" onclick="pickMulti('pharmacy',this)">
  <div class="ot">Qualiphy partner pharmacy <span class="otag otag-rec" id="rec-rx">Recommended for Rx programs</span></div>
  <div class="od">Pre-vetted compounding pharmacies, bundled all-inclusive pricing. Qualiphy ships directly to the patient. Ideal for GLP-1, peptides, hormone therapy.</div>
  <div class="orad"></div>
  </div>
- <div class="oc" data-v="custom" onclick="pickSingle('pharmacy',this)">
+ <div class="oc oc-multi" data-v="custom" onclick="pickMulti('pharmacy',this)">
  <div class="ot">Custom pharmacy (CVS, Walgreens, etc.) <span class="otag otag-req" id="req-uc" style="display:none">Required for Urgent Care</span></div>
  <div class="od">Send the treatment order to a specific retail or compounding pharmacy. Patient picks up or has it shipped. Best when patients have a preferred local pharmacy.</div>
  <div class="orad"></div>
+ </div>
  </div>
  </div>
 
@@ -1047,7 +1049,7 @@ const WEBHOOK_SAMPLES = {
 
 let step=0;
 let useCases=new Set();
-let pharmacy='';
+let pharmacy=new Set();
 let providerOverride='no';
 let invite='qualiphy';
 let states=new Set();
@@ -1107,8 +1109,14 @@ function canContinue(){
  if(step===0) return gv('f-co')&&gv('f-nm')&&gv('f-em');
  if(step===1){
  if(useCases.size===0) return false;
- const needsPharmacy=useCases.has('rx')||useCases.has('urgent');
- if(needsPharmacy && !pharmacy) return false;
+ const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
+ // When both rx + urgent are picked, fulfillment is auto-derived (both partner
+ // and custom) and the question is hidden, so no validation needed.
+ if(isRx&&isUrg) return true;
+ // Urgent Care must route to a custom (retail) pharmacy.
+ if(isUrg && !pharmacy.has('custom')) return false;
+ // Rx-only requires at least one fulfillment type.
+ if(isRx && pharmacy.size===0) return false;
  return true;
  }
  return true;
@@ -1174,23 +1182,39 @@ function pickMulti(group,el){
  el.classList.toggle('sel',useCases.has(v));
  updateRxSection();
  }
+ if(group==='pharmacy'){
+ if(pharmacy.has(v))pharmacy.delete(v); else pharmacy.add(v);
+ el.classList.toggle('sel',pharmacy.has(v));
+ }
  validate();
 }
 function pickSingle(group,el){
  const v=el.dataset.v;
  el.parentElement.querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));
  el.classList.add('sel');
- if(group==='pharmacy') pharmacy=v;
  if(group==='invite') invite=v;
  if(group==='providerOverride') providerOverride=v;
  validate();
 }
+
+// Effective pharmacy set used by every downstream consumer (plan render,
+// payload generation, endpoint list). When the user picks BOTH rx + urgent
+// at step 1, the fulfillment question is hidden and we auto-derive both
+// fulfillment types here — partner covers Rx, custom covers Urgent Care.
+function getPharmacy(){
+ if(useCases.has('rx')&&useCases.has('urgent')) return new Set(['partner','custom']);
+ return pharmacy;
+}
+
 function updateRxSection(){
- const need=useCases.has('rx')||useCases.has('urgent');
+ const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
+ const need=isRx||isUrg;
+ const both=isRx&&isUrg;
  $('rx-section').classList.toggle('hidden',!need);
- $('req-uc').style.display=useCases.has('urgent')?'':'none';
+ $('pharmacy-block').classList.toggle('hidden',!need||both);
+ $('req-uc').style.display=isUrg?'':'none';
  if(!need){
-   pharmacy='';
+   pharmacy.clear();
    providerOverride='no';
    $('g-pharmacy').querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));
    $('g-providerOverride').querySelectorAll('.oc').forEach(c=>c.classList.remove('sel'));
@@ -1257,10 +1281,13 @@ function buildResult(){
  const examIds=getExamIds();
  const stateArr=Array.from(states).sort();
 
+ // Effective pharmacy set (auto-derives both when rx + urgent both selected)
+ const ph=getPharmacy();
+
  // Endpoints to call
  const eps=new Set();
- if(pharmacy==='partner'){eps.add('partner_pharmacy_list');eps.add('partner_pharmacy_treatment_packages');}
- if(pharmacy==='custom'){eps.add('custom_pharmacy_search');}
+ if(ph.has('partner')){eps.add('partner_pharmacy_list');eps.add('partner_pharmacy_treatment_packages');}
+ if(ph.has('custom')){eps.add('custom_pharmacy_search');}
  if(opts.prefill){eps.add('exam_questions');eps.add('exam_submit_answers');}
  if(opts.attach){eps.add('exam_upload_attachment');}
  eps.add('exam_invite');
@@ -1272,20 +1299,30 @@ function buildResult(){
  if(isRx)ucLabels.push('Rx');
  if(isUrg)ucLabels.push('Urgent Care');
 
- const phLabels={partner:'Partner pharmacy',custom:'Custom pharmacy'};
- const phLabel=needsRx?(phLabels[pharmacy]||'Not selected'):'N/A (no Rx)';
+ // Pharmacy label: handles 0, 1, or 2 selections.
+ const phLabel=(()=>{
+ if(!needsRx) return 'N/A (no Rx)';
+ if(ph.size===0) return 'Not selected';
+ const parts=[];
+ if(ph.has('partner')) parts.push('Partner pharmacy');
+ if(ph.has('custom')) parts.push('Custom pharmacy');
+ return parts.join(' + ');
+ })();
 
  const inviteLabel=invite==='qualiphy'?'Qualiphy default (email + SMS)':'Custom (we send our own)';
  const overrideLabel=needsRx?(providerOverride==='yes'?'Provider can override':'Follow my settings'):'N/A';
 
  // Recipe match - which docs recipe is closest?
  let recipeAnchor='recipe-gfe';
- if(isRx && pharmacy==='partner') recipeAnchor='recipe-glp1';
+ if(isRx && ph.has('partner')) recipeAnchor='recipe-glp1';
  else if(isUrg) recipeAnchor='recipe-urgent';
  else if(opts.prefill) recipeAnchor='recipe-prefill';
  else if(invite==='custom') recipeAnchor='recipe-custom-invite';
 
- // Sample payload (lives in production; "test" routing comes from tele_state="TE" + Test Approve)
+ // Sample payload (lives in production; "test" routing comes from tele_state="TE" + Test Approve).
+ // A single /exam_invite call uses ONE pharmacy flow — when the user picked both, the sample
+ // shows the partner-pharmacy fields (the primary Rx flow); custom-pharmacy invites use the
+ // alternate field set documented in the docs and called out in the plan summary.
  const teleState = 'TE';
  const payload = {
  api_key: 'YOUR_API_KEY',
@@ -1298,8 +1335,8 @@ function buildResult(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if(pharmacy==='partner'){payload.pharmacy_id='PHARMACY_ID';payload.order_set_id='PACKAGE_ID';}
- if(pharmacy==='custom'){payload.custom_pharmacy=1;payload.ncpdpid='PHARMACY_NCPDPID';payload.pharmacy_name='Pharmacy Name';payload.pharmacy_state=teleState;}
+ if(ph.has('partner')){payload.pharmacy_id='PHARMACY_ID';payload.order_set_id='PACKAGE_ID';}
+ else if(ph.has('custom')){payload.custom_pharmacy=1;payload.ncpdpid='PHARMACY_NCPDPID';payload.pharmacy_name='Pharmacy Name';payload.pharmacy_state=teleState;}
  if(needsRx && providerOverride==='yes') payload.provider_pos_selection=3;
  if(opts.redirect){
  payload.redirect_approve='https://yoursite.com/cleared';
@@ -1335,7 +1372,7 @@ function buildResult(){
  const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payload, opts, overrideLabel);
 
  // Section numbering — pre-step-3 cards expand the count when partner pharmacy is selected
- const showPharmacyDiscovery = pharmacy === 'partner';
+ const showPharmacyDiscovery = ph.has('partner');
  let n = 0;
  const num = () => ++n;
  const portalN = num();         // 1
@@ -1530,7 +1567,7 @@ function recipeName(a){
 function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payload,opts,overrideLabel){
  const stateSum=stateArr.length===0?'Not yet selected':(stateArr.length===US_STATES.length?'All 49 supported jurisdictions':(stateArr.length<=6?stateArr.join(', '):`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3} more)`));
  const needsRx = useCases.has('rx')||useCases.has('urgent');
- const showPharmacyDiscovery = pharmacy === 'partner';
+ const showPharmacyDiscovery = getPharmacy().has('partner');
 
  const epList=Array.from(eps).map(e=>` - /${e}`).join('\n');
 
@@ -1851,21 +1888,28 @@ function downloadPdf(){
  const examIds = getExamIds();
  const stateArr = Array.from(states).sort();
  const ucLabels = []; if (isGfe) ucLabels.push('GFE'); if (isRx) ucLabels.push('Rx'); if (isUrg) ucLabels.push('Urgent Care');
- const phLabels = { partner: 'Partner pharmacy', custom: 'Custom pharmacy' };
- const phLabel = needsRx ? (phLabels[pharmacy] || 'Not selected') : 'N/A (no Rx)';
+ const ph = getPharmacy();
+ const phLabel = (() => {
+ if (!needsRx) return 'N/A (no Rx)';
+ if (ph.size === 0) return 'Not selected';
+ const parts = [];
+ if (ph.has('partner')) parts.push('Partner pharmacy');
+ if (ph.has('custom')) parts.push('Custom pharmacy');
+ return parts.join(' + ');
+ })();
  const inviteLabel = invite === 'qualiphy' ? 'Qualiphy default (email + SMS)' : 'Custom (we send our own)';
  const overrideLabel = needsRx ? (providerOverride === 'yes' ? 'Provider can override' : 'Follow my settings') : 'N/A';
  const stateSum = stateArr.length === 0 ? 'Not yet selected' : (stateArr.length === US_STATES.length ? 'All 49 supported jurisdictions' : (stateArr.length <= 6 ? stateArr.join(', ') : `${stateArr.length} states (${stateArr.slice(0, 3).join(', ')}, +${stateArr.length - 3} more)`));
 
  // Endpoints used
  const eps = new Set();
- if (pharmacy === 'partner') { eps.add('partner_pharmacy_list'); eps.add('partner_pharmacy_treatment_packages'); }
- if (pharmacy === 'custom') eps.add('custom_pharmacy_search');
+ if (ph.has('partner')) { eps.add('partner_pharmacy_list'); eps.add('partner_pharmacy_treatment_packages'); }
+ if (ph.has('custom')) eps.add('custom_pharmacy_search');
  if (opts.prefill) { eps.add('exam_questions'); eps.add('exam_submit_answers'); }
  if (opts.attach) eps.add('exam_upload_attachment');
  eps.add('exam_invite');
 
- const showPharmacyDiscovery = pharmacy === 'partner';
+ const showPharmacyDiscovery = ph.has('partner');
 
  // Section numbering
  let n = 0; const num = () => ++n;
@@ -1977,8 +2021,8 @@ function downloadPdf(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if (pharmacy === 'partner') { payload.pharmacy_id = 'PHARMACY_ID'; payload.order_set_id = 'PACKAGE_ID'; }
- if (pharmacy === 'custom') { payload.custom_pharmacy = 1; payload.ncpdpid = 'PHARMACY_NCPDPID'; payload.pharmacy_name = 'Pharmacy Name'; payload.pharmacy_state = teleState; }
+ if (ph.has('partner')) { payload.pharmacy_id = 'PHARMACY_ID'; payload.order_set_id = 'PACKAGE_ID'; }
+ else if (ph.has('custom')) { payload.custom_pharmacy = 1; payload.ncpdpid = 'PHARMACY_NCPDPID'; payload.pharmacy_name = 'Pharmacy Name'; payload.pharmacy_state = teleState; }
  if (needsRx && providerOverride === 'yes') payload.provider_pos_selection = 3;
  if (opts.redirect) {
  payload.redirect_approve = 'https://yoursite.com/cleared';
@@ -2037,7 +2081,7 @@ function downloadPdf(){
 }
 
 function restart(){
- step=0;useCases.clear();states.clear();pharmacy='';providerOverride='no';invite='qualiphy';
+ step=0;useCases.clear();states.clear();pharmacy.clear();providerOverride='no';invite='qualiphy';
  opts={prefill:false,attach:false,redirect:false};
  ['f-co','f-nm','f-em','f-wh'].forEach(id=>{const e=$(id);if(e)e.value='';});
  document.querySelectorAll('.oc.sel').forEach(c=>c.classList.remove('sel'));
