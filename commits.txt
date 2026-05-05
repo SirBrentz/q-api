@@ -1,6 +1,33 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-05 — Quick Start: doc-coverage round (additional_data, custom-
+              pharmacy billing/delivery, polish)
+              · New Step 3 toggle: "Round-trip our internal order/customer
+                ID through the webhook". Adds
+                additional_data: "{\"order_id\":\"YOUR_INTERNAL_ORDER_ID\"}"
+                to every /exam_invite sample. Common integration pattern
+                for matching webhook events back to internal records.
+              · Two new sub-toggles under skip-pharmacy-conf (visible only
+                when that's checked):
+                  - "Bill the clinic for custom-pharmacy treatments
+                    (instead of the patient)" → custom_pharmacy_patient_billing:
+                    1, plus a custom_pharmacy_clinic_billing identifier
+                    placeholder. Off by default (patient billed).
+                  - "Custom pharmacy ships to the patient (instead of
+                    in-pharmacy pickup)" → custom_pharmacy_delivery_method:
+                    2. Off by default (pickup).
+              · Test names list now includes "Test N/A" alongside Approve
+                / Reject (and the Rx variants when applicable). Matches
+                the canonical list in the docs Testing section.
+              · Result page now ends with a callout linking the main
+                docs' Going-to-Production checklist (#going-live) for
+                pre-launch validation steps.
+              · Soft warning when the user has both Rx in scope and
+                more than one exam ID listed: "Only one Rx exam can run
+                per meeting." Renders inline near the patient-state
+                warning in the Send-the-patient-invite section.
+
 2026-05-04 — Quick Start: skip-pharmacy-conf and skip-address-conf toggles +
               richer custom-pharmacy plan output (Emma feedback)
               Two new conditional checkboxes in the Step 3 "Any of these

@@ -851,11 +851,35 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
  </div>
  </div>
 
+ <div class="ci" id="ck-additionalData" onclick="toggleCheck(this)">
+ <div class="cbox" aria-hidden="true"></div>
+ <div>
+ <div class="cl">Round-trip our internal order/customer ID through the webhook</div>
+ <div class="cs">Stash a stringified JSON blob in <code>additional_data</code> at invite time and Qualiphy returns it unchanged on every webhook event. Saves a DB lookup when matching results back to your records.</div>
+ </div>
+ </div>
+
  <div class="ci hidden" id="ck-skipPharmacyConf" onclick="toggleCheck(this)">
  <div class="cbox" aria-hidden="true"></div>
  <div>
  <div class="cl">Skip the Qualiphy pharmacy-confirmation screen for custom pharmacy invites</div>
  <div class="cs">By default, Qualiphy asks the patient to confirm their pharmacy on our end. Pick this if your platform already chose the custom pharmacy (or your own UI asks the patient) so they aren't asked again. We'll show you how to look up the right pharmacy via <code>/partner_pharmacy_list</code> + <code>/custom_pharmacy_search</code> and pre-populate every field on <code>/exam_invite</code>.</div>
+ </div>
+ </div>
+
+ <div class="ci hidden" id="ck-clinicBilled" onclick="toggleCheck(this)" style="margin-left:24px">
+ <div class="cbox" aria-hidden="true"></div>
+ <div>
+ <div class="cl">Bill the clinic for custom-pharmacy treatments (instead of the patient)</div>
+ <div class="cs">Sets <code>custom_pharmacy_patient_billing: 1</code> and adds a <code>custom_pharmacy_clinic_billing</code> identifier you'll fill in. Off by default — patient is billed by the pharmacy.</div>
+ </div>
+ </div>
+
+ <div class="ci hidden" id="ck-shipToPatient" onclick="toggleCheck(this)" style="margin-left:24px">
+ <div class="cbox" aria-hidden="true"></div>
+ <div>
+ <div class="cl">Custom pharmacy ships to the patient (instead of in-pharmacy pickup)</div>
+ <div class="cs">Sets <code>custom_pharmacy_delivery_method: 2</code>. Off by default — patient picks up at the pharmacy.</div>
  </div>
  </div>
 
@@ -1069,7 +1093,7 @@ let pharmacy=new Set();
 let providerOverride='no';
 let invite='qualiphy';
 let states=new Set();
-let opts={prefill:false,attach:false,redirect:false,skipPharmacyConf:false,skipAddressConf:false};
+let opts={prefill:false,attach:false,redirect:false,additionalData:false,skipPharmacyConf:false,clinicBilled:false,shipToPatient:false,skipAddressConf:false};
 
 const $=id=>document.getElementById(id);
 const gv=id=>{const e=$(id);return e?e.value.trim():''};
@@ -1290,12 +1314,19 @@ function toggleCheck(el){
  opts.prefill=$('ck-prefill').classList.contains('on');
  opts.attach=$('ck-attach').classList.contains('on');
  opts.redirect=$('ck-redirect').classList.contains('on');
+ opts.additionalData=$('ck-additionalData').classList.contains('on');
  opts.skipPharmacyConf=$('ck-skipPharmacyConf').classList.contains('on');
+ opts.clinicBilled=$('ck-clinicBilled').classList.contains('on');
+ opts.shipToPatient=$('ck-shipToPatient').classList.contains('on');
  opts.skipAddressConf=$('ck-skipAddressConf').classList.contains('on');
+ // Clinic-billed and ship-to-patient sub-toggles only matter when
+ // skipPharmacyConf is on — refresh visibility when it flips.
+ updateStep3Visibility();
 }
 
-// Toggle conditional Step 3 checkboxes based on the upstream selections at
-// Step 1. Called from showStep when entering step 3.
+// Toggle conditional Step 3 checkboxes based on upstream Step 1 selections
+// AND on whether skipPharmacyConf is currently checked. Called from showStep
+// (on entry) and from toggleCheck (on every click).
 function updateStep3Visibility(){
  const ph=getPharmacy();
  const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
@@ -1304,7 +1335,11 @@ function updateStep3Visibility(){
  const showSkipPharmacy = ph.has('custom');
  // Skip-address-conf only applies when there's a medication / address-collecting exam.
  const showSkipAddress = needsRx;
+ // Billing + delivery sub-toggles only matter when skipPharmacyConf is ON
+ // (we only ship those fields on payloads that pre-populate pharmacy details).
+ const showSubPharmacy = showSkipPharmacy && opts.skipPharmacyConf;
  const sp=$('ck-skipPharmacyConf'), sa=$('ck-skipAddressConf');
+ const cb=$('ck-clinicBilled'), st=$('ck-shipToPatient');
  if(sp){
  sp.classList.toggle('hidden', !showSkipPharmacy);
  if(!showSkipPharmacy){ sp.classList.remove('on'); opts.skipPharmacyConf=false; }
@@ -1312,6 +1347,14 @@ function updateStep3Visibility(){
  if(sa){
  sa.classList.toggle('hidden', !showSkipAddress);
  if(!showSkipAddress){ sa.classList.remove('on'); opts.skipAddressConf=false; }
+ }
+ if(cb){
+ cb.classList.toggle('hidden', !showSubPharmacy);
+ if(!showSubPharmacy){ cb.classList.remove('on'); opts.clinicBilled=false; }
+ }
+ if(st){
+ st.classList.toggle('hidden', !showSubPharmacy);
+ if(!showSubPharmacy){ st.classList.remove('on'); opts.shipToPatient=false; }
  }
 }
 
@@ -1443,6 +1486,11 @@ function buildResult(){
  p.pharmacy_type = 'Retail';
  p.skip_pharmacy_confirmation = 2;
  p.custom_pharmacy_patient_choice = 1;
+ // Billing + delivery only ride along when the dev is preselecting the
+ // pharmacy (defaults: patient billed, in-pharmacy pickup).
+ p.custom_pharmacy_patient_billing = opts.clinicBilled ? 1 : 2;
+ if(opts.clinicBilled) p.custom_pharmacy_clinic_billing = 'YOUR_CLINIC_BILLING_ID';
+ p.custom_pharmacy_delivery_method = opts.shipToPatient ? 2 : 1;
  }
  // When skipPharmacyConf is OFF: just custom_pharmacy: 1, no pharmacy
  // details — Qualiphy shows the confirmation screen so the patient picks.
@@ -1458,6 +1506,10 @@ function buildResult(){
  p.redirect_reject='https://yoursite.com/rejected';
  p.redirect_na='https://yoursite.com/technical_problem';
  p.redirect_missed='https://yoursite.com/missed_exam';
+ }
+ // Round-trip an internal order/customer ID through the webhook payload.
+ if(opts.additionalData){
+ p.additional_data = '{"order_id":"YOUR_INTERNAL_ORDER_ID"}';
  }
  return p;
  }
@@ -1617,6 +1669,10 @@ function buildResult(){
  <div class="cb-icon">!</div>
  <div class="cb-body">Use the <strong>patient's</strong> state in <code>tele_state</code>, not your clinic's. <a href="../#states">Why this matters &rarr;</a></div>
  </div>
+ ${needsRx && examIds.length>1?`<div class="cb cb-warn" style="margin-top:10px;margin-bottom:0">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Only one Rx exam can run per meeting.</strong> You've listed ${examIds.length} exam IDs. Stack non-Rx exams freely in a single invite, but split Rx exams into separate <code>/exam_invite</code> calls (one per meeting).</div>
+ </div>`:''}
  </div>
 
  <div class="rs">
@@ -1624,7 +1680,7 @@ function buildResult(){
  <p class="rs-d">Real providers review your test patients. The pipeline is identical to live traffic &mdash; the only difference is the values you send.</p>
  <ul style="margin:8px 0 0;padding-left:0;list-style:none">
  <li class="chk"><div class="chk-box"></div><div>Set <code>tele_state</code> to <code>"TE"</code> in test payloads to route to the test provider pool</div></li>
- <li class="chk"><div class="chk-box"></div><div>Use names that accurately describe the scenario you want the provider to follow: <code>Test Approve</code> / <code>Test Reject</code>${needsRx?' / <code>Test Prescription Approve</code> / <code>Test Prescription Reject</code>':''}</div></li>
+ <li class="chk"><div class="chk-box"></div><div>Use names that accurately describe the scenario you want the provider to follow: <code>Test Approve</code> / <code>Test Reject</code> / <code>Test N/A</code>${needsRx?' / <code>Test Prescription Approve</code> / <code>Test Prescription Reject</code>':''}</div></li>
  <li class="chk"><div class="chk-box"></div><div>Approvals process in 2&ndash;24 hours on weekdays</div></li>
  </ul>
  </div>
@@ -1642,6 +1698,11 @@ function buildResult(){
  <div class="cb-icon">i</div>
  <div class="cb-body"><strong>Closest matching recipe in our docs:</strong> <a href="../#${recipeAnchor}">${recipeName(recipeAnchor)} &rarr;</a> Walks through this exact use case end-to-end.</div>
  </div>`:''}
+
+ <div class="cb cb-info" style="margin-top:14px">
+ <div class="cb-icon">&check;</div>
+ <div class="cb-body"><strong>Before flipping the switch on real patients,</strong> run through the <a href="../#going-live">Going to Production checklist &rarr;</a> Covers idempotency, real-state swap, error monitoring, and the full pre-launch validation list.</div>
+ </div>
  `;
 
  // Stash the email body for copy-plan
@@ -1808,7 +1869,7 @@ clinic's. This is the #1 most common integration bug.
 ${s7}. TEST BEFORE GOING LIVE
 ============================================================
 tele_state:   "TE" (routes to the test provider pool)
-Test names:   Test Approve / Test Reject${needsRx?' / Test Prescription Approve / Test Prescription Reject':''}
+Test names:   Test Approve / Test Reject / Test N/A${needsRx?' / Test Prescription Approve / Test Prescription Reject':''}
 Turnaround:   2-24 hours on weekdays (real providers review)
 
 Use names that accurately describe the scenario you want the
@@ -2251,6 +2312,9 @@ function downloadPdf(){
  p.pharmacy_type = 'Retail';
  p.skip_pharmacy_confirmation = 2;
  p.custom_pharmacy_patient_choice = 1;
+ p.custom_pharmacy_patient_billing = opts.clinicBilled ? 1 : 2;
+ if (opts.clinicBilled) p.custom_pharmacy_clinic_billing = 'YOUR_CLINIC_BILLING_ID';
+ p.custom_pharmacy_delivery_method = opts.shipToPatient ? 2 : 1;
  }
  }
  // Provider override only goes on partner-pharmacy invites — custom
@@ -2263,6 +2327,9 @@ function downloadPdf(){
  p.redirect_reject = 'https://yoursite.com/rejected';
  p.redirect_na = 'https://yoursite.com/technical_problem';
  p.redirect_missed = 'https://yoursite.com/missed_exam';
+ }
+ if (opts.additionalData) {
+ p.additional_data = '{"order_id":"YOUR_INTERNAL_ORDER_ID"}';
  }
  return p;
  };
@@ -2302,7 +2369,7 @@ function downloadPdf(){
  text('Real providers review your test patients. The pipeline is identical to live traffic; only the values you send differ.', { size: 10, color: C.mid });
  space(4);
  checkbox('Set tele_state to "TE" to route to the test provider pool');
- checkbox(`Use names that accurately describe the scenario: Test Approve / Test Reject${needsRx ? ' / Test Prescription Approve / Test Prescription Reject' : ''}`);
+ checkbox(`Use names that accurately describe the scenario: Test Approve / Test Reject / Test N/A${needsRx ? ' / Test Prescription Approve / Test Prescription Reject' : ''}`);
  checkbox('Approvals process in 2-24 hours on weekdays');
 
  // ===== Receiving results =====
@@ -2344,7 +2411,7 @@ function downloadPdf(){
 
 function restart(){
  step=0;useCases.clear();states.clear();pharmacy.clear();providerOverride='no';invite='qualiphy';
- opts={prefill:false,attach:false,redirect:false,skipPharmacyConf:false,skipAddressConf:false};
+ opts={prefill:false,attach:false,redirect:false,additionalData:false,skipPharmacyConf:false,clinicBilled:false,shipToPatient:false,skipAddressConf:false};
  ['f-co','f-nm','f-em','f-wh'].forEach(id=>{const e=$(id);if(e)e.value='';});
  document.querySelectorAll('.oc.sel').forEach(c=>c.classList.remove('sel'));
  document.querySelectorAll('.ci.on').forEach(c=>c.classList.remove('on'));
