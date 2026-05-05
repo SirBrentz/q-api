@@ -1,6 +1,50 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-04 — Quick Start: skip-pharmacy-conf and skip-address-conf toggles +
+              richer custom-pharmacy plan output (Emma feedback)
+              Two new conditional checkboxes in the Step 3 "Any of these
+              sound useful?" panel:
+
+              Skip pharmacy-confirmation (only visible when custom pharmacy
+              is in scope):
+              · OFF (default): the custom-pharmacy /exam_invite sample
+                drops to just custom_pharmacy: 1 — Qualiphy shows the
+                confirmation screen so the patient picks. The
+                /custom_pharmacy_search endpoint disappears from the
+                chips and from the plan.
+              · ON: the dev preselects the pharmacy on their end. Plan
+                grows TWO new steps before "Send the patient invite":
+                  - "Find your pharmacy IDs" (now also surfaces the
+                    "Choose Your Own Pharmacy" entry from
+                    /partner_pharmacy_list) — kicks in even when
+                    "let provider decide" override is on.
+                  - "Look up the custom pharmacy" via
+                    /custom_pharmacy_search.
+                The custom /exam_invite sample now ships pharmacy_id,
+                ncpdpid, pharmacy_name, full pharmacy_address_*, city,
+                state, zip_code, phone, type, plus
+                skip_pharmacy_confirmation: 2 and
+                custom_pharmacy_patient_choice: 1.
+
+              Skip address-confirmation (only visible when there's a
+              medication / address-collecting exam in scope):
+              · ON: ALL exam_invite samples gain address_line_1 / line_2
+                / city / state / zip_code (patient's home address); the
+                partner-pharmacy sample also gains shipping_address_*
+                fields since partner Rx ships to the patient.
+
+              Also dropped per Emma:
+              · provider_pos_selection is now NEVER on a custom-pharmacy
+                sample (only on partner-pharmacy when override = yes).
+              · The OLD custom-pharmacy sample's ncpdpid / pharmacy_name
+                / pharmacy_state defaults are gone unless the user opts
+                into skip-pharmacy-conf.
+
+              All three rendering targets — the on-screen plan, the
+              copy-paste email body, and the PDF — share the same gates,
+              section numbering, and payload shapes.
+
 2026-05-04 — Quick Start: always show both partner + custom invite samples
               for any Rx flow
               · Send-the-patient-invite section now renders both a

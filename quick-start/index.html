@@ -851,6 +851,22 @@ html.theme-ready body, html.theme-ready .nav, html.theme-ready .card, html.theme
  </div>
  </div>
 
+ <div class="ci hidden" id="ck-skipPharmacyConf" onclick="toggleCheck(this)">
+ <div class="cbox" aria-hidden="true"></div>
+ <div>
+ <div class="cl">Skip the Qualiphy pharmacy-confirmation screen for custom pharmacy invites</div>
+ <div class="cs">By default, Qualiphy asks the patient to confirm their pharmacy on our end. Pick this if your platform already chose the custom pharmacy (or your own UI asks the patient) so they aren't asked again. We'll show you how to look up the right pharmacy via <code>/partner_pharmacy_list</code> + <code>/custom_pharmacy_search</code> and pre-populate every field on <code>/exam_invite</code>.</div>
+ </div>
+ </div>
+
+ <div class="ci hidden" id="ck-skipAddressConf" onclick="toggleCheck(this)">
+ <div class="cbox" aria-hidden="true"></div>
+ <div>
+ <div class="cl">Skip the Qualiphy patient-address confirmation screen for medication exams</div>
+ <div class="cs">By default, patients confirm their home (and shipping) address on Qualiphy's screening form. Pick this if you already collect those addresses on your end and want to bypass the screen — we'll add the relevant <code>address_*</code> (and, for partner-pharmacy Rx, <code>shipping_address_*</code>) fields to your <code>/exam_invite</code> payload sample.</div>
+ </div>
+ </div>
+
  <div class="cnav">
  <button class="btn btn-ghost" onclick="goPrev()">&larr; Back</button>
  <button class="btn btn-primary" onclick="goNext()">Generate my plan &rarr;</button>
@@ -1053,7 +1069,7 @@ let pharmacy=new Set();
 let providerOverride='no';
 let invite='qualiphy';
 let states=new Set();
-let opts={prefill:false,attach:false,redirect:false};
+let opts={prefill:false,attach:false,redirect:false,skipPharmacyConf:false,skipAddressConf:false};
 
 const $=id=>document.getElementById(id);
 const gv=id=>{const e=$(id);return e?e.value.trim():''};
@@ -1100,6 +1116,7 @@ function showStep(){
  if(intro) intro.classList.toggle('hidden', step===4);
  if(pbar) pbar.classList.toggle('hidden', step===4);
  if(shell) shell.classList.toggle('is-result', step===4);
+ if(step===3) updateStep3Visibility();
  if(step===4) buildResult();
  renderPbar();
  window.scrollTo({top:0,behavior:'smooth'});
@@ -1268,17 +1285,34 @@ function updateStateCount(){
 
 /* ===== STEP 3 ===== */
 function toggleCheck(el){
- const id=el.id.slice(3);
- opts[id==='attach'?'attach':id==='redirect'?'redirect':'prefill']=!opts[id==='attach'?'attach':id==='redirect'?'redirect':'prefill'];
- const map={prefill:'prefill',attach:'attach',redirect:'redirect'};
- const k=map[id]||id;
- opts[k]=!opts[k];
- // Simpler: derive directly from class
  el.classList.toggle('on');
- // resync from class
+ // Resync opts from class state — single source of truth for each checkbox.
  opts.prefill=$('ck-prefill').classList.contains('on');
  opts.attach=$('ck-attach').classList.contains('on');
  opts.redirect=$('ck-redirect').classList.contains('on');
+ opts.skipPharmacyConf=$('ck-skipPharmacyConf').classList.contains('on');
+ opts.skipAddressConf=$('ck-skipAddressConf').classList.contains('on');
+}
+
+// Toggle conditional Step 3 checkboxes based on the upstream selections at
+// Step 1. Called from showStep when entering step 3.
+function updateStep3Visibility(){
+ const ph=getPharmacy();
+ const isRx=useCases.has('rx'), isUrg=useCases.has('urgent');
+ const needsRx=isRx||isUrg;
+ // Skip-pharmacy-conf only applies to custom-pharmacy flows.
+ const showSkipPharmacy = ph.has('custom');
+ // Skip-address-conf only applies when there's a medication / address-collecting exam.
+ const showSkipAddress = needsRx;
+ const sp=$('ck-skipPharmacyConf'), sa=$('ck-skipAddressConf');
+ if(sp){
+ sp.classList.toggle('hidden', !showSkipPharmacy);
+ if(!showSkipPharmacy){ sp.classList.remove('on'); opts.skipPharmacyConf=false; }
+ }
+ if(sa){
+ sa.classList.toggle('hidden', !showSkipAddress);
+ if(!showSkipAddress){ sa.classList.remove('on'); opts.skipAddressConf=false; }
+ }
 }
 
 /* ===== STEP 4: result ===== */
@@ -1299,10 +1333,25 @@ function buildResult(){
  // time — the provider drives the choice instead of the caller.
  const skipPartnerDiscovery = providerOverride === 'yes';
 
+ // /partner_pharmacy_list serves two purposes:
+ //   1. Looking up partner-pharmacy IDs for QualiphyRx-Packages invites
+ //      (gated on partner being in ph + override = no)
+ //   2. Looking up the "Choose Your Own Pharmacy" entry's ID when the user
+ //      opts to skip the Qualiphy pharmacy-confirmation screen (the dev
+ //      pre-selects everything and ships it on the invite)
+ const needPartnerListForPartner = ph.has('partner') && !skipPartnerDiscovery;
+ const needPartnerListForCustom  = ph.has('custom') && opts.skipPharmacyConf;
+ const showPartnerList = needPartnerListForPartner || needPartnerListForCustom;
+ const showPartnerPackages = needPartnerListForPartner;
+ // /custom_pharmacy_search only when the dev is preselecting the pharmacy
+ // (skip the Qualiphy confirmation screen).
+ const showCustomSearch = ph.has('custom') && opts.skipPharmacyConf;
+
  // Endpoints to call
  const eps=new Set();
- if(ph.has('partner') && !skipPartnerDiscovery){eps.add('partner_pharmacy_list');eps.add('partner_pharmacy_treatment_packages');}
- if(ph.has('custom')){eps.add('custom_pharmacy_search');}
+ if(showPartnerList) eps.add('partner_pharmacy_list');
+ if(showPartnerPackages) eps.add('partner_pharmacy_treatment_packages');
+ if(showCustomSearch) eps.add('custom_pharmacy_search');
  if(opts.prefill){eps.add('exam_questions');eps.add('exam_submit_answers');}
  if(opts.attach){eps.add('exam_upload_attachment');}
  eps.add('exam_invite');
@@ -1351,20 +1400,59 @@ function buildResult(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- // Partner sample always includes pharmacy_id / order_set_id placeholders so
- // the partner-flow shape is clear even when the caller is letting the
- // provider override at consultation (provider_pos_selection: 3 below).
+ // Patient address fields: only added when the user opts to skip the
+ // Qualiphy address-confirmation screen (they're collecting it themselves).
+ if(opts.skipAddressConf){
+ p.address_line_1 = '123 Main St';
+ p.address_line_2 = 'Apt 4B';
+ p.city = 'New York';
+ p.state = 'NY';
+ p.zip_code = '10001';
+ }
+ // Partner-pharmacy sample always shows pharmacy_id / order_set_id
+ // placeholders so the partner-flow shape stays clear, even when the caller
+ // is letting the provider override at consultation time.
  if(kind === 'partner'){
  p.pharmacy_id='PHARMACY_ID';
  p.order_set_id='PACKAGE_ID';
+ // Shipping address is partner-pharmacy-specific (Qualiphy ships meds via
+ // partner). Only shown when address-confirm screen is skipped.
+ if(opts.skipAddressConf){
+ p.shipping_address_line_1 = '123 Main St';
+ p.shipping_address_line_2 = 'Apt 4B';
+ p.shipping_city = 'New York';
+ p.shipping_state = 'NY';
+ p.shipping_zip_code = '10001';
+ }
  }
  if(kind === 'custom'){
- p.custom_pharmacy=1;
- p.ncpdpid='PHARMACY_NCPDPID';
- p.pharmacy_name='Pharmacy Name';
- p.pharmacy_state=teleState;
+ p.custom_pharmacy = 1;
+ if(opts.skipPharmacyConf){
+ // The dev is preselecting a specific custom pharmacy and skipping the
+ // Qualiphy confirmation screen. Full pharmacy details from
+ // /custom_pharmacy_search go on the payload.
+ p.pharmacy_id = 'PHARMACY_ID';
+ p.ncpdpid = '1234567';
+ p.pharmacy_name = 'Pharmacy Name';
+ p.pharmacy_address_line_1 = '123 Main St';
+ p.pharmacy_address_line_2 = 'Apt 4B';
+ p.pharmacy_zip_code = '10001';
+ p.pharmacy_city = 'New York';
+ p.pharmacy_state = 'NY';
+ p.pharmacy_phone = '(999) 999-9999';
+ p.pharmacy_type = 'Retail';
+ p.skip_pharmacy_confirmation = 2;
+ p.custom_pharmacy_patient_choice = 1;
  }
- if(needsRx && providerOverride==='yes') p.provider_pos_selection=3;
+ // When skipPharmacyConf is OFF: just custom_pharmacy: 1, no pharmacy
+ // details — Qualiphy shows the confirmation screen so the patient picks.
+ }
+ // Provider override only applies to partner-pharmacy invites (the only
+ // flow with pre-set pharmacy + dosage IDs the provider could swap).
+ // Custom-pharmacy and plain GFE samples never include provider_pos_selection.
+ if(kind === 'partner' && needsRx && providerOverride === 'yes'){
+ p.provider_pos_selection = 3;
+ }
  if(opts.redirect){
  p.redirect_approve='https://yoursite.com/cleared';
  p.redirect_reject='https://yoursite.com/rejected';
@@ -1417,17 +1505,16 @@ function buildResult(){
  // Email body
  const planText = buildEmailBody(co, nm, ucLabels, phLabel, inviteLabel, examIds, stateArr, wh, eps, payloads, payloadKinds, opts, overrideLabel);
 
- // Section numbering — pre-step-3 cards expand the count when partner pharmacy is selected.
- // Skip the discovery sections entirely if the provider is picking pharmacy/dosage at
- // consultation time (no point pre-fetching IDs the caller won't use).
- const showPharmacyDiscovery = ph.has('partner') && !skipPartnerDiscovery;
+ // Section numbering — slot in optional pharmacy-discovery sections only when
+ // the corresponding endpoint is actually in the plan.
  let n = 0;
  const num = () => ++n;
  const portalN = num();         // 1
  const endpointsN = num();      // 2
  const examListN = num();       // 3
- const pharmacyListN = showPharmacyDiscovery ? num() : null;
- const packagesN = showPharmacyDiscovery ? num() : null;
+ const pharmacyListN = showPartnerList ? num() : null;
+ const packagesN = showPartnerPackages ? num() : null;
+ const customSearchN = showCustomSearch ? num() : null;
  const sampleCallN = num();
  const testN = num();
  const webhookN = num();
@@ -1490,17 +1577,25 @@ function buildResult(){
  ${renderSamplePair('exam_list')}
  </div>
 
- ${showPharmacyDiscovery?`
+ ${showPartnerList?`
  <div class="rs">
  <div class="rs-h"><div class="rs-num">${pharmacyListN}</div><h3 class="rs-t">Find your pharmacy IDs</h3></div>
- <p class="rs-d">Call <code>/partner_pharmacy_list</code> to discover the partner pharmacies your account can route to. Pick the <code>pharmacy_id</code> values you want to use. <em>Skip this step if Qualiphy has already given you the pharmacy ID you need.</em></p>
+ <p class="rs-d">Call <code>/partner_pharmacy_list</code> to list every pharmacy your account can route to.${needPartnerListForPartner?' Pick the <code>pharmacy_id</code> values you want to use for partner-pharmacy invites.':''}${needPartnerListForCustom?' Grab the <code>pharmacy_id</code> for the <strong>"Choose Your Own Pharmacy"</strong> entry — that\'s the one you\'ll pass on custom-pharmacy invites where you preselect the pharmacy on your end.':''} <em>Skip this step if Qualiphy has already given you the IDs you need.</em></p>
  ${renderSamplePair('partner_pharmacy_list')}
- </div>
+ </div>`:''}
 
+ ${showPartnerPackages?`
  <div class="rs">
  <div class="rs-h"><div class="rs-num">${packagesN}</div><h3 class="rs-t">Find your <code>order_set_id</code> for treatment packages</h3></div>
  <p class="rs-d">Call <code>/partner_pharmacy_treatment_packages</code> with the <code>pharmacy_id</code> from the previous step and the <code>exam_id</code> from <code>/exam_list</code>. The <code>order_set_id</code> values returned correspond to specific drug + dosage packages.</p>
  ${renderSamplePair('partner_pharmacy_treatment_packages')}
+ </div>`:''}
+
+ ${showCustomSearch?`
+ <div class="rs">
+ <div class="rs-h"><div class="rs-num">${customSearchN}</div><h3 class="rs-t">Look up the custom pharmacy</h3></div>
+ <p class="rs-d">Call <code>/custom_pharmacy_search</code> to fetch the address, NCPDPID, phone, and pharmacy_type fields for the specific retail pharmacy you've chosen on your end. You'll drop these straight onto the <code>/exam_invite</code> payload below so Qualiphy doesn't ask the patient to confirm again.</p>
+ ${renderSamplePair('custom_pharmacy_search')}
  </div>`:''}
 
  <div class="rs">
@@ -1622,15 +1717,23 @@ function recipeName(a){
 function buildEmailBody(co,nm,ucLabels,phLabel,inviteLabel,examIds,stateArr,wh,eps,payloads,payloadKinds,opts,overrideLabel){
  const stateSum=stateArr.length===0?'Not yet selected':(stateArr.length===US_STATES.length?'All 49 supported jurisdictions':(stateArr.length<=6?stateArr.join(', '):`${stateArr.length} states (${stateArr.slice(0,3).join(', ')}, +${stateArr.length-3} more)`));
  const needsRx = useCases.has('rx')||useCases.has('urgent');
- const showPharmacyDiscovery = getPharmacy().has('partner') && providerOverride !== 'yes';
+ const ph = getPharmacy();
+ const skipPartnerDiscovery = providerOverride === 'yes';
+ const needPartnerListForPartner = ph.has('partner') && !skipPartnerDiscovery;
+ const needPartnerListForCustom = ph.has('custom') && opts.skipPharmacyConf;
+ const showPartnerList = needPartnerListForPartner || needPartnerListForCustom;
+ const showPartnerPackages = needPartnerListForPartner;
+ const showCustomSearch = ph.has('custom') && opts.skipPharmacyConf;
 
  const epList=Array.from(eps).map(e=>` - /${e}`).join('\n');
 
- // Section numbering
+ // Section numbering — slot in optional pharmacy-discovery sections only when
+ // they actually appear in the plan.
  let n=0; const num=()=>++n;
  const s1=num(); const s2=num(); const s3=num();
- const s4=showPharmacyDiscovery?num():null;
- const s5=showPharmacyDiscovery?num():null;
+ const s4=showPartnerList?num():null;
+ const s5=showPartnerPackages?num():null;
+ const s5b=showCustomSearch?num():null;
  const s6=num(); const s7=num(); const s8=num();
 
  const portalLines = [
@@ -1682,7 +1785,7 @@ Full docs at https://docs.qualiphy.me/
 
 ${epList}
  - webhook handler (POST endpoint on YOUR side that Qualiphy will call)
-${sampleSection(s3,'Find your exam IDs','exam_list')}${showPharmacyDiscovery?sampleSection(s4,'Find your pharmacy IDs','partner_pharmacy_list')+sampleSection(s5,'Find your order_set_ids','partner_pharmacy_treatment_packages'):''}
+${sampleSection(s3,'Find your exam IDs','exam_list')}${showPartnerList?sampleSection(s4,'Find your pharmacy IDs (partner_pharmacy_list)','partner_pharmacy_list'):''}${showPartnerPackages?sampleSection(s5,'Find your order_set_ids','partner_pharmacy_treatment_packages'):''}${showCustomSearch?sampleSection(s5b,'Look up the custom pharmacy (custom_pharmacy_search)','custom_pharmacy_search'):''}
 ============================================================
 ${s6}. SEND THE PATIENT INVITE
 ============================================================
@@ -1963,28 +2066,30 @@ function downloadPdf(){
  const overrideLabel = needsRx ? (providerOverride === 'yes' ? 'Provider can override' : 'Follow my settings') : 'N/A';
  const stateSum = stateArr.length === 0 ? 'Not yet selected' : (stateArr.length === US_STATES.length ? 'All 49 supported jurisdictions' : (stateArr.length <= 6 ? stateArr.join(', ') : `${stateArr.length} states (${stateArr.slice(0, 3).join(', ')}, +${stateArr.length - 3} more)`));
 
- // When the user lets the provider pick at consultation time, drop the
- // partner-pharmacy discovery endpoints — the caller doesn't need pharmacy_id
- // or order_set_id pre-fetched.
  const skipPartnerDiscovery = providerOverride === 'yes';
+ const needPartnerListForPartner = ph.has('partner') && !skipPartnerDiscovery;
+ const needPartnerListForCustom = ph.has('custom') && opts.skipPharmacyConf;
+ const showPartnerList = needPartnerListForPartner || needPartnerListForCustom;
+ const showPartnerPackages = needPartnerListForPartner;
+ const showCustomSearch = ph.has('custom') && opts.skipPharmacyConf;
 
  // Endpoints used
  const eps = new Set();
- if (ph.has('partner') && !skipPartnerDiscovery) { eps.add('partner_pharmacy_list'); eps.add('partner_pharmacy_treatment_packages'); }
- if (ph.has('custom')) eps.add('custom_pharmacy_search');
+ if (showPartnerList) eps.add('partner_pharmacy_list');
+ if (showPartnerPackages) eps.add('partner_pharmacy_treatment_packages');
+ if (showCustomSearch) eps.add('custom_pharmacy_search');
  if (opts.prefill) { eps.add('exam_questions'); eps.add('exam_submit_answers'); }
  if (opts.attach) eps.add('exam_upload_attachment');
  eps.add('exam_invite');
-
- const showPharmacyDiscovery = ph.has('partner') && !skipPartnerDiscovery;
 
  // Section numbering
  let n = 0; const num = () => ++n;
  const portalN = num();
  const endpointsN = num();
  const examListN = num();
- const pharmacyListN = showPharmacyDiscovery ? num() : null;
- const packagesN = showPharmacyDiscovery ? num() : null;
+ const pharmacyListN = showPartnerList ? num() : null;
+ const packagesN = showPartnerPackages ? num() : null;
+ const customSearchN = showCustomSearch ? num() : null;
  const sampleCallN = num();
  const testN = num();
  const webhookN = num();
@@ -2055,19 +2160,35 @@ function downloadPdf(){
  codeBlock(ENDPOINT_SAMPLES.exam_list.request, 'POST /api/exam_list');
  codeBlock(ENDPOINT_SAMPLES.exam_list.response, 'sample response');
 
- // ===== Optional: pharmacy discovery sections =====
- if (showPharmacyDiscovery) {
+ // ===== Optional: pharmacy-list discovery section =====
+ if (showPartnerList) {
  sectionHeader('Find your pharmacy IDs', pharmacyListN);
- text('Call /partner_pharmacy_list to discover the partner pharmacies your account can route to. Skip if Qualiphy has already given you the pharmacy ID.', { size: 10, color: C.mid });
+ let listDesc = 'Call /partner_pharmacy_list to list every pharmacy your account can route to.';
+ if (needPartnerListForPartner) listDesc += ' Pick the pharmacy_id values you want to use for partner-pharmacy invites.';
+ if (needPartnerListForCustom) listDesc += ' Grab the pharmacy_id for the "Choose Your Own Pharmacy" entry — that\'s the one you\'ll pass on custom-pharmacy invites where you preselect the pharmacy on your end.';
+ listDesc += ' Skip this step if Qualiphy has already given you the IDs you need.';
+ text(listDesc, { size: 10, color: C.mid });
  space(4);
  codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_list.request, 'POST /api/partner_pharmacy_list');
  codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_list.response, 'sample response');
+ }
 
+ // ===== Optional: order-set discovery section =====
+ if (showPartnerPackages) {
  sectionHeader('Find your order_set_ids for treatment packages', packagesN);
  text('Call /partner_pharmacy_treatment_packages with the pharmacy_id and exam_id from the previous steps. order_set_id maps to a specific drug + dosage package.', { size: 10, color: C.mid });
  space(4);
  codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_treatment_packages.request, 'POST /api/partner_pharmacy_treatment_packages');
  codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_treatment_packages.response, 'sample response');
+ }
+
+ // ===== Optional: custom_pharmacy_search section (when skipping pharmacy confirmation) =====
+ if (showCustomSearch) {
+ sectionHeader('Look up the custom pharmacy', customSearchN);
+ text('Call /custom_pharmacy_search to fetch the address, NCPDPID, phone, and pharmacy_type fields for the specific retail pharmacy you\'ve chosen on your end. You\'ll drop these straight onto the /exam_invite payload below so Qualiphy doesn\'t ask the patient to confirm again.', { size: 10, color: C.mid });
+ space(4);
+ codeBlock(ENDPOINT_SAMPLES.custom_pharmacy_search.request, 'POST /api/custom_pharmacy_search');
+ codeBlock(ENDPOINT_SAMPLES.custom_pharmacy_search.response, 'sample response');
  }
 
  // ===== Send the patient invite =====
@@ -2092,9 +2213,51 @@ function downloadPdf(){
  tele_state: teleState,
  webhook_url: wh || 'YOUR_WEBHOOK_URL'
  };
- if (kind === 'partner') { p.pharmacy_id = 'PHARMACY_ID'; p.order_set_id = 'PACKAGE_ID'; }
- if (kind === 'custom') { p.custom_pharmacy = 1; p.ncpdpid = 'PHARMACY_NCPDPID'; p.pharmacy_name = 'Pharmacy Name'; p.pharmacy_state = teleState; }
- if (needsRx && providerOverride === 'yes') p.provider_pos_selection = 3;
+ // Patient address fields when skipping the Qualiphy address-confirmation
+ // screen (caller is collecting it themselves).
+ if (opts.skipAddressConf) {
+ p.address_line_1 = '123 Main St';
+ p.address_line_2 = 'Apt 4B';
+ p.city = 'New York';
+ p.state = 'NY';
+ p.zip_code = '10001';
+ }
+ if (kind === 'partner') {
+ p.pharmacy_id = 'PHARMACY_ID';
+ p.order_set_id = 'PACKAGE_ID';
+ // Shipping address only on the partner-pharmacy (Rx-shipping) sample.
+ if (opts.skipAddressConf) {
+ p.shipping_address_line_1 = '123 Main St';
+ p.shipping_address_line_2 = 'Apt 4B';
+ p.shipping_city = 'New York';
+ p.shipping_state = 'NY';
+ p.shipping_zip_code = '10001';
+ }
+ }
+ if (kind === 'custom') {
+ p.custom_pharmacy = 1;
+ if (opts.skipPharmacyConf) {
+ // Dev preselects the custom pharmacy and skips the Qualiphy
+ // confirmation screen — full pharmacy details from /custom_pharmacy_search.
+ p.pharmacy_id = 'PHARMACY_ID';
+ p.ncpdpid = '1234567';
+ p.pharmacy_name = 'Pharmacy Name';
+ p.pharmacy_address_line_1 = '123 Main St';
+ p.pharmacy_address_line_2 = 'Apt 4B';
+ p.pharmacy_zip_code = '10001';
+ p.pharmacy_city = 'New York';
+ p.pharmacy_state = 'NY';
+ p.pharmacy_phone = '(999) 999-9999';
+ p.pharmacy_type = 'Retail';
+ p.skip_pharmacy_confirmation = 2;
+ p.custom_pharmacy_patient_choice = 1;
+ }
+ }
+ // Provider override only goes on partner-pharmacy invites — custom
+ // and plain GFE samples never include provider_pos_selection.
+ if (kind === 'partner' && needsRx && providerOverride === 'yes') {
+ p.provider_pos_selection = 3;
+ }
  if (opts.redirect) {
  p.redirect_approve = 'https://yoursite.com/cleared';
  p.redirect_reject = 'https://yoursite.com/rejected';
@@ -2181,7 +2344,7 @@ function downloadPdf(){
 
 function restart(){
  step=0;useCases.clear();states.clear();pharmacy.clear();providerOverride='no';invite='qualiphy';
- opts={prefill:false,attach:false,redirect:false};
+ opts={prefill:false,attach:false,redirect:false,skipPharmacyConf:false,skipAddressConf:false};
  ['f-co','f-nm','f-em','f-wh'].forEach(id=>{const e=$(id);if(e)e.value='';});
  document.querySelectorAll('.oc.sel').forEach(c=>c.classList.remove('sel'));
  document.querySelectorAll('.ci.on').forEach(c=>c.classList.remove('on'));
