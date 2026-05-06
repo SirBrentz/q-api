@@ -1,6 +1,15 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-06 — Sidebar: each group is now a contained card
+              The five sidebar groups (Getting Started / API Reference
+              / Webhook handling / Recipes / Going Live) used to read
+              as one long unbroken list. Wrapped each in a soft
+              container — surface bg, faint border-lt, 12px radius —
+              and added a subtle divider line below each group header
+              so the sub-items clearly belong to their section. All
+                tokens flip per theme.
+
 2026-05-06 — Sidebar: numbered chip uses palette tokens (theme-safe)
               The 01/02/03 chips next to the new category headers were
               shipping as solid indigo with white text — fine in light
