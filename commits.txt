@@ -1,6 +1,15 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-06 — Sidebar: numbered chip uses palette tokens (theme-safe)
+              The 01/02/03 chips next to the new category headers were
+              shipping as solid indigo with white text — fine in light
+              mode but in dark mode --indigo flips to pale lavender,
+              giving white-on-lavender. Switched to the same
+              --lavender-mist bg + --indigo text pattern that .s-tag
+              and .s-link.active already use elsewhere, so the chip
+              adapts per theme.
+
 2026-05-06 — Sidebar: category headers now read as headers
               The "Getting Started" / "API Reference" / etc. labels in
               the left nav were rendering smaller (10px, weight 600,
