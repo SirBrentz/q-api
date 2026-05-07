@@ -316,3 +316,13 @@ Qualiphy API Docs - change log
 2026-04-30 — Quick Start /exam_invite sample: hardcode tele_state to "TE" (was using stateArr[0],
               which surfaced as "AK" once the user picked states); applies to both the on-screen
               sample and the PDF plan
+2026-05-07 — Deploy prep for api-docs.qualiphy.me handover
+              · add /CNAME with api-docs.qualiphy.me (GitHub Pages custom-domain marker)
+              · add /robots.txt (allow root + quick-start, disallow /dashboard/, sitemap ref)
+              · add /sitemap.xml (root + quick-start)
+              · update <link rel="canonical"> + <meta property="og:url"> in index.html and
+                quick-start/index.html from docs.qualiphy.me to api-docs.qualiphy.me
+              · update self-references in quick-start/index.html plan output (Copy plan +
+                generated PDF text) to api-docs.qualiphy.me
+              · README.txt rewritten as a handover doc — DNS record, hosting notes, and a
+                pre-deploy checklist (delete README.txt, sample-plan.pdf, dashboard/SETUP.txt)
