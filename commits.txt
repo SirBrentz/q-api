@@ -1,6 +1,23 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-07 — Sidebar search: results dropdown lists actual params
+              Previous fix made section-level matches work (searching
+              "redirect" surfaced the /exam_invite link), but Brent
+              wanted to actually SEE the matching parameters
+              themselves — redirect_approve / redirect_reject /
+              redirect_na / redirect_missed — as distinct results, not
+              just one section link. Now on page load we build a
+              proper search index over (a) every sidebar link
+              including its target section's full text and (b) every
+              <code> name inside every .param-row, with each parameter
+              becoming its own searchable item. As the user types we
+              render a results dropdown below the search input grouped
+              into "Parameters" and "Sections", and clicking a param
+              result jumps to its row and briefly flashes it via a
+              .search-flash animation so it's easy to spot. Esc clears
+              the search and restores the sidebar nav.
+
 2026-05-07 — Sidebar search: also matches docs body content
               The sidebar search only looked at each link's text + its
               data-search attribute, so common terms that only appear
