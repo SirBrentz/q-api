@@ -2261,6 +2261,21 @@ function copyCode(btn, paneId) {
 const searchInput = document.getElementById('docsSearch');
 const allLinks = document.querySelectorAll('.sidebar a.s-link');
 const allGroups = document.querySelectorAll('.sidebar-group');
+
+// Build a haystack per sidebar link that includes the full text of the
+// section it points to, so searches for any parameter name, response field,
+// or word in the docs body (e.g. "redirect", "email") surface the right link.
+const linkHaystacks = new Map();
+allLinks.forEach(l => {
+ let h = (l.textContent || '') + ' ' + (l.dataset.search || '');
+ const href = l.getAttribute('href') || '';
+ if (href.length > 1 && href.charAt(0) === '#') {
+ const target = document.getElementById(href.slice(1));
+ if (target) h += ' ' + (target.textContent || '');
+ }
+ linkHaystacks.set(l, h.toLowerCase());
+});
+
 searchInput.addEventListener('input', e => {
  const q = e.target.value.trim().toLowerCase();
  if (!q) {
@@ -2272,7 +2287,7 @@ searchInput.addEventListener('input', e => {
  const linksInGroup = g.querySelectorAll('a.s-link');
  let anyVisible = false;
  linksInGroup.forEach(l => {
- const haystack = (l.textContent + ' ' + (l.dataset.search || '')).toLowerCase();
+ const haystack = linkHaystacks.get(l) || (l.textContent + ' ' + (l.dataset.search || '')).toLowerCase();
  if (haystack.includes(q)) {
  l.style.display = '';
  anyVisible = true;

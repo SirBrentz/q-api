@@ -1,6 +1,20 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-07 — Sidebar search: also matches docs body content
+              The sidebar search only looked at each link's text + its
+              data-search attribute, so common terms that only appear
+              as parameter names inside the docs body — "redirect"
+              (redirect_approve / redirect_reject / redirect_na /
+              redirect_missed on /exam_invite), "email" (the patient
+              email param), and any other field/response key — never
+              surfaced. Now each sidebar link's haystack is built once
+              on load to include the textContent of the section it
+              points to (#ep-exam-invite, #ep-exam-webhook, etc.), so
+              searching any parameter, response field, code sample
+              token, or word in the docs body matches the right link.
+              Cached per-link to keep filtering fast.
+
 2026-05-06 — Sidebar: each group is now a contained card
               The five sidebar groups (Getting Started / API Reference
               / Webhook handling / Recipes / Going Live) used to read
