@@ -961,10 +961,73 @@ const exams = await res.json();</div></div>
  <span class="endpoint-method post">POST</span>
  <span class="endpoint-path">/api/exam_list</span>
  </div>
- <p>Lists every exam configured on your account, including its ID, name, type (GFE/Rx/Urgent), and required questions.</p>
- <h4>Common parameters</h4>
+ <p>Returns every exam configured on your clinic. Use this to discover the <code>id</code> values you'll pass to <a href="#ep-exam-invite"><code>/exam_invite</code></a>. Each exam record tells you whether it's a GFE or an Rx (<code>rx_type</code>), what attachments the patient must upload (<code>attachments</code>), and any preset price.</p>
+
+ <h4>Parameters</h4>
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ </div>
+
+ <h4>Response fields</h4>
+ <div class="param-table">
+ <div class="param-row"><div class="param-name"><code>clinic_id</code><div class="param-meta"><span class="param-type">integer</span></div></div><div class="param-desc">The Qualiphy clinic ID associated with the API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams</code><div class="param-meta"><span class="param-type">array</span></div></div><div class="param-desc">Every exam configured on this clinic. See fields below for each item.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams[].id</code><div class="param-meta"><span class="param-type">integer</span></div></div><div class="param-desc">Exam ID. Pass this to <a href="#ep-exam-invite"><code>/exam_invite</code></a> in the <code>exams</code> array.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams[].title</code><div class="param-meta"><span class="param-type">string</span></div></div><div class="param-desc">Human-readable exam name as configured in the Qualiphy portal.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams[].rx_type</code><div class="param-meta"><span class="param-type">integer</span></div></div><div class="param-desc"><code>1</code> = non-Rx (GFE). <code>2</code> = Rx, including QualiphyRx Packages, Urgent Care, and Choose-Your-Own-Pharmacy flows. There is no separate "Urgent" type — urgent-care exams are <code>rx_type: 2</code> and are distinguished only by their <code>title</code>.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams[].price</code><div class="param-meta"><span class="param-type">string | null</span></div></div><div class="param-desc">Preset price as a decimal string (e.g. <code>"27.99"</code>) when one is configured for the exam. <code>null</code> for exams that don't carry a fixed Qualiphy-side price.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams[].attachments_required</code><div class="param-meta"><span class="param-type">integer</span></div></div><div class="param-desc">Number of files the patient must upload before the consultation. Always at least <code>1</code>.</div></div>
+ <div class="param-row"><div class="param-name"><code>exams[].attachments</code><div class="param-meta"><span class="param-type">string[]</span></div></div><div class="param-desc">Names of the additional attachments required beyond the default ID upload — e.g. <code>["Lab"]</code>, <code>["ID", "Lab"]</code>, or <code>["Picture of hair loss area"]</code>. Empty array means only the standard ID is required.</div></div>
+ </div>
+
+ <h4>Sample response</h4>
+ <div class="codeblock">
+ <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">200 OK</span></div><button class="copy-btn" onclick="copyCode(this,'el-resp')">Copy</button></div>
+ <div class="codeblock-pane active" id="el-resp"><div class="codeblock-body">{
+  "clinic_id": 1234,
+  "exams": [
+    {
+      "id": 2228,
+      "title": "Embrace Aging GFE (Dermal Fillers, Botox, PDO, Microneedling PRP)",
+      "rx_type": 1,
+      "price": null,
+      "attachments_required": 1,
+      "attachments": []
+    },
+    {
+      "id": 1822,
+      "title": "Clinical Evaluation for Injectables &amp; Lifting",
+      "rx_type": 1,
+      "price": "27.99",
+      "attachments_required": 1,
+      "attachments": []
+    },
+    {
+      "id": 2769,
+      "title": "3 Month Supply: Semaglutide with Medication Shipping (No Labwork Required)",
+      "rx_type": 2,
+      "price": null,
+      "attachments_required": 2,
+      "attachments": ["ID"]
+    },
+    {
+      "id": 3702,
+      "title": "3 Month Supply: Semaglutide with Medication Shipping (With Lab-work Upload)",
+      "rx_type": 2,
+      "price": null,
+      "attachments_required": 2,
+      "attachments": ["ID", "Lab"]
+    },
+    {
+      "id": 1486,
+      "title": "Urgent Care - Acne (Doxycycline, Clindamycin, Benzoyl Peroxide) Treatment",
+      "rx_type": 2,
+      "price": null,
+      "attachments_required": 2,
+      "attachments": ["ID"]
+    }
+  ]
+}</div></div>
  </div>
 </section>
 

@@ -1,6 +1,28 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-08 — Fix /exam_list documentation — description was wrong
+              Thomas Ciccarelli flagged that the existing description
+              ("Lists every exam configured on your account, including
+              its ID, name, type (GFE/Rx/Urgent), and required
+              questions") was wrong on multiple counts:
+                * field is `title`, not `name`
+                * `rx_type` is binary (1 = GFE, 2 = Rx) — there is no
+                  separate "Urgent" type; urgent-care exams are just
+                  rx_type:2 distinguished by their title
+                * "required questions" doesn't exist as a field —
+                  actual fields are `attachments_required` (count) and
+                  `attachments` (string[] of attachment names)
+                * `price`, `clinic_id`, `attachments_required`, and
+                  `attachments` weren't documented at all
+              Rewrote the endpoint description, added a Response fields
+              table covering every field returned (clinic_id + per-exam
+              id/title/rx_type/price/attachments_required/attachments),
+              and added a Sample response showing both rx_type values,
+              priced and unpriced exams, and 0/1/2-attachment cases
+              including an Urgent Care exam to make the rx_type:2
+              "no separate Urgent type" point concrete.
+
 2026-05-07 — Sidebar search: results dropdown lists actual params
               Previous fix made section-level matches work (searching
               "redirect" surfaced the /exam_invite link), but Brent
