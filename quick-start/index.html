@@ -52,7 +52,13 @@ window.QAPI_TRACK_CONFIG = {
   var viewedSections = {};
   var scrollMaxFired = 0;
 
-  function send(event, data, useBeacon){
+  function send(event, data, opts){
+    // opts may be `true` (legacy useBeacon flag) or an object:
+    //   { useBeacon: bool, large: bool }
+    // `large` drops `keepalive` (which caps body size around 64KB), so the
+    // PDF base64 upload doesn't get truncated by the browser.
+    if (opts === true) opts = { useBeacon: true };
+    opts = opts || {};
     var payload = {
       secret: cfg.SHARED_SECRET, session_id: vid, event: event,
       timestamp: new Date().toISOString(),
@@ -64,12 +70,12 @@ window.QAPI_TRACK_CONFIG = {
       utms: utms, geo: geo, data: data || {}
     };
     var body = JSON.stringify(payload);
-    if (useBeacon && navigator.sendBeacon) {
+    if (opts.useBeacon && navigator.sendBeacon) {
       try { navigator.sendBeacon(cfg.WEBHOOK_URL, new Blob([body], { type: 'text/plain' })); return; } catch(e){}
     }
-    try {
-      fetch(cfg.WEBHOOK_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body: body });
-    } catch(e){}
+    var init = { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: body };
+    if (!opts.large) init.keepalive = true;
+    try { fetch(cfg.WEBHOOK_URL, init); } catch(e){}
   }
   window.qtrack = send;
 
@@ -269,15 +275,25 @@ window.QAPI_TRACK_CONFIG = {
     }, true);
 
     // Track which key fields get any input. Fire once per field per session
-    // (avoids spamming on every keystroke).
+    // for the boolean "qs_field_filled" flag (drives dashboard's Has Webhook
+    // URL / Has Exam IDs aggregates), and separately fire "qs_field_value"
+    // on each meaningful change so the actual value lands in the sheet for
+    // manual reference. qs_field_value is PII and is filtered out of the
+    // dashboard JSON by the Apps Script.
     function watchField(id, name){
       var el = document.getElementById(id);
       if (!el) return;
+      var lastSent = '';
       el.addEventListener('blur', function(){
-        if (qsState.fieldsFilled[name]) return;
-        if (String(el.value || '').trim().length > 0){
+        var v = String(el.value || '').trim();
+        if (v.length > 0 && !qsState.fieldsFilled[name]){
           qsState.fieldsFilled[name] = 1;
           send('qs_field_filled', { field: name });
+        }
+        // Send the actual value (PII) — sheet-only, not surfaced on dashboard
+        if (v !== lastSent){
+          lastSent = v;
+          send('qs_field_value', { field: name, value: v.slice(0, 500) });
         }
       });
     }
@@ -286,17 +302,24 @@ window.QAPI_TRACK_CONFIG = {
     watchField('f-em', 'email');
     watchField('f-wh', 'webhook');
 
-    // Exam ID field is dynamic - delegate on the list and fire once when any
-    // exam input first gets a value.
+    // Exam ID list is dynamic - delegate on the list. Fire "qs_field_filled"
+    // once on first non-empty input, and send the full csv of current exam IDs
+    // on every blur so the sheet has the live list.
     document.addEventListener('blur', function(e){
       var el = e.target;
       if (!el || !el.closest) return;
       if (!el.closest('#exam-list')) return;
-      if (qsState.fieldsFilled['examIds']) return;
-      if (String(el.value || '').trim().length > 0){
+      var hasAny = false;
+      var ids = [];
+      document.querySelectorAll('#exam-list input').forEach(function(inp){
+        var v = String(inp.value || '').trim();
+        if (v){ hasAny = true; ids.push(v); }
+      });
+      if (hasAny && !qsState.fieldsFilled['examIds']){
         qsState.fieldsFilled['examIds'] = 1;
         send('qs_field_filled', { field: 'examIds' });
       }
+      send('qs_field_value', { field: 'examIds', value: ids.join(',').slice(0, 500) });
     }, true);
   }
   if (document.readyState !== 'loading') attachQS();
@@ -2419,7 +2442,19 @@ function downloadPdf(){
 
  // Save
  const cleanedCo = (co || 'plan').trim().replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 40) || 'plan';
- doc.save(`Qualiphy-API-integration-plan-${cleanedCo}.pdf`);
+ const pdfFilename = `Qualiphy-API-integration-plan-${cleanedCo}.pdf`;
+ doc.save(pdfFilename);
+
+ // Upload the same PDF to the telemetry sheet so we have a copy for future
+ // reference. PII (sheet-only) — the dashboard filters it out, and the upload
+ // path uses non-keepalive fetch since the body can exceed 64 KB.
+ try {
+  const dataUri = doc.output('datauristring'); // data:application/pdf;base64,XXXX
+  const b64 = (dataUri.split(',')[1] || '');
+  if (b64 && window.qtrack){
+   window.qtrack('qs_pdf_generated', { pdf_b64: b64, filename: pdfFilename }, { large: true });
+  }
+ } catch (e){ /* best-effort */ }
 
  btn.innerHTML = '✓ Downloaded';
  setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2200);

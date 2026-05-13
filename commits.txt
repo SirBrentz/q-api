@@ -1,6 +1,85 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Telemetry v3: PII capture + PDF storage (sheet-only)
+              Brent asked to capture more of what Quick Start visitors
+              actually fill in (email, company, contact name, webhook
+              URL, exam IDs) plus the generated PDF for future-meeting
+              reference — but explicitly NOT to surface any of it on the
+              observability dashboard. Dashboard stays raw metrics only.
+
+              APPS SCRIPT v3 (dashboard/SETUP.txt Code.gs block):
+                * New columns auto-append to existing sheets (schema-
+                  extension is non-destructive):
+                    PII: Email, Company, Contact Name, Webhook URL
+                         Value, Exam IDs Value, PDF Drive URL, PDF
+                         Generated At
+                    Per-feature flags: Opt: Prefill, Opt: Attach Docs,
+                         Opt: Custom Redirect, Opt: Additional Data,
+                         Opt: Skip Pharmacy Confirm, Opt: Clinic
+                         Billed, Opt: Ship To Patient, Opt: Skip
+                         Address Confirm
+                * New events handled:
+                    qs_field_value { field, value }  — actual string
+                       value lands in the appropriate PII column
+                       (email / company / name / webhook / examIds).
+                       Values capped at 500 chars.
+                    qs_pdf_generated { pdf_b64, filename }  — base64
+                       decoded, Utilities.newBlob, written into a
+                       Drive folder named "Qualiphy API Docs - Quick
+                       Start PDFs" (auto-created on first use). File
+                       URL stored in PDF Drive URL; timestamp in PDF
+                       Generated At. Drive folder is owned by the
+                       script-deployer, not shared publicly.
+                * option_selected/deselected for optionalFeature now
+                  ALSO sets per-feature Yes/No columns so you can
+                  pivot in Sheets without parsing the CSV column.
+                * qs_restart wipes the v3 PII columns and feature
+                  flags too. (PDF Drive URL is intentionally NOT
+                  wiped — the file still exists in Drive and the
+                  pointer is useful history.)
+                * **doGet filters PII before returning JSON.** New
+                  PII_COLS list — Email, Company, Contact Name,
+                  Webhook URL Value, Exam IDs Value, PDF Drive URL,
+                  PDF Generated At. These are never serialized into
+                  the dashboard payload, so they can't accidentally
+                  render in the recent-sessions table or CSV export,
+                  and they're not sniffable from browser dev tools.
+
+              PAGE-SIDE (quick-start/index.html):
+                * watchField extended to also fire qs_field_value with
+                  the actual value on blur (in addition to the existing
+                  qs_field_filled boolean flag). Fires for company,
+                  name, email, webhook.
+                * Exam ID list handler rewritten to send the full csv
+                  of current exam IDs on every blur (was only firing a
+                  single "filled" flag).
+                * send() takes a new opts object with `large: true` to
+                  drop fetch's `keepalive` (which caps at ~64 KB). Used
+                  for the PDF base64 payload which can run 100–300 KB.
+                  Legacy `send(event, data, true)` for sendBeacon still
+                  works.
+                * downloadPdf, after doc.save, also does
+                  doc.output('datauristring'), splits off the base64,
+                  and posts qs_pdf_generated. Best-effort — failure
+                  doesn't break the user's download.
+
+              SETUP.txt:
+                * New section E2 documents the v3 schema, the Drive
+                  folder, the PII filter on doGet, and what the
+                  dashboard will / won't see.
+                * Section B updated to reference Code.gs (v3) instead
+                  of v2 in the copy-paste instructions.
+
+              DASHBOARD: no changes needed.
+                * Existing row mapper doesn't reference any of the new
+                  fields (verified via grep). It explicitly enumerates
+                  the columns it pulls; new columns are invisible.
+                * CSV export same story — column list is explicit.
+                * Belt + suspenders: Apps Script PII_COLS filter would
+                  catch any future regressions if someone DID add a
+                  reference.
+
 2026-05-13 — Postman + OpenAPI: full polish pass for production-ready devs
               Brent reviewed the universal Postman collection and asked
               whether it was truly complete for a dev who has never used
