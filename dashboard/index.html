@@ -307,11 +307,17 @@ a:hover{text-decoration:underline}
 
   <div class="topbar-spacer"></div>
 
+  <div class="time-range" role="tablist" aria-label="Scope">
+    <button class="time-btn scope-btn active" data-scope="all" role="tab">all</button>
+    <button class="time-btn scope-btn" data-scope="docs" role="tab">main docs</button>
+    <button class="time-btn scope-btn" data-scope="qs" role="tab">quick start</button>
+  </div>
+
   <div class="time-range" role="tablist" aria-label="Time range">
-    <button class="time-btn" data-range="1" role="tab">24h</button>
-    <button class="time-btn active" data-range="7" role="tab">7d</button>
-    <button class="time-btn" data-range="30" role="tab">30d</button>
-    <button class="time-btn" data-range="all" role="tab">all</button>
+    <button class="time-btn range-btn" data-range="1" role="tab">24h</button>
+    <button class="time-btn range-btn active" data-range="7" role="tab">7d</button>
+    <button class="time-btn range-btn" data-range="30" role="tab">30d</button>
+    <button class="time-btn range-btn" data-range="all" role="tab">all</button>
   </div>
 
   <button class="topbar-btn" id="exportBtn" title="Export current window as CSV">
@@ -332,6 +338,7 @@ a:hover{text-decoration:underline}
     <div class="dash-h1">API Docs Behavior</div>
     <div class="dash-h-meta">
       <span>source · <strong>apps script</strong></span>
+      <span>scope · <strong id="metaScope">all</strong></span>
       <span>range · <strong id="metaRange">last 7 days</strong></span>
       <span>updated · <strong id="metaUpdated">—</strong></span>
     </div>
@@ -381,11 +388,11 @@ a:hover{text-decoration:underline}
     <div class="panel stat-accent-orange"><div class="stat">
       <div class="stat-label">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Avg Session
+        Avg Engaged Time
       </div>
       <div class="stat-value"><span id="stDuration">—</span><span class="stat-unit" id="stDurationUnit">sec</span></div>
       <div class="stat-sub">
-        <span>median <strong id="stDurationMed" style="color:var(--text-bright)">—</strong></span>
+        <span>median <strong id="stDurationMed" style="color:var(--text-bright)">—</strong> · capped 30m</span>
       </div>
       <svg class="stat-spark" id="sparkDuration" viewBox="0 0 200 28" preserveAspectRatio="none"></svg>
     </div></div>
@@ -411,13 +418,13 @@ a:hover{text-decoration:underline}
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="docsFunnelPanel">
       <div class="panel-header">
         <div class="panel-title">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          Engagement Funnel
+          API Docs · Engagement Funnel
         </div>
-        <div class="panel-meta">land → copy</div>
+        <div class="panel-meta">main docs · land → copy</div>
       </div>
       <div class="panel-body-tight" id="funnel"></div>
     </div>
@@ -682,7 +689,13 @@ const CONFIG = {
   REFRESH_MS: 30000,
 };
 
-const state = { sessions: [], updated: null, rangeDays: 7, loading: false };
+const state = { sessions: [], updated: null, rangeDays: 7, scope: 'all', loading: false };
+
+// A row is "Quick Start" if it landed on /quick-start/ OR it shows any
+// QS plan-builder activity (step, picks, completion). Otherwise it's "Main Docs".
+function isQS(r){
+  return /quick-start/.test(r.path) || r.qsStep > 0 || !!r.useCases || r.qsCompleted;
+}
 const $ = (id) => document.getElementById(id);
 
 /* ============ GATE ============ */
@@ -762,7 +775,9 @@ function normalizeSession(s){
     tabLanguages: s['Tab Languages'] || '',
     externalClicks: Number(s['External Clicks']) || 0,
     scrollMax: Number(s['Scroll Max']) || 0,
-    duration: Number(s['Duration (sec)']) || 0,
+    // Clamp duration to 30 min: legacy rows pre-engaged-time fix could be
+    // tab-open-overnight artifacts that would skew the avg wildly.
+    duration: Math.min(1800, Number(s['Duration (sec)']) || 0),
     totalEvents: Number(s['Total Events']) || 0,
     variant: s['Variant'] || '',
     // Quick Start plan-builder
@@ -789,15 +804,24 @@ function setRefreshState(st){
 
 /* ============ FILTER ============ */
 function filteredSessions(){
-  if (state.rangeDays === 'all') return state.sessions;
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - Number(state.rangeDays));
-  return state.sessions.filter(s => s.startedAt && s.startedAt >= cutoff);
+  let rows = state.sessions;
+  if (state.rangeDays !== 'all'){
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - Number(state.rangeDays));
+    rows = rows.filter(s => s.startedAt && s.startedAt >= cutoff);
+  }
+  if (state.scope === 'docs') rows = rows.filter(r => !isQS(r));
+  else if (state.scope === 'qs') rows = rows.filter(r => isQS(r));
+  return rows;
 }
 
 /* ============ RENDER ============ */
 function render(){
   const rows = filteredSessions();
+  // Hide the API Docs funnel when the user has narrowed to Quick Start —
+  // it's a docs-flow funnel and would just show near-zeros for QS rows.
+  const docsFunnelPanel = $('docsFunnelPanel');
+  if (docsFunnelPanel) docsFunnelPanel.style.display = state.scope === 'qs' ? 'none' : '';
   renderAlerts(rows);
   renderStats(rows);
   renderChart(rows);
@@ -815,6 +839,14 @@ function render(){
 function renderMeta(rows){
   const label = state.rangeDays === 'all' ? 'all time' : `last ${state.rangeDays} day${state.rangeDays === 1 ? '' : 's'}`;
   $('metaRange').textContent = label;
+  // Always show the docs/qs split based on the in-range rows so you can
+  // see what's behind the active scope filter at a glance.
+  const cutoff = state.rangeDays === 'all' ? null : (() => { const d = new Date(); d.setDate(d.getDate() - Number(state.rangeDays)); return d; })();
+  const inRange = cutoff ? state.sessions.filter(s => s.startedAt && s.startedAt >= cutoff) : state.sessions;
+  const qsCount = inRange.filter(isQS).length;
+  const docsCount = inRange.length - qsCount;
+  const scopeLabel = state.scope === 'all' ? `all (${docsCount} docs · ${qsCount} QS)` : state.scope === 'docs' ? `main docs (${docsCount})` : `quick start (${qsCount})`;
+  $('metaScope').textContent = scopeLabel;
   if (state.updated){
     const d = new Date(state.updated);
     const diff = Math.floor((Date.now() - d.getTime()) / 1000);
@@ -1590,14 +1622,22 @@ function exportCSV(){
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/* ============ TIME RANGE ============ */
+/* ============ TIME RANGE + SCOPE ============ */
 function initTimeRange(){
-  document.querySelectorAll('.time-btn').forEach(btn => {
+  document.querySelectorAll('.range-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const r = btn.dataset.range;
       state.rangeDays = r === 'all' ? 'all' : Number(r);
+      render();
+    });
+  });
+  document.querySelectorAll('.scope-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.scope = btn.dataset.scope;
       render();
     });
   });

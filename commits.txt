@@ -1,6 +1,53 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Tracker: engaged-time semantics + dashboard scope filter
+              Two related fixes after Brent flagged that "Avg Session"
+              on the dashboard was wildly higher than reality, and that
+              main-docs vs quick-start stats were impossible to tell
+              apart.
+
+              (1) Avg-session bug, root cause:
+                  * Session ID is actually a persistent visitor ID in
+                    localStorage — one row per visitor, not per visit.
+                  * Duration (sec) was updated via Math.max(...) on
+                    every event from page-side elapsed_sec = wall-clock
+                    time since page load. A tab left open overnight
+                    (or backgrounded for hours) would write an absurd
+                    number into the visitor's row, and Math.max kept
+                    it forever. One stuck tab poisoned the avg.
+
+              (1) Fix:
+                  * q-api/index.html + q-api/quick-start/index.html:
+                    replaced the old wall-clock counter with engaged-
+                    time tracking. Now we only tick the counter when
+                    the tab is visible AND the user has interacted in
+                    the last 30s. Hard cap of 30 min per page load so
+                    even a worst-case tab can't poison the metric.
+                  * dashboard/index.html: clamp legacy Duration values
+                    at 30 min when mapping rows, so historical rows
+                    with hour-long durations stop dragging the avg up.
+                  * Renamed the stat card "Avg Session" → "Avg
+                    Engaged Time" with "capped 30m" sublabel so the
+                    semantics are obvious.
+
+              (2) Docs vs Quick Start clarity:
+                  * Added a Scope pill bar in the topbar:
+                    [all] [main docs] [quick start]. Filters every
+                    stat / funnel / breakdown below it.
+                  * isQS(row) classifier: any row that landed on
+                    /quick-start/ OR has plan-builder activity counts
+                    as Quick Start. Otherwise it's Main Docs.
+                  * Renamed "Engagement Funnel" → "API Docs ·
+                    Engagement Funnel" with sub-meta "main docs ·
+                    land → copy" to make it explicit which flow the
+                    funnel describes.
+                  * Hide the API Docs funnel panel when scope=qs
+                    (it would just show near-zeros for QS rows).
+                  * Dash header now shows live scope info, e.g.
+                    "scope · all (42 docs · 7 QS)" so you can see the
+                    split at a glance even when filter is "all".
+
 2026-05-08 — Fix /exam_list documentation — description was wrong
               Thomas Ciccarelli flagged that the existing description
               ("Lists every exam configured on your account, including
