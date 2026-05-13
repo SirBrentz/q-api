@@ -1,6 +1,29 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Endpoint: themed banner instead of full card + dark-mode POST fix
+              Two follow-ups from Brent's review of the section-separation
+              pass:
+                * He didn't like the bordered card wrapping each endpoint
+                  (felt too boxed in, narrowed the reading width). Pulled
+                  the card treatment off .endpoint entirely — no border,
+                  no background, no shadow. Just bottom margin for breathing.
+                * Replaced it with a themed banner on .endpoint-head: a
+                  full-width indigo gradient bar with a 4px indigo left
+                  rail and rounded corners, so the eye still gets a clear
+                  "new endpoint starts here" cue at the top of each one
+                  without the surrounding box. Dark-mode tinted gradient
+                  + lavender rail.
+                * Dark mode bug: the POST method badge text (#0F7A3D
+                  dark-green on a dark-green tinted bg) was illegible in
+                  dark theme. Force POST text to #fff with a slightly
+                  stronger green tint in dark mode. Also touched up the
+                  rarely-used GET badge to use lavender in dark mode for
+                  consistency, in case any GET endpoints get added later.
+                * Endpoint-path pill background switched from
+                  --surface-warm to --paper so it stays visible inside the
+                  banner gradient.
+
 2026-05-13 — Postman + OpenAPI support, sidebar CTA, section separation
               Three related shippings in one push:
 

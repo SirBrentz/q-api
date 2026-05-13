@@ -607,14 +607,17 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .recipe-step-body{font-size:13.5px;color:var(--text);line-height:1.55}
 .recipe-step-body code{font-size:.9em}
 
-/* ENDPOINT BLOCK - contained card so endpoints don't blend together when scrolling */
-.endpoint{background:var(--paper);border:1px solid var(--border-lt);border-radius:14px;padding:28px 32px;margin-bottom:48px;box-shadow:var(--shadow-sm);scroll-margin-top:88px}
-.endpoint-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;padding-left:12px;box-shadow:inset 3px 0 0 #0F7A3D}
+/* ENDPOINT BLOCK - themed banner per endpoint, no full-card wrapper */
+.endpoint{padding:0;margin-bottom:64px;scroll-margin-top:88px}
+.endpoint-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;padding:14px 18px;border-radius:10px;background:linear-gradient(90deg,rgba(77,61,113,.08),rgba(77,61,113,.02) 65%,transparent);border-left:4px solid var(--indigo)}
 .endpoint-method{font-family:var(--font-m);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase}
 .endpoint-method.post{background:rgba(126,217,87,.16);color:#0F7A3D;border:1px solid rgba(126,217,87,.3)}
 .endpoint-method.get{background:rgba(77,61,113,.1);color:var(--indigo);border:1px solid rgba(77,61,113,.2)}
-.endpoint-path{font-family:var(--font-m);font-size:14.5px;font-weight:600;color:var(--ink);background:var(--surface-warm);padding:4px 10px;border-radius:6px;border:1px solid var(--border-lt)}
+.endpoint-path{font-family:var(--font-m);font-size:14.5px;font-weight:600;color:var(--ink);background:var(--paper);padding:4px 10px;border-radius:6px;border:1px solid var(--border-lt)}
 .endpoint-actions{margin-left:auto;display:flex;gap:8px}
+[data-theme="dark"] .endpoint-head{background:linear-gradient(90deg,rgba(206,200,254,.10),rgba(206,200,254,.03) 65%,transparent);border-left-color:#9F92BF}
+[data-theme="dark"] .endpoint-method.post{background:rgba(126,217,87,.18);color:#fff;border-color:rgba(126,217,87,.45)}
+[data-theme="dark"] .endpoint-method.get{color:#CEC8FE;background:rgba(206,200,254,.12);border-color:rgba(206,200,254,.28)}
 
 /* TABLE OF CONTENTS (mobile only - reading hint) */
 .toc-mobile{display:none}
