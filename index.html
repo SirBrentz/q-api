@@ -608,7 +608,8 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .recipe-step-body code{font-size:.9em}
 
 /* ENDPOINT BLOCK - themed banner per endpoint, no full-card wrapper */
-.endpoint{padding:0;margin-bottom:64px;scroll-margin-top:88px}
+.endpoint{padding:0;margin-bottom:64px;scroll-margin-top:88px;position:relative}
+.endpoint:not(:last-child)::after{content:"";display:block;width:40%;height:1px;background:var(--border-lt);margin:64px auto 0}
 .endpoint-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;padding:14px 18px;border-radius:10px;background:linear-gradient(90deg,rgba(77,61,113,.08),rgba(77,61,113,.02) 65%,transparent);border-left:4px solid var(--indigo)}
 .endpoint-method{font-family:var(--font-m);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase}
 .endpoint-method.post{background:rgba(126,217,87,.16);color:#0F7A3D;border:1px solid rgba(126,217,87,.3)}
