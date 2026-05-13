@@ -1,6 +1,40 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Rip out PDF storage; sheet-row lookup by email is enough
+              Brent realized the PDF wasn't needed: since every selection
+              a user makes in the flow already lives in its own column,
+              you can search the sheet by Email, jump to the row, and
+              scroll right to see Use Cases, Pharmacy Choice, Provider
+              Override, Invite Method, Optional Features (+ per-feature
+              flags), States, Webhook URL, and Exam IDs — i.e. all the
+              data the PDF would have shown. The actual PDF file adds
+              complexity (Drive auth, base64 upload, page-unload races)
+              for redundant info.
+
+              REMOVED:
+                * Page-side qs_pdf_generated dispatch + the "Uploading
+                  copy…" button state. doc.save runs and we're done.
+                * The `large: true` plumbing in send() — only existed
+                  for the PDF payload.
+                * Apps Script: qs_pdf_generated handler, getPdfFolder_()
+                  helper, PDF_FOLDER constant. No more DriveApp scope
+                  needed.
+                * SETUP.txt: PDF STORAGE section, DriveApp re-auth
+                  callout. Replaced with a "LOOKUP WORKFLOW" section
+                  explaining the Ctrl-F-by-email pattern.
+
+              KEPT:
+                * PDF Drive URL + PDF Generated At in PII_COLS, even
+                  though the script no longer writes them — protects
+                  any residual data already in sheets that ran the
+                  earlier v3 build, so it stays out of the dashboard.
+                * Both columns remain in the sheet header for those
+                  earlier deployments. They will just stop receiving
+                  new data. Manually delete the columns in your sheet
+                  if you want them gone — the script will not re-add
+                  them.
+
 2026-05-13 — Dashboard: hide QS panels on Main Docs tab + PDF upload debug
               Two follow-ups from Brent.
 

@@ -52,13 +52,7 @@ window.QAPI_TRACK_CONFIG = {
   var viewedSections = {};
   var scrollMaxFired = 0;
 
-  function send(event, data, opts){
-    // opts may be `true` (legacy useBeacon flag) or an object:
-    //   { useBeacon: bool, large: bool }
-    // `large` drops `keepalive` (which caps body size around 64KB), so the
-    // PDF base64 upload doesn't get truncated by the browser.
-    if (opts === true) opts = { useBeacon: true };
-    opts = opts || {};
+  function send(event, data, useBeacon){
     var payload = {
       secret: cfg.SHARED_SECRET, session_id: vid, event: event,
       timestamp: new Date().toISOString(),
@@ -70,12 +64,12 @@ window.QAPI_TRACK_CONFIG = {
       utms: utms, geo: geo, data: data || {}
     };
     var body = JSON.stringify(payload);
-    if (opts.useBeacon && navigator.sendBeacon) {
+    if (useBeacon && navigator.sendBeacon) {
       try { navigator.sendBeacon(cfg.WEBHOOK_URL, new Blob([body], { type: 'text/plain' })); return; } catch(e){}
     }
-    var init = { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: body };
-    if (!opts.large) init.keepalive = true;
-    try { fetch(cfg.WEBHOOK_URL, init); } catch(e){}
+    try {
+      fetch(cfg.WEBHOOK_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body: body });
+    } catch(e){}
   }
   window.qtrack = send;
 
@@ -2485,39 +2479,10 @@ function downloadPdf(){
 
  // Save
  const cleanedCo = (co || 'plan').trim().replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 40) || 'plan';
- const pdfFilename = `Qualiphy-API-integration-plan-${cleanedCo}.pdf`;
- doc.save(pdfFilename);
+ doc.save(`Qualiphy-API-integration-plan-${cleanedCo}.pdf`);
 
- // Upload the same PDF to the telemetry sheet so we have a copy for future
- // reference. PII (sheet-only) — the dashboard filters it out, and the upload
- // path uses non-keepalive fetch since the body can exceed 64 KB (fetch
- // keepalive caps at ~64 KB; a typical plan PDF runs 100-300 KB after b64).
- try {
-  const dataUri = doc.output('datauristring'); // data:application/pdf;...;base64,XXX
-  // Robust extraction: find the ;base64, marker rather than splitting on comma
-  // (filename in the data URI could theoretically contain a comma).
-  const marker = ';base64,';
-  const ix = dataUri.indexOf(marker);
-  const b64 = ix >= 0 ? dataUri.slice(ix + marker.length) : '';
-  console.log('[qs-pdf] base64 length:', b64.length, 'qtrack available:', !!window.qtrack);
-  if (b64 && window.qtrack){
-   window.qtrack('qs_pdf_generated', { pdf_b64: b64, filename: pdfFilename }, { large: true });
-   console.log('[qs-pdf] qs_pdf_generated dispatched -> check sheet PDF Drive URL in ~3-5s');
-  } else {
-   console.warn('[qs-pdf] upload skipped: b64 empty or qtrack missing');
-  }
- } catch (e){
-  console.error('[qs-pdf] upload prep failed:', e);
- }
-
- // Hold the "Uploading copy…" state a beat so the fetch has time to fly out
- // before the user closes the tab. fetch without keepalive is cancelled on
- // page unload, so the PDF needs ~2 seconds of tab-open time after click.
- btn.innerHTML = 'Uploading copy…';
- setTimeout(() => {
-  btn.innerHTML = '✓ Downloaded';
-  setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1800);
- }, 2200);
+ btn.innerHTML = '✓ Downloaded';
+ setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2200);
  } catch (err) {
  console.error('PDF generation failed:', err);
  btn.innerHTML = orig;

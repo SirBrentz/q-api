@@ -68,19 +68,16 @@ B) PASTE THE APPS SCRIPT + DEPLOY
  *              Drops PII into the sheet for internal reference only.
  * doGet(e)   — returns all rows as JSON when ?action=data&secret=... matches.
  *              PII columns (Email, Company, Contact Name, Webhook URL Value,
- *              Exam IDs Value, PDF Drive URL, PDF Generated At) are FILTERED
- *              OUT of the response so the dashboard never receives them over
- *              the wire. The sheet stays the source of truth for manual
- *              lookups; the dashboard only sees aggregate metrics.
+ *              Exam IDs Value) are FILTERED OUT of the response so the
+ *              dashboard never receives them over the wire. The sheet stays
+ *              the source of truth for manual lookups; the dashboard only
+ *              sees aggregate metrics.
  *
  * v3 adds (vs v2):
  *   - PII capture: Email, Company, Contact Name, Webhook URL Value, Exam IDs Value
  *   - Per-feature flags: Opt: Prefill, Opt: Attach Docs, Opt: Custom Redirect,
  *     Opt: Additional Data, Opt: Skip Pharmacy Confirm, Opt: Clinic Billed,
  *     Opt: Ship To Patient, Opt: Skip Address Confirm
- *   - PDF storage: generated PDF is base64-uploaded into a Drive folder
- *     (auto-created at "Qualiphy API Docs - Quick Start PDFs"); URL + ts
- *     stored in the row. Dashboard never sees these fields.
  *   - doGet PII filter so the dashboard cannot accidentally render PII.
  *
  * v2 schema additions (carried over): Use Cases, Pharmacy Choice, Provider
@@ -94,7 +91,6 @@ B) PASTE THE APPS SCRIPT + DEPLOY
  */
 const SHARED_SECRET = 'qapi-9j2k-trk-bx88-2026';
 const SHEET_NAME    = 'Sessions';
-const PDF_FOLDER    = 'Qualiphy API Docs - Quick Start PDFs';
 
 // Full v3 schema. The script auto-appends any of these that are missing
 // from the existing sheet header row (preserves v1/v2 data).
@@ -108,9 +104,11 @@ const COLS = [
   'Use Cases','Pharmacy Choice','Provider Override','Invite Method',
   'Optional Features','States Selected','States List',
   'Has Webhook URL','Has Exam IDs','Quick Start Step','Quick Start Completed',
-  // v3 PII columns - sheet-only, filtered out of doGet
+  // v3 PII columns - sheet-only, filtered out of doGet. Search by Email
+  // to find a clinic, then scroll across the row to see everything they
+  // selected (Use Cases, Pharmacy Choice, Provider Override, Invite Method,
+  // Optional Features, States, exam IDs, webhook URL, opt flags).
   'Email','Company','Contact Name','Webhook URL Value','Exam IDs Value',
-  'PDF Drive URL','PDF Generated At',
   // v3 per-feature flags - safe to surface, but only "Optional Features" csv
   //   is wired to the dashboard. Per-feature columns are for spreadsheet pivots.
   'Opt: Prefill','Opt: Attach Docs','Opt: Custom Redirect','Opt: Additional Data',
@@ -119,6 +117,10 @@ const COLS = [
 ];
 
 // Columns the dashboard MUST never see. doGet strips these before serializing.
+// The two PDF columns are no longer written by this script (we used to store
+// the generated PDF in Drive), but they may still exist on sheets deployed
+// with the earlier v3 build. Keep them filtered so any residual data stays
+// out of the dashboard.
 const PII_COLS = [
   'Email','Company','Contact Name','Webhook URL Value','Exam IDs Value',
   'PDF Drive URL','PDF Generated At'
@@ -238,16 +240,6 @@ function csvAdd_(curStr, value) {
 }
 function csvRemove_(curStr, value) {
   return String(curStr || '').split(',').map(s => s.trim()).filter(Boolean).filter(v => v !== value).join(',');
-}
-
-/**
- * Returns the Drive folder where generated Quick Start PDFs are stored.
- * Auto-creates on first use. Folder lives in the script owner's root Drive.
- */
-function getPdfFolder_() {
-  const folders = DriveApp.getFoldersByName(PDF_FOLDER);
-  if (folders.hasNext()) return folders.next();
-  return DriveApp.createFolder(PDF_FOLDER);
 }
 
 function doPost(e) {
@@ -406,25 +398,6 @@ function doPost(e) {
       else if (f === 'name')    cur['Contact Name']      = v;
       else if (f === 'webhook') cur['Webhook URL Value'] = v;
       else if (f === 'examIds') cur['Exam IDs Value']    = v;
-    }
-    /* v3 - generated PDF: decode base64 + write to Drive, store URL only.
-     * Errors are written to the PDF Drive URL cell (instead of being
-     * silently swallowed) so you can see WHY a PDF didn't land — the
-     * most common cause is the DriveApp OAuth scope not being authorized.
-     */
-    else if (ev === 'qs_pdf_generated' && data.pdf_b64) {
-      try {
-        const bytes = Utilities.base64Decode(String(data.pdf_b64));
-        const fname = String(data.filename || ('qs-pdf-' + sid + '.pdf')).slice(0, 200);
-        const blob  = Utilities.newBlob(bytes, 'application/pdf', fname);
-        const folder = getPdfFolder_();
-        const file   = folder.createFile(blob);
-        cur['PDF Drive URL']    = file.getUrl();
-        cur['PDF Generated At'] = body.timestamp || new Date().toISOString();
-      } catch (e) {
-        cur['PDF Drive URL']    = 'ERROR: ' + String(e && e.message ? e.message : e).slice(0, 300);
-        cur['PDF Generated At'] = body.timestamp || new Date().toISOString();
-      }
     }
     else if (ev === 'qs_restart') {
       // Wipe plan-builder fields so the same visitor can re-answer fresh.
@@ -588,9 +561,10 @@ plus a Code Language Preference panel.
 E2) WHAT v3 ADDED OVER v2
 ================================================================================
 
-v3 adds per-clinic PII capture + generated-PDF storage. EVERYTHING in this
-section is sheet-only — doGet filters it out before sending to the dashboard,
-so the observability page still shows aggregate metrics only.
+v3 adds per-clinic PII capture so you can search the sheet by email and
+scroll the row to see everything the user picked. EVERYTHING in this
+section is sheet-only — doGet filters it out before sending to the
+dashboard, so the observability page still shows aggregate metrics only.
 
 PII columns (sheet only, NOT in dashboard JSON):
 
@@ -599,8 +573,6 @@ PII columns (sheet only, NOT in dashboard JSON):
   Contact Name         — name of the person filling out the wizard (Step 0)
   Webhook URL Value    — actual URL string entered (Step 1)
   Exam IDs Value       — comma list of actual exam IDs (Step 2)
-  PDF Drive URL        — Drive link to the generated plan PDF
-  PDF Generated At     — ISO timestamp the PDF was uploaded
 
 Per-feature Yes/No columns (visible if you want to pivot in Sheets, but the
 dashboard ignores them and continues to read the existing "Optional Features"
@@ -615,48 +587,26 @@ csv column):
   Opt: Ship To Patient
   Opt: Skip Address Confirm
 
-PDF STORAGE
------------
-When a user clicks "Download as PDF" on the quick-start result screen, the
-PDF is base64-encoded and posted to this Apps Script. The script:
-  1. Decodes the base64 back to PDF bytes.
-  2. Auto-creates (if missing) a Drive folder named
-     "Qualiphy API Docs - Quick Start PDFs" in the script-owner's Drive root.
-     Folder name is set in the PDF_FOLDER constant at the top of Code.gs.
-  3. Writes the PDF as a new file in that folder.
-  4. Stores the file's Drive URL in the row's "PDF Drive URL" column.
-  5. Stamps "PDF Generated At" with the upload timestamp.
-
-The script runs AS YOU (the deployer), so the folder + files are owned by
-your Google account. Files are not shared publicly — only people you grant
-Drive access to (you, plus anyone you explicitly share with) can read them.
-
-** IMPORTANT: Drive permission re-authorization **
-v3 uses DriveApp, which is a NEW OAuth scope vs v2. After pasting the v3
-code, you MUST grant the new Drive permission, otherwise PDF uploads will
-silently fail (the try/catch around the Drive write swallows the auth
-error so the row still saves the other fields).
-
-To grant the Drive scope:
-  1. In the Apps Script editor with v3 pasted in, click the function picker
-     above the code and select "getPdfFolder_".
-  2. Click Run.
-  3. A modal will appear asking you to authorize. Click "Review permissions".
-  4. Sign in with the same Google account that owns the sheet.
-  5. Click "Advanced" → "Go to (script name) (unsafe)" → "Allow".
-  6. If the function completes without error, Drive is wired up.
-  7. NOW redeploy via Deploy → Manage deployments → New version.
-
-If you ever see PDF Drive URL stay empty in the sheet even though a user
-clicked Download, the most likely cause is that this auth step was skipped.
+LOOKUP WORKFLOW
+---------------
+When you need a clinic's full intake details (e.g. preparing for a
+follow-up call):
+  1. Open the Sheet, hit Ctrl/Cmd+F, paste their email.
+  2. Jump to the matching row.
+  3. Scroll right — Use Cases, Pharmacy Choice, Provider Override, Invite
+     Method, Optional Features (csv + per-feature flags), States, Webhook
+     URL, Exam IDs are all on that row.
+The PDF the user downloaded is generated client-side from these exact
+fields, so reconstructing what they would have seen is straightforward
+without storing the binary.
 
 PII FILTER ON doGet
 -------------------
 doGet() iterates row values and skips any column listed in PII_COLS. The
 dashboard never sees Email / Company / Contact Name / Webhook URL Value /
-Exam IDs Value / PDF Drive URL / PDF Generated At over the wire — meaning
-they can't accidentally render in the recent-sessions table, can't be
-included in the CSV export, and aren't sniffable from the browser dev tools.
+Exam IDs Value over the wire — meaning they can't accidentally render in
+the recent-sessions table, can't be included in the CSV export, and aren't
+sniffable from the browser dev tools.
 
 The sheet itself, of course, has all of this for your manual reference.
 
