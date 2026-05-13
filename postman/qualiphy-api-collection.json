@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Qualiphy API",
-    "description": "Qualiphy telemedicine API. Authentication: every request body MUST include an `api_key` field (no headers, no query params). All endpoints are POST with `Content-Type: application/json`. Base URL defaults to https://api.qualiphy.me. Set `api_key` in the collection or environment variables before running.",
+    "description": "Qualiphy telemedicine API.\n\n## Getting started in 30 seconds\n\n1. Click the collection name above → **Variables** tab → paste your `api_key` value (find it in your Qualiphy dashboard → Settings).\n2. Hit **Save**.\n3. Open **Exam → List exams** and click **Send**. You should get a 200 with your exam list.\n4. Now run **Create exam invite** — it auto-pulls an `exam_id` from the previous response and fires a test-mode invite.\n5. Subsequent requests (resend, cancel, submit answers, upload attachment) auto-pull the `patient_exam_id` from the invite response.\n\n## Auth\n\nEvery request body **MUST** include an `api_key` field (no headers, no query params). All endpoints are POST with `Content-Type: application/json`. Base URL defaults to `https://api.qualiphy.me`.\n\n## Auto-chaining\n\nThe Tests script on each request captures useful response IDs into collection variables, so you do not need to copy-paste between requests:\n\n- `/exam_list` → sets `{{exam_id}}` from `exams[0].id`\n- `/exam_invite` → sets `{{patient_id}}` from `patient_exams[0].patient_exam_id` and `{{meeting_uuid}}` from `meeting_uuid`\n- `/partner_pharmacy_list` → sets `{{pharmacy_id}}` from `pharmacies[0].pharmacy_id`\n- `/partner_pharmacy_treatment_packages` → sets `{{order_set_id}}` from `treatment_packages[0].order_set_id`\n- `/custom_pharmacy_search` → sets `{{ncpdpid}}` from `pharmacies[0].ncpdpid`\n\nCheck the Postman console (View → Show Postman Console) after firing any request to see which variables it set.\n\n## Field-name gotchas\n\n- `patient_exam_id` (per-patient) vs `exam_id` (exam type) — they are different. Resend / cancel / upload use `patient_exam_id`.\n- `custom_pharmacy`: 1 = Custom, 2 = Partner. Inverted from what you would expect.\n- `phone_number` not `phone`.\n- Legacy `exam_pos_id` is still returned alongside `order_set_id` for older integrations.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_postman_id": "qualiphy-api-1-0-0"
   },
@@ -12,6 +12,25 @@
       "item": [
         {
           "name": "List exams (/api/exam_list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && Array.isArray(j.exams) && j.exams.length > 0 && j.exams[0].id != null) {",
+                  "      pm.collectionVariables.set('exam_id', String(j.exams[0].id));",
+                  "      console.log('[auto-chain] exam_id =', j.exams[0].id);",
+                  "    }",
+                  "  } catch (e) { console.warn('[auto-chain] exam_list parse failed:', e); }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -25,17 +44,61 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Returns every exam configured on your clinic. Use this to discover the `id` values you pass to `/exam_invite`. Each exam record includes `rx_type` (1=GFE, 2=Rx), `attachments_required`, `attachments`, and a preset `price` if configured."
-          }
+            "description": "Returns every exam configured on your clinic. Use this to discover the `id` values you pass to `/exam_invite`. Each exam record includes `rx_type` (1=GFE, 2=Rx), `attachments_required`, `attachments`, and a preset `price` if configured.\n\n**Auto-chain**: this request's Tests script captures `exams[0].id` into `{{exam_id}}` so subsequent requests work without manual paste."
+          },
+          "response": [
+            {
+              "name": "200 - typical exam list",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_list",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_list"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"clinic_id\": 1234,\n  \"exams\": [\n    {\n      \"id\": 2228,\n      \"title\": \"Embrace Aging GFE (Dermal Fillers, Botox, PDO, Microneedling PRP)\",\n      \"rx_type\": 1,\n      \"price\": null,\n      \"attachments_required\": 1,\n      \"attachments\": []\n    },\n    {\n      \"id\": 2769,\n      \"title\": \"3 Month Supply: Semaglutide with Medication Shipping (No Labwork Required)\",\n      \"rx_type\": 2,\n      \"price\": null,\n      \"attachments_required\": 2,\n      \"attachments\": [\"ID\"]\n    },\n    {\n      \"id\": 1486,\n      \"title\": \"Urgent Care - Acne (Doxycycline, Clindamycin, Benzoyl Peroxide) Treatment\",\n      \"rx_type\": 2,\n      \"price\": null,\n      \"attachments_required\": 2,\n      \"attachments\": [\"ID\"]\n    }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Create exam invite (/api/exam_invite)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && Array.isArray(j.patient_exams) && j.patient_exams.length > 0 && j.patient_exams[0].patient_exam_id != null) {",
+                  "      pm.collectionVariables.set('patient_id', String(j.patient_exams[0].patient_exam_id));",
+                  "      console.log('[auto-chain] patient_id =', j.patient_exams[0].patient_exam_id);",
+                  "    }",
+                  "    if (j && j.meeting_uuid) {",
+                  "      pm.collectionVariables.set('meeting_uuid', String(j.meeting_uuid));",
+                  "      console.log('[auto-chain] meeting_uuid =', j.meeting_uuid);",
+                  "    }",
+                  "  } catch (e) { console.warn('[auto-chain] exam_invite parse failed:', e); }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -48,15 +111,59 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exams\": [4226],\n  \"first_name\": \"Test\",\n  \"last_name\": \"Approve\",\n  \"email\": \"test@example.com\",\n  \"dob\": \"1990-06-30\",\n  \"phone_number\": \"+15555550100\",\n  \"state\": \"TE\",\n  \"tele_state\": \"TE\",\n  \"webhook_url\": \"{{webhook_url}}\",\n  \"additional_data\": \"{\\\"order_id\\\":\\\"WC-12847\\\"}\",\n  \"redirect_approve\": \"https://yourstore.com/cleared\",\n  \"redirect_reject\": \"https://yourstore.com/needs-followup\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exams\": [{{exam_id}}],\n  \"first_name\": \"Test\",\n  \"last_name\": \"Approve\",\n  \"email\": \"test@example.com\",\n  \"dob\": \"1990-06-30\",\n  \"phone_number\": \"+15555550100\",\n  \"state\": \"TE\",\n  \"tele_state\": \"TE\",\n  \"webhook_url\": \"{{webhook_url}}\",\n  \"additional_data\": \"{\\\"order_id\\\":\\\"WC-12847\\\"}\",\n  \"redirect_approve\": \"https://yourstore.com/cleared\",\n  \"redirect_reject\": \"https://yourstore.com/needs-followup\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. This example uses test-mode routing (`state` and `tele_state` set to TE) so it is safe to fire as-is. For Rx flows, add `pharmacy_id` + `order_set_id` (partner pharmacy) or `custom_pharmacy: 1` + `ncpdpid` + custom-pharmacy address fields. Watch the `custom_pharmacy` mapping — 1=Custom, 2=Partner."
-          }
+            "description": "Core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. This example uses test-mode routing (`state` and `tele_state` set to TE) so it is safe to fire as-is. For Rx flows, add `pharmacy_id` + `order_set_id` (partner pharmacy) or `custom_pharmacy: 1` + `ncpdpid` + custom-pharmacy address fields. Watch the `custom_pharmacy` mapping — 1=Custom, 2=Partner.\n\n**Auto-chain**: this request's Tests script captures `patient_exams[0].patient_exam_id` into `{{patient_id}}` and `meeting_uuid` into `{{meeting_uuid}}`."
+          },
+          "response": [
+            {
+              "name": "200 - invite created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_invite",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_invite"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exams\": [4226],\n  \"first_name\": \"Test\",\n  \"last_name\": \"Approve\",\n  \"email\": \"test@example.com\",\n  \"dob\": \"1990-06-30\",\n  \"phone_number\": \"+15555550100\",\n  \"state\": \"TE\",\n  \"tele_state\": \"TE\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"http_code\": 200,\n  \"meeting_url\": \"https://app.qualiphy.me/meeting/abc-123-def-456\",\n  \"meeting_uuid\": \"abc-123-def-456\",\n  \"patient_exams\": [\n    {\n      \"patient_exam_id\": 4844,\n      \"exam_title\": \"GFE Aesthetic\",\n      \"exam_id\": 4226\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 - unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_invite",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_invite"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"BAD_KEY\",\n  \"exams\": [4226]\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"http_code\": 401,\n  \"message\": \"Unauthorized access.\"\n}"
+            }
+          ]
         },
         {
           "name": "Resend invite (/api/exam_invite_resend)",
@@ -73,14 +180,35 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Re-sends the invite email and SMS to the patient. Use when a patient says they did not receive their original invite. `patient_exam_id` comes from the `patient_exams[]` array of the original `/exam_invite` response."
-          }
+            "description": "Re-sends the invite email and SMS to the patient. Use when a patient says they did not receive their original invite.\n\n`patient_exam_id` comes from the `patient_exams[]` array of the original `/exam_invite` response — auto-populated from `{{patient_id}}` if you ran `/exam_invite` first."
+          },
+          "response": [
+            {
+              "name": "200 - invite resent",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_invite_resend",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_invite_resend"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": 4844\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"http_code\": 200,\n  \"status\": \"ok\"\n}"
+            }
+          ]
         },
         {
           "name": "Cancel invite (/api/exam_invite_cancel)",
@@ -97,14 +225,58 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "description": "Cancel a previously created patient exam invite. Valid only before the provider has acted. Pass `patient_exam_id` (not `exam_id`). Returns 400 with status detail if the exam is already approved, rejected, or deferred — treat duplicate cancellations as success in retry logic."
-          }
+          },
+          "response": [
+            {
+              "name": "200 - cancelled",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_invite_cancel",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_invite_cancel"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": 55322\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"http_code\": 200,\n  \"patient_exam_id\": 55322,\n  \"status\": \"cancelled\",\n  \"cancelled_at\": \"2026-04-22T19:08:29.680Z\"\n}"
+            },
+            {
+              "name": "400 - already approved",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_invite_cancel",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_invite_cancel"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": 55322\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"http_code\": 400,\n  \"message\": \"Exam status is already approved.\"\n}"
+            }
+          ]
         },
         {
           "name": "Get exam questions (/api/exam_questions)",
@@ -121,14 +293,35 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exam_id\": {{exam_id}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "description": "Returns the screening question schema for the given exam. Use to build pre-fill UI on your own intake form, or to map your existing intake fields onto the Qualiphy question set."
-          }
+          },
+          "response": [
+            {
+              "name": "200 - question schema",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_questions",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_questions"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exam_id\": 4226\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"exam_id\": 4226,\n  \"questions\": [\n    { \"no\": 1, \"question\": \"Are you currently taking any medications?\" },\n    { \"no\": 2, \"question\": \"Have you had any reactions to anesthesia?\" },\n    { \"no\": 3, \"question\": \"Are you pregnant or breastfeeding?\" }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Submit answers (/api/exam_submit_answers)",
@@ -145,14 +338,35 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}},\n  \"answers\": [\n    { \"no\": 1, \"question\": \"Are you currently taking any medications?\", \"answer\": \"No.\" },\n    { \"no\": 2, \"question\": \"Have you had any reactions to anesthesia?\", \"answer\": \"No.\" },\n    { \"no\": 3, \"question\": \"Are you pregnant or breastfeeding?\", \"answer\": \"No.\" }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "description": "Submits answers on behalf of the patient. Pair with `/exam_questions` to pre-fill the screening using your own intake data. If you submit answers for every question, the questionnaire is skipped entirely and the patient goes straight to the provider call."
-          }
+          },
+          "response": [
+            {
+              "name": "200 - answers accepted",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/exam_submit_answers",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "exam_submit_answers"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": 149784,\n  \"answers\": [\n    { \"no\": 1, \"question\": \"Are you currently taking any medications?\", \"answer\": \"No.\" }\n  ]\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"http_code\": 200,\n  \"status\": \"ok\"\n}"
+            }
+          ]
         },
         {
           "name": "Upload attachment (/api/exam_upload_attachment)",
@@ -169,13 +383,9 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}},\n  \"file_name\": \"id-front.jpg\",\n  \"file_type\": \"ID\",\n  \"file_base64\": \"<base64-encoded-bytes>\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Attach a document to a patient exam (ID photos, lab results, prior records). The provider sees attachments during the screening. Note: the public docs section for this endpoint does not enumerate parameters; the fields here are a best-effort reconstruction. Confirm exact field names with Qualiphy before going live."
+            "description": "Attach a document to a patient exam (ID photos, lab results, prior records). The provider sees attachments during the screening.\n\n**Note**: the public docs section for this endpoint does not enumerate parameters in a table; the fields here are a best-effort reconstruction from the supported attachment types (`ID`, `Lab`). Confirm exact field names with Qualiphy before going live in production."
           }
         }
       ]
@@ -186,6 +396,25 @@
       "item": [
         {
           "name": "List partner pharmacies (/api/partner_pharmacy_list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && Array.isArray(j.pharmacies) && j.pharmacies.length > 0 && j.pharmacies[0].pharmacy_id != null) {",
+                  "      pm.collectionVariables.set('pharmacy_id', String(j.pharmacies[0].pharmacy_id));",
+                  "      console.log('[auto-chain] pharmacy_id =', j.pharmacies[0].pharmacy_id);",
+                  "    }",
+                  "  } catch (e) { console.warn('[auto-chain] partner_pharmacy_list parse failed:', e); }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -199,17 +428,57 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Lists Qualiphy partner compounding pharmacies available for your account. Use the returned `pharmacy_id` with `/exam_invite` and `/partner_pharmacy_treatment_packages`."
-          }
+            "description": "Lists Qualiphy partner compounding pharmacies available for your account. Use the returned `pharmacy_id` with `/exam_invite` and `/partner_pharmacy_treatment_packages`.\n\n**Auto-chain**: captures `pharmacies[0].pharmacy_id` into `{{pharmacy_id}}`."
+          },
+          "response": [
+            {
+              "name": "200 - available pharmacies",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/partner_pharmacy_list",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "partner_pharmacy_list"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"pharmacies\": [\n    { \"pharmacy_id\": 17, \"name\": \"Empower Pharmacy\", \"type\": \"compounding\" },\n    { \"pharmacy_id\": 22, \"name\": \"Strive Pharmacy\", \"type\": \"compounding\" }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "List treatment packages (/api/partner_pharmacy_treatment_packages)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && Array.isArray(j.treatment_packages) && j.treatment_packages.length > 0 && j.treatment_packages[0].order_set_id != null) {",
+                  "      pm.collectionVariables.set('order_set_id', String(j.treatment_packages[0].order_set_id));",
+                  "      console.log('[auto-chain] order_set_id =', j.treatment_packages[0].order_set_id);",
+                  "    }",
+                  "  } catch (e) { console.warn('[auto-chain] treatment_packages parse failed:', e); }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -222,18 +491,58 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_id\": 17,\n  \"exam_id\": {{exam_id}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_id\": {{pharmacy_id}},\n  \"exam_id\": {{exam_id}}\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Lists treatment packages (drug + dosage + pricing) for a specific partner pharmacy and Rx exam. Returns `order_set_id` for use with `/exam_invite`. Legacy `exam_pos_id` is still returned for older integrations."
-          }
+            "description": "Lists treatment packages (drug + dosage + pricing) for a specific partner pharmacy and Rx exam. Returns `order_set_id` for use with `/exam_invite`. Legacy `exam_pos_id` is still returned for older integrations.\n\n**Auto-chain**: captures `treatment_packages[0].order_set_id` into `{{order_set_id}}`."
+          },
+          "response": [
+            {
+              "name": "200 - treatment packages",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/partner_pharmacy_treatment_packages",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "partner_pharmacy_treatment_packages"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_id\": 17,\n  \"exam_id\": 1292\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"treatment_packages\": [\n    {\n      \"order_set_id\": \"OS-2104\",\n      \"exam_pos_id\": 4861,\n      \"drug_name\": \"Semaglutide\",\n      \"strength\": \"2mg\",\n      \"size\": \"2mL\",\n      \"duration_days\": 30,\n      \"price\": 29900\n    }\n  ]\n}"
+            }
+          ]
         },
         {
           "name": "Search custom pharmacy (/api/custom_pharmacy_search)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && Array.isArray(j.pharmacies) && j.pharmacies.length > 0 && j.pharmacies[0].ncpdpid != null) {",
+                  "      pm.collectionVariables.set('ncpdpid', String(j.pharmacies[0].ncpdpid));",
+                  "      console.log('[auto-chain] ncpdpid =', j.pharmacies[0].ncpdpid);",
+                  "    }",
+                  "  } catch (e) { console.warn('[auto-chain] custom_pharmacy_search parse failed:', e); }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -247,14 +556,35 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"search\": \"CVS\",\n  \"zip_code\": \"10001\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "Look up any U.S. pharmacy by name, ZIP, or NCPDPID. Returns the full address and identifier fields needed for `/exam_invite` custom-pharmacy routing. Pass `ncpdpid` alone to fetch a known pharmacy by ID."
-          }
+            "description": "Look up any U.S. pharmacy by name, ZIP, or NCPDPID. Returns the full address and identifier fields needed for `/exam_invite` custom-pharmacy routing. Pass `ncpdpid` alone to fetch a known pharmacy by ID.\n\n**Auto-chain**: captures `pharmacies[0].ncpdpid` into `{{ncpdpid}}`."
+          },
+          "response": [
+            {
+              "name": "200 - matching pharmacies",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": {
+                  "raw": "{{base_url}}/api/custom_pharmacy_search",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "custom_pharmacy_search"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"search\": \"CVS\",\n  \"zip_code\": \"10001\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"pharmacies\": [\n    {\n      \"ncpdpid\": \"3318547\",\n      \"name\": \"CVS Pharmacy #4382\",\n      \"address_line_1\": \"342 W 23rd St\",\n      \"city\": \"New York\",\n      \"state\": \"NY\",\n      \"zip_code\": \"10011\",\n      \"phone\": \"2127757582\"\n    }\n  ]\n}"
+            }
+          ]
         }
       ]
     },
@@ -276,23 +606,70 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"event\": 1,\n  \"reason\": \"Initial consultation complete\",\n  \"exam_id\": \"exam-001\",\n  \"exam_url\": \"https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...\",\n  \"exam_name\": \"General Health Check\",\n  \"exam_status\": \"Approved\",\n  \"rx_status\": \"Pharmacy Confirmed\",\n  \"clinic_name\": \"Downtown Medical Center\",\n  \"patient_email\": \"patient@example.com\",\n  \"patient_phone_number\": \"5551234567\",\n  \"patient_exam_id\": \"patient-exam-789\",\n  \"provider_name\": \"NP Liza\",\n  \"additional_data\": \"{\\\"order_id\\\":\\\"WC-12847\\\"}\",\n  \"questions_answers\": [\n    { \"no\": 1, \"question\": \"How are you feeling?\", \"answer\": \"Good.\" }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "description": "REFERENCE ONLY — DO NOT SEND.\n\nQualiphy POSTs lifecycle events to your `webhook_url`. Your handler should respond 200 immediately and process asynchronously.\n\nDispatch on `event`:\n\n- event=1 Consultation Complete. Fires for every exam (GFE, Rx, Urgent Care). `exam_status` is one of: Approved, Rejected, Deferred to Medical Director, NA, Missed. `exam_url` is a CloudFront-hosted signed PDF — mirror to your own storage if you need long-term access.\n\n- event=2 Prescription Confirmed. Fires only for Rx exams after event 1. Carries `prescription[]` (each item: drug_name, dosage_form_type, strength, size, quantity, directions, duration_days, refill_amount, ndc_number, schedule_code, pharmacy_name, pharmacy_contacts[], prescription_tracking[], created_at), `prescribed_os_id`, and the full consultation envelope.\n\n- event=3 Prescription Tracking. Fires only when a partner pharmacy ships. Carries `patient_exam_id`, `prescription_id`, `tracking_number`, `delivery_service`, `pharmacy_location`, `order_id`. Custom-pharmacy flows never get event 3.\n\nThis example shows an event=1 Approved payload. Switch the body to event 2 or 3 to model the other shapes."
-          }
+            "description": "REFERENCE ONLY — DO NOT SEND.\n\nQualiphy POSTs lifecycle events to your `webhook_url`. Your handler should respond 200 immediately and process asynchronously.\n\nDispatch on `event`:\n\n- **event=1 Consultation Complete**. Fires for every exam (GFE, Rx, Urgent Care). `exam_status` is one of: Approved, Rejected, Deferred to Medical Director, NA, Missed. `exam_url` is a CloudFront-hosted signed PDF — mirror to your own storage if you need long-term access.\n\n- **event=2 Prescription Confirmed**. Fires only for Rx exams after event 1. Carries `prescription[]` (each item: drug_name, dosage_form_type, strength, size, quantity, directions, duration_days, refill_amount, ndc_number, schedule_code, pharmacy_name, pharmacy_contacts[], prescription_tracking[], created_at), `prescribed_os_id`, and the full consultation envelope.\n\n- **event=3 Prescription Tracking**. Fires only when a partner pharmacy ships. Carries `patient_exam_id`, `prescription_id`, `tracking_number`, `delivery_service`, `pharmacy_location`, `order_id`. Custom-pharmacy flows never get event 3.\n\nThis example shows an event=1 Approved payload. The saved 'examples' tab on this request includes event=2 and event=3 payloads."
+          },
+          "response": [
+            {
+              "name": "Event 1 — Consultation Complete (Approved)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{webhook_url}}", "host": ["{{webhook_url}}"] },
+                "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"event\": 1,\n  \"reason\": \"Initial consultation complete\",\n  \"exam_id\": \"exam-001\",\n  \"exam_url\": \"https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...\",\n  \"exam_name\": \"General Health Check\",\n  \"exam_status\": \"Approved\",\n  \"rx_status\": \"Pharmacy Confirmed\",\n  \"clinic_name\": \"Downtown Medical Center\",\n  \"patient_email\": \"patient@example.com\",\n  \"patient_phone_number\": \"5551234567\",\n  \"patient_exam_id\": \"patient-exam-789\",\n  \"provider_name\": \"NP Liza\",\n  \"additional_data\": \"{\\\"order_id\\\":\\\"WC-12847\\\"}\",\n  \"questions_answers\": [\n    { \"no\": 1, \"question\": \"How are you feeling?\", \"answer\": \"Good.\" }\n  ]\n}"
+            },
+            {
+              "name": "Event 2 — Prescription Confirmed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{webhook_url}}", "host": ["{{webhook_url}}"] },
+                "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"event\": 2,\n  \"exam_id\": 1292,\n  \"exam_name\": \"GLP-1 Weight Loss\",\n  \"exam_status\": \"Approved\",\n  \"exam_url\": \"https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...\",\n  \"rx_status\": \"Pharmacy Confirmed\",\n  \"clinic_name\": \"Downtown Medical Center\",\n  \"patient_email\": \"patient@example.com\",\n  \"patient_phone_number\": \"5551234567\",\n  \"patient_exam_id\": 149784,\n  \"provider_name\": \"NP Liza\",\n  \"prescribed_os_id\": 486,\n  \"prescription\": [\n    {\n      \"prescription_id\": 3320,\n      \"drug_name\": \"Semaglutide\",\n      \"dosage_form_type\": \"Inj\",\n      \"strength\": \"2mg\",\n      \"size\": \"2mL\",\n      \"quantity\": \"2\",\n      \"directions\": \"Inject 0.25mg subcutaneously weekly.\",\n      \"duration_days\": 30,\n      \"refill_amount\": 2,\n      \"ndc_number\": \"\",\n      \"schedule_code\": \"\",\n      \"pharmacy_name\": \"Choose Your Pharmacy\",\n      \"pharmacy_contacts\": [\n        { \"full_name\": null, \"email\": null, \"phone_number\": null, \"role\": null }\n      ],\n      \"prescription_tracking\": [\n        { \"rx_number\": null, \"tracking_number\": null, \"ship_carrier\": null, \"delivery_service\": null, \"pharmacy_location\": null }\n      ],\n      \"created_at\": \"2025-03-19T18:42:27.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Event 3 — Prescription Tracking",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{webhook_url}}", "host": ["{{webhook_url}}"] },
+                "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"event\": 3,\n  \"patient_exam_id\": \"patient-exam-789\",\n  \"prescription_id\": \"12345\",\n  \"tracking_number\": \"123ABC456DEF\",\n  \"delivery_service\": \"Overnight\",\n  \"pharmacy_location\": \"Main Street Location\",\n  \"order_id\": \"1234567890\"\n}"
+            }
+          ]
         }
       ]
     }
   ],
   "variable": [
     { "key": "base_url", "value": "https://api.qualiphy.me", "type": "string" },
-    { "key": "api_key", "value": "", "type": "string" },
-    { "key": "exam_id", "value": "", "type": "string" },
-    { "key": "patient_id", "value": "", "type": "string" },
-    { "key": "webhook_url", "value": "", "type": "string" }
+    { "key": "api_key", "value": "", "type": "string", "description": "Your Qualiphy API key. Find it at app.qualiphy.me → Settings → API. Keep this secret." },
+    { "key": "exam_id", "value": "", "type": "string", "description": "Auto-set by /exam_list. Or paste a specific exam id." },
+    { "key": "patient_id", "value": "", "type": "string", "description": "Auto-set by /exam_invite (from patient_exams[0].patient_exam_id). Used by resend / cancel / submit_answers / upload_attachment." },
+    { "key": "pharmacy_id", "value": "", "type": "string", "description": "Auto-set by /partner_pharmacy_list. Used by /partner_pharmacy_treatment_packages." },
+    { "key": "order_set_id", "value": "", "type": "string", "description": "Auto-set by /partner_pharmacy_treatment_packages. Pass to /exam_invite for Rx partner-pharmacy invites." },
+    { "key": "ncpdpid", "value": "", "type": "string", "description": "Auto-set by /custom_pharmacy_search. Pass to /exam_invite for custom-pharmacy invites." },
+    { "key": "meeting_uuid", "value": "", "type": "string", "description": "Auto-set by /exam_invite." },
+    { "key": "webhook_url", "value": "", "type": "string", "description": "Your webhook receiver URL. Optional in /exam_invite." }
   ]
 }

@@ -2444,59 +2444,115 @@ function buildTailoredCollection(){
  const co = (($('f-co') && $('f-co').value) || '').trim();
  const today = new Date().toISOString().slice(0,10);
 
- function req(name, path, body, desc){
-  return {
+ // Field names match the live Qualiphy API exactly (api_key in body,
+ // patient_exam_id not exam_invite_id, exams[] array on /exam_invite, etc).
+ // Sentinel placeholders are needed because JSON.stringify wraps everything
+ // in quotes — but exam_id, patient_exam_id, pharmacy_id, order_set_id are
+ // integers in Qualiphy, so the {{var}} substitution must NOT be quoted in
+ // the body. We swap quoted sentinels for bare {{vars}} after stringify.
+ const S = {
+  examId: '__Q_EXAM_ID__',
+  patientId: '__Q_PATIENT_ID__',
+  pharmacyId: '__Q_PHARMACY_ID__',
+  orderSetId: '__Q_ORDER_SET_ID__'
+ };
+ function rawBody(obj){
+  let s = JSON.stringify(obj, null, 2);
+  s = s.replace(/"__Q_EXAM_ID__"/g, '{{exam_id}}');
+  s = s.replace(/"__Q_PATIENT_ID__"/g, '{{patient_id}}');
+  s = s.replace(/"__Q_PHARMACY_ID__"/g, '{{pharmacy_id}}');
+  s = s.replace(/"__Q_ORDER_SET_ID__"/g, '{{order_set_id}}');
+  return s;
+ }
+ function req(name, path, body, desc, tests){
+  const item = {
    name: name,
    request: {
     method: 'POST',
     header: [{ key: 'Content-Type', value: 'application/json' }],
     url: { raw: '{{base_url}}' + path, host: ['{{base_url}}'], path: path.replace(/^\//,'').split('/') },
-    body: { mode: 'raw', raw: JSON.stringify(body, null, 2), options: { raw: { language: 'json' } } },
+    body: { mode: 'raw', raw: rawBody(body), options: { raw: { language: 'json' } } },
     description: desc
    },
    response: []
   };
+  if (tests && tests.length){
+   item.event = [{ listen: 'test', script: { type: 'text/javascript', exec: tests } }];
+  }
+  return item;
  }
 
+ // Test-mode patient (state=TE routes to internal test providers — safe to fire as-is).
  const examplePatient = {
-  first_name: 'Jane', last_name: 'Doe', email: 'jane.doe@example.com',
-  phone: '+15551234567', dob: '1985-04-12', gender: 'Female',
-  address: '123 Main St', city: 'Austin', state: 'TX', zip: '78701',
-  tele_state: 'TX'
+  first_name: 'Test', last_name: 'Approve', email: 'test@example.com',
+  dob: '1990-06-30', phone_number: '+15555550100',
+  state: 'TE', tele_state: 'TE'
  };
 
  const examFolder = { name: 'Exam', item: [] };
  examFolder.item.push(req('exam_list', '/api/exam_list',
   { api_key: '{{api_key}}' },
-  'List every exam configured on your account, including its ID, title, rx_type, and required attachments.'));
+  'List every exam configured on your clinic. Auto-sets {{exam_id}} from exams[0].id.',
+  [
+   "if (pm.response.code === 200) {",
+   "  try {",
+   "    const j = pm.response.json();",
+   "    if (j && Array.isArray(j.exams) && j.exams.length > 0 && j.exams[0].id != null) {",
+   "      pm.collectionVariables.set('exam_id', String(j.exams[0].id));",
+   "      console.log('[auto-chain] exam_id =', j.exams[0].id);",
+   "    }",
+   "  } catch (e) { console.warn(e); }",
+   "}"
+  ]));
 
- const invitePayload = Object.assign({ api_key: '{{api_key}}', exam_id: '{{exam_id}}' }, examplePatient);
+ // /exam_invite uses `exams: [id]` (array), not `exam_id` (singular).
+ const invitePayload = Object.assign({
+  api_key: '{{api_key}}',
+  exams: ['{{exam_id}}']
+ }, examplePatient);
  if (webhookUrl) invitePayload.webhook_url = '{{webhook_url}}';
  if (providerOverride === 'yes') invitePayload.provider_pos_selection = 3;
- if (opts.additionalData) invitePayload.additional_data = '{"your_order_id":"42"}';
+ if (opts.additionalData) invitePayload.additional_data = '{"order_id":"YOUR_ORDER_ID"}';
  examFolder.item.push(req('exam_invite', '/api/exam_invite', invitePayload,
-  'Create a patient screening (Good Faith Exam, Rx consult, or Urgent Care visit) and invite the patient. Returns a meeting URL.'));
+  'Core endpoint. Creates a patient exam invite and returns a meeting URL. Test-mode (state=TE, tele_state=TE) so it is safe to fire as-is once api_key is set. Auto-sets {{patient_id}} from patient_exams[0].patient_exam_id and {{meeting_uuid}} from meeting_uuid.',
+  [
+   "if (pm.response.code === 200) {",
+   "  try {",
+   "    const j = pm.response.json();",
+   "    if (j && Array.isArray(j.patient_exams) && j.patient_exams.length > 0 && j.patient_exams[0].patient_exam_id != null) {",
+   "      pm.collectionVariables.set('patient_id', String(j.patient_exams[0].patient_exam_id));",
+   "      console.log('[auto-chain] patient_id =', j.patient_exams[0].patient_exam_id);",
+   "    }",
+   "    if (j && j.meeting_uuid) {",
+   "      pm.collectionVariables.set('meeting_uuid', String(j.meeting_uuid));",
+   "      console.log('[auto-chain] meeting_uuid =', j.meeting_uuid);",
+   "    }",
+   "  } catch (e) { console.warn(e); }",
+   "}"
+  ]));
 
  if (opts.prefill){
   examFolder.item.push(req('exam_questions', '/api/exam_questions',
    { api_key: '{{api_key}}', exam_id: '{{exam_id}}' },
-   'Fetch the question list for an exam so you can pre-fill patient answers before they join the consultation.'));
+   'Fetch the screening question list for an exam so you can pre-fill answers before the patient joins.'));
   examFolder.item.push(req('exam_submit_answers', '/api/exam_submit_answers',
-   { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE', answers: [{ question_id: 1, answer: 'Yes' }] },
-   'Submit pre-filled patient answers tied to an invite. Skips the questionnaire screen for the patient.'));
+   { api_key: '{{api_key}}', patient_exam_id: '{{patient_id}}', answers: [
+    { no: 1, question: 'Are you currently taking any medications?', answer: 'No.' }
+   ] },
+   'Submit answers on behalf of the patient. Pair with /exam_questions. Submitting all answers skips the patient questionnaire entirely.'));
  }
  if (opts.attach){
   examFolder.item.push(req('exam_upload_attachment', '/api/exam_upload_attachment',
-   { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE', file_url: 'https://example.com/lab.pdf', filename: 'lab-results.pdf' },
-   'Upload supporting documents (lab results, ID, prior records) to an active exam invite.'));
+   { api_key: '{{api_key}}', patient_exam_id: '{{patient_id}}', file_name: 'id-front.jpg', file_type: 'ID', file_base64: '<base64-encoded-bytes>' },
+   'Attach a document (ID, lab results) to a patient exam. Note: the public docs do not enumerate fields for this endpoint — best-effort shape; confirm with Qualiphy before going live.'));
  }
 
  examFolder.item.push(req('exam_invite_resend', '/api/exam_invite_resend',
-  { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE' },
-  'Resend the invite to a patient who hasn\'t started their consultation.'));
+  { api_key: '{{api_key}}', patient_exam_id: '{{patient_id}}' },
+  'Resend the invite email and SMS to the patient.'));
  examFolder.item.push(req('exam_invite_cancel', '/api/exam_invite_cancel',
-  { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE' },
-  'Cancel an unstarted exam invite.'));
+  { api_key: '{{api_key}}', patient_exam_id: '{{patient_id}}' },
+  'Cancel an unstarted exam invite. 400 if already approved/rejected/deferred — treat duplicate cancels as success.'));
 
  const folders = [examFolder];
 
@@ -2505,38 +2561,80 @@ function buildTailoredCollection(){
   if (pharm.has('partner')){
    pharmFolder.item.push(req('partner_pharmacy_list', '/api/partner_pharmacy_list',
     { api_key: '{{api_key}}' },
-    'List Qualiphy-partner compounding pharmacies available for fulfillment.'));
+    'List Qualiphy partner compounding pharmacies. Auto-sets {{pharmacy_id}} from pharmacies[0].pharmacy_id.',
+    [
+     "if (pm.response.code === 200) {",
+     "  try {",
+     "    const j = pm.response.json();",
+     "    if (j && Array.isArray(j.pharmacies) && j.pharmacies.length > 0 && j.pharmacies[0].pharmacy_id != null) {",
+     "      pm.collectionVariables.set('pharmacy_id', String(j.pharmacies[0].pharmacy_id));",
+     "      console.log('[auto-chain] pharmacy_id =', j.pharmacies[0].pharmacy_id);",
+     "    }",
+     "  } catch (e) { console.warn(e); }",
+     "}"
+    ]));
    pharmFolder.item.push(req('partner_pharmacy_treatment_packages', '/api/partner_pharmacy_treatment_packages',
-    { api_key: '{{api_key}}', partner_pharmacy_id: 1 },
-    'List treatment packages (dosage, fill count, price) offered by a specific partner pharmacy.'));
+    { api_key: '{{api_key}}', pharmacy_id: '{{pharmacy_id}}', exam_id: '{{exam_id}}' },
+    'Treatment packages (drug + dosage + price) for a partner pharmacy and Rx exam. Returns order_set_id. Auto-sets {{order_set_id}}.',
+    [
+     "if (pm.response.code === 200) {",
+     "  try {",
+     "    const j = pm.response.json();",
+     "    if (j && Array.isArray(j.treatment_packages) && j.treatment_packages.length > 0 && j.treatment_packages[0].order_set_id != null) {",
+     "      pm.collectionVariables.set('order_set_id', String(j.treatment_packages[0].order_set_id));",
+     "      console.log('[auto-chain] order_set_id =', j.treatment_packages[0].order_set_id);",
+     "    }",
+     "  } catch (e) { console.warn(e); }",
+     "}"
+    ]));
   }
   if (pharm.has('custom')){
    pharmFolder.item.push(req('custom_pharmacy_search', '/api/custom_pharmacy_search',
-    { api_key: '{{api_key}}', zip: '78701' },
-    'Search retail pharmacies (CVS, Walgreens, etc.) by ZIP. Returns NCPDPID, address, phone — drop these onto /exam_invite.'));
+    { api_key: '{{api_key}}', search: 'CVS', zip_code: '10001' },
+    'Search U.S. pharmacies by name and ZIP. Returns NCPDPID + address fields for /exam_invite custom-pharmacy routing. Auto-sets {{ncpdpid}}.',
+    [
+     "if (pm.response.code === 200) {",
+     "  try {",
+     "    const j = pm.response.json();",
+     "    if (j && Array.isArray(j.pharmacies) && j.pharmacies.length > 0 && j.pharmacies[0].ncpdpid != null) {",
+     "      pm.collectionVariables.set('ncpdpid', String(j.pharmacies[0].ncpdpid));",
+     "      console.log('[auto-chain] ncpdpid =', j.pharmacies[0].ncpdpid);",
+     "    }",
+     "  } catch (e) { console.warn(e); }",
+     "}"
+    ]));
   }
   folders.push(pharmFolder);
  }
 
- // Webhook reference (non-callable; documents the inbound payload shape)
+ // Webhook reference (non-callable; documents the inbound payload shape).
+ // Matches Qualiphy's actual event=1 payload — not a made-up shape.
  folders.push({
   name: 'Webhook (reference)',
-  description: 'Qualiphy POSTs to your webhook URL when a consultation completes. This entry documents the inbound payload — you cannot fire it from Postman.',
+  description: 'Qualiphy POSTs to your webhook_url when a consultation completes. Reference only — do not fire from Postman. Dispatch on the `event` field: 1=Consultation Complete, 2=Prescription Confirmed (Rx), 3=Prescription Tracking (partner pharmacy shipping).',
   item: [{
-   name: 'Inbound: exam result',
+   name: 'Inbound: exam result (event=1)',
    request: {
     method: 'POST',
     header: [{ key: 'Content-Type', value: 'application/json' }],
     url: { raw: '{{webhook_url}}', host: ['{{webhook_url}}'], path: [] },
     body: { mode: 'raw', raw: JSON.stringify({
-     exam_invite_id: 12345, exam_id: 4226, status: 'approved',
-     patient: { first_name: 'Jane', last_name: 'Doe', email: 'jane.doe@example.com' },
-     provider: { name: 'Dr. Example', npi: '1234567890' },
-     meeting_url: 'https://app.qualiphy.me/meeting/abc',
-     completed_at: '2026-05-13T18:32:00Z',
-     additional_data: '{"your_order_id":"42"}'
+     event: 1,
+     reason: 'Initial consultation complete',
+     exam_id: 'exam-001',
+     exam_url: 'https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...',
+     exam_name: 'General Health Check',
+     exam_status: 'Approved',
+     rx_status: 'Pharmacy Confirmed',
+     clinic_name: 'Downtown Medical Center',
+     patient_email: 'patient@example.com',
+     patient_phone_number: '5551234567',
+     patient_exam_id: 'patient-exam-789',
+     provider_name: 'NP Liza',
+     additional_data: '{"order_id":"WC-12847"}',
+     questions_answers: [{ no: 1, question: 'How are you feeling?', answer: 'Good.' }]
     }, null, 2), options: { raw: { language: 'json' } } },
-    description: 'Reference payload Qualiphy sends to your webhook URL after each consultation. Status values: approved, rejected, na.'
+    description: 'event=1 Consultation Complete. Fires for every exam. exam_status: Approved | Rejected | Deferred to Medical Director | NA | Missed. Event=2 adds prescription[]; event=3 adds tracking_number, delivery_service. Respond 200 quickly and process async.'
    },
    response: []
   }]
@@ -2550,7 +2648,14 @@ function buildTailoredCollection(){
    name: 'Qualiphy API · ' + (co ? co + ' (tailored)' : 'tailored'),
    _postman_id: 'qualiphy-tailored-' + Date.now(),
    description: 'Tailored Postman collection generated from your Quick Start answers on ' + today + '.\n\n'
-    + '• Auth: every request body includes `api_key`. Fill it in the collection variables panel (find your key in app.qualiphy.me → Settings).\n'
+    + '## Getting started\n'
+    + '1. Click the collection name → Variables tab → paste your api_key (find it at app.qualiphy.me → Settings).\n'
+    + '2. Click Save.\n'
+    + '3. Fire `/exam_list` — it auto-pulls an exam_id for you. Then fire `/exam_invite` in test mode (state=TE).\n'
+    + '4. Resend / cancel / submit-answers / upload-attachment all auto-pull the patient_exam_id from the invite response.\n\n'
+    + '## Auto-chaining\n'
+    + 'Tests scripts on each request set collection variables so you do not need to copy-paste between requests. Check View → Show Postman Console to see which variables fire.\n\n'
+    + '## Your selections\n'
     + '• Use cases: ' + ucList + '\n'
     + '• Pharmacy: ' + phList + '\n'
     + '• Generated by api-docs.qualiphy.me/quick-start/',
@@ -2561,6 +2666,11 @@ function buildTailoredCollection(){
    { key: 'base_url', value: 'https://api.qualiphy.me', type: 'string' },
    { key: 'api_key', value: '', type: 'string' },
    { key: 'exam_id', value: examIds[0] || '', type: 'string' },
+   { key: 'patient_id', value: '', type: 'string' },
+   { key: 'pharmacy_id', value: '', type: 'string' },
+   { key: 'order_set_id', value: '', type: 'string' },
+   { key: 'ncpdpid', value: '', type: 'string' },
+   { key: 'meeting_uuid', value: '', type: 'string' },
    { key: 'webhook_url', value: webhookUrl || '', type: 'string' }
   ]
  };

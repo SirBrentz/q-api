@@ -1,6 +1,105 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Postman + OpenAPI: full polish pass for production-ready devs
+              Brent reviewed the universal Postman collection and asked
+              whether it was truly complete for a dev who has never used
+              the Qualiphy API. It wasn't — close, but missing the two
+              biggest UX hits. Closed both gaps on Postman, and verified
+              + tightened OpenAPI in the same pass.
+
+              POSTMAN — universal collection (postman/qualiphy-api-
+              collection.json), now 40 KB up from 15 KB:
+                * Auto-chaining Tests scripts on 5 endpoints capture
+                  response IDs into collection variables, so devs no
+                  longer copy-paste between requests:
+                    /exam_list                        -> {{exam_id}}
+                    /exam_invite                      -> {{patient_id}},
+                                                         {{meeting_uuid}}
+                    /partner_pharmacy_list            -> {{pharmacy_id}}
+                    /partner_pharmacy_treatment_packages -> {{order_set_id}}
+                    /custom_pharmacy_search           -> {{ncpdpid}}
+                  Each script logs to the Postman console so it's clear
+                  which variable just got set.
+                * Saved example responses on every callable endpoint
+                  (200 success + several 4xx error variants). The dev
+                  sees the response shape inside Postman before they
+                  even fire the request.
+                * Three saved webhook examples on the reference entry
+                  (event=1 Consultation Complete, event=2 Prescription
+                  Confirmed with full prescription[] array, event=3
+                  Prescription Tracking) so handler authors can see all
+                  three payload shapes side-by-side.
+                * Expanded collection variables (added pharmacy_id,
+                  order_set_id, ncpdpid, meeting_uuid) with per-var
+                  descriptions naming which endpoint sets them.
+                * Rewritten info.description with a "Getting started in
+                  30 seconds" walkthrough, auto-chain key, and the
+                  field-name gotchas (patient_exam_id vs exam_id,
+                  custom_pharmacy 1=Custom 2=Partner, phone_number not
+                  phone, legacy exam_pos_id).
+                * Environment file (qualiphy-api.postman_environment.
+                  json) gained the four new vars to match.
+
+              QUICK START — tailored generator (quick-start/index.html
+              buildTailoredCollection()):
+                * Caught and fixed real field-name bugs that would have
+                  burned every dev who downloaded the tailored version:
+                    exam_invite_id -> patient_exam_id (in resend,
+                                       cancel, submit_answers, upload)
+                    exam_id (singular) -> exams: [id] (array) on
+                                       /exam_invite
+                    partner_pharmacy_id -> pharmacy_id (on packages)
+                    zip -> zip_code (on custom_pharmacy_search)
+                    question_id -> no (on submit_answers)
+                    file_url + filename -> file_name + file_type +
+                                       file_base64 (on upload)
+                    phone -> phone_number (on /exam_invite body)
+                * Webhook reference body rewritten to match Qualiphy's
+                  actual event=1 payload shape (was a made-up
+                  approved/rejected/na string-status shape that does
+                  not exist in the real API).
+                * Same Tests scripts as the universal — auto-chain
+                  patient_id, exam_id, pharmacy_id, order_set_id,
+                  ncpdpid, meeting_uuid.
+                * Sentinel-placeholder trick (S.examId etc + rawBody())
+                  to work around JSON.stringify quoting integer
+                  variable refs. Without this, {{exam_id}} would
+                  substitute as "4226" (string) into [{{exam_id}}],
+                  producing ["4226"] — and Qualiphy expects [4226].
+                * Generated info.description now includes a "Getting
+                  started" walkthrough mirroring the universal.
+                * Variable list expanded to include patient_id,
+                  pharmacy_id, order_set_id, ncpdpid, meeting_uuid.
+
+              OPENAPI — openapi.json, now 51 KB up from 39 KB:
+                * /exam_invite request now ships three named scenario
+                  examples (GFE, Partner Pharmacy Rx, Urgent/Custom
+                  Pharmacy) plus a top-level description listing the
+                  required field set for each — devs no longer need to
+                  cross-reference the docs to figure out which fields
+                  go with which flow.
+                * Added a 400 response to /exam_invite. Expanded the
+                  401 with what each canonical Qualiphy error message
+                  means (need PCP, need DocuSign, need PSC, etc).
+                * Webhook descriptions overhauled — event=1/2/3 fire
+                  conditions, the partner-vs-custom event=3 carve-out,
+                  the 100ms response target, and per-event nullability
+                  notes (exam_url nullable for NA/Missed, pharmacy_*
+                  fields null in event=2's "Choose Your Pharmacy"
+                  state).
+                * Added the int-vs-string type drift gotcha between
+                  event=1 (string IDs) and event=2 (integer IDs) to
+                  the schema descriptions — webhook authors need to
+                  parse defensively.
+                * Flagged the docs contradiction on
+                  attachments_required (table says count, glossary
+                  says inverted boolean) in the field description.
+                * Tightened nearly every other field description with
+                  the doc's nuance (counter-intuitive mappings, when
+                  fields are required, the meaning of POS in
+                  provider_pos_selection, etc).
+
 2026-05-13 — Endpoint: themed banner instead of full card + dark-mode POST fix
               Two follow-ups from Brent's review of the section-separation
               pass:

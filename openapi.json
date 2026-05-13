@@ -92,31 +92,80 @@
       "post": {
         "tags": ["Exam"],
         "summary": "Create a patient exam invite",
-        "description": "The core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. Supports four scenarios via parameter combinations: Good Faith Exam, QualiphyRx Packages (partner pharmacy), Urgent Care Visit, and Choose Your Own Pharmacy (custom pharmacy). Watch the `custom_pharmacy` mapping: 1 means custom, 2 means partner.",
+        "description": "The core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. Supports four distinct scenarios via parameter combinations, all hitting this same endpoint:\n\n1. **Good Faith Exam (GFE)** - non-Rx clearance for in-clinic procedures. Pass `exams` + identity fields only. No pharmacy fields. Use a `rx_type: 1` exam from `/exam_list`.\n2. **QualiphyRx Packages** (Partner Pharmacy) - prescription fulfilled through Qualiphy's compounding-pharmacy network with shipping included. Pass `pharmacy_id` (from `/partner_pharmacy_list`) and `order_set_id` (from `/partner_pharmacy_treatment_packages`). Use a `rx_type: 2` exam. Pickup not supported. Webhook events 1, 2, and 3 all fire.\n3. **Urgent Care Visit** - prescription sent to a retail pharmacy for same-day pickup/delivery. Pass `custom_pharmacy: 1`, `ncpdpid`, and the `pharmacy_*` address fields. Webhook events 1 and 2 fire (no event 3 — retail pharmacy handles fulfillment).\n4. **Choose Your Own Pharmacy** - same field set as Urgent Care, used for non-urgent meds. The `ncpdpid` and `pharmacy_*` fields come from `/custom_pharmacy_search`.\n\n**Watch the `custom_pharmacy` mapping**: `1` means custom (retail), `2` means partner. Counter-intuitive. For test mode, set both `state` and `tele_state` to `TE` and use names like `Test Approve` / `Test Prescription Approve` to steer the test provider's verdict.",
         "operationId": "examInvite",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/ExamInviteRequest" },
-              "example": {
-                "api_key": "YOUR_API_KEY",
-                "exams": [4226],
-                "first_name": "Test",
-                "last_name": "Approve",
-                "email": "test@example.com",
-                "dob": "1990-06-30",
-                "phone_number": "+15555550100",
-                "state": "TE",
-                "tele_state": "TE",
-                "webhook_url": "https://your-app.com/webhooks/qualiphy"
+              "examples": {
+                "scenarioGFE": {
+                  "summary": "Scenario 1 - Good Faith Exam (non-Rx)",
+                  "value": {
+                    "api_key": "YOUR_API_KEY",
+                    "exams": [4226],
+                    "first_name": "Test",
+                    "last_name": "Approve",
+                    "email": "test@example.com",
+                    "dob": "1985-03-12",
+                    "phone_number": "+15555550100",
+                    "state": "TE",
+                    "tele_state": "TE",
+                    "webhook_url": "https://yourstore.com/webhooks/qualiphy",
+                    "additional_data": "{\"order_id\":\"WC-12847\"}",
+                    "redirect_approve": "https://yourstore.com/cleared",
+                    "redirect_reject": "https://yourstore.com/needs-followup"
+                  }
+                },
+                "scenarioPartnerPharmacy": {
+                  "summary": "Scenario 2 - QualiphyRx Packages (partner pharmacy)",
+                  "value": {
+                    "api_key": "YOUR_API_KEY",
+                    "exams": [1292],
+                    "first_name": "Test",
+                    "last_name": "Prescription Approve",
+                    "email": "test@example.com",
+                    "dob": "1982-09-04",
+                    "phone_number": "+15555550100",
+                    "state": "TE",
+                    "tele_state": "TE",
+                    "pharmacy_id": 47,
+                    "order_set_id": "OS-2104",
+                    "webhook_url": "https://yourapp.com/webhooks/qualiphy",
+                    "additional_data": "{\"subscription_id\":\"SUB-9912\"}"
+                  }
+                },
+                "scenarioUrgentOrCustom": {
+                  "summary": "Scenario 3/4 - Urgent Care or Choose Your Own Pharmacy",
+                  "value": {
+                    "api_key": "YOUR_API_KEY",
+                    "exams": [3104],
+                    "first_name": "Test",
+                    "last_name": "Prescription Approve",
+                    "email": "test@example.com",
+                    "dob": "1991-02-18",
+                    "phone_number": "+15555550100",
+                    "state": "TE",
+                    "tele_state": "TE",
+                    "custom_pharmacy": 1,
+                    "ncpdpid": "1234567",
+                    "pharmacy_name": "CVS Pharmacy #5821",
+                    "pharmacy_address_line_1": "1500 Main St",
+                    "pharmacy_city": "Austin",
+                    "pharmacy_state": "TX",
+                    "pharmacy_zip_code": "78701",
+                    "pharmacy_phone": "+15125550000",
+                    "webhook_url": "https://yourapp.com/webhooks/qualiphy"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Invite created.",
+            "description": "Invite created. `patient_exam_id` is the per-patient instance ID — use it for cancel, resend, submit-answers, attachment upload, and to correlate webhook payloads. `exam_id` is the catalog ID you passed in.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ExamInviteResponse" },
@@ -135,8 +184,11 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request. Typically a missing required field, malformed `dob` (must be YYYY-MM-DD) or `phone_number`, or an invalid `tele_state` (use a two-letter uppercase abbreviation, `DC` for D.C., or `TE` for test mode). The response body specifies which field failed."
+          },
           "401": {
-            "description": "Unauthorized. Possible messages: `Unauthorized access.`, `Need to add Patient Care Provider via Qualiphy Portal!`, `You need to signed docusign and signed rx`, `Need to sign Prescriptive Services Contract via Qualiphy Portal!`."
+            "description": "Unauthorized. Possible response messages and what each means:\n- `Unauthorized access.` - api_key missing or invalid.\n- `Need to add Patient Care Provider via Qualiphy Portal!` - no provider configured for the patient's `tele_state`. Add one in Portal -> Operators.\n- `You need to signed docusign and signed rx` - onboarding agreements incomplete.\n- `Need to sign Prescriptive Services Contract via Qualiphy Portal!` - required before any Rx exam (GFE works without it)."
           }
         }
       }
@@ -145,7 +197,7 @@
       "post": {
         "tags": ["Exam"],
         "summary": "Upload an attachment to a patient exam",
-        "description": "Attach a document to a patient exam (ID photos, lab results, prior records). The provider sees attachments during the screening. Note: the public docs section for this endpoint does not enumerate parameters or example payload; the fields below reflect the conventional request shape (api_key + patient_exam_id + file payload). Confirm exact field names with Qualiphy before going live.",
+        "description": "Attach a document to a patient exam (ID photos, lab results, prior records). The provider sees attachments during the screening.\n\n**Spec note:** the public docs section for this endpoint contains only a one-line description and does not enumerate request fields, document a curl example, or show a response shape. The schema below is a best-effort reconstruction (api_key + patient_exam_id + file payload). Before going live, confirm the exact field names (especially how the file is encoded — multipart vs base64 JSON) directly with Qualiphy support; the rest of the API uses `application/json`, so base64 inside JSON is the most likely shape.",
         "operationId": "examUploadAttachment",
         "requestBody": {
           "required": true,
@@ -164,7 +216,7 @@
         },
         "responses": {
           "200": {
-            "description": "Attachment received.",
+            "description": "Attachment received. Response shape is not documented; the example below is a best-effort acknowledgment shape consistent with the other side-effect endpoints (`/exam_invite_resend`, `/exam_submit_answers`).",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GenericOk" },
@@ -195,7 +247,7 @@
         },
         "responses": {
           "200": {
-            "description": "Question schema for the requested exam.",
+            "description": "Question schema for the requested exam. Note: the public docs do not include a sample response body for this endpoint; the example below mirrors the `{ no, question }` shape used by `/exam_submit_answers` and the webhook `questions_answers` array. Confirm exact fields against a live call.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ExamQuestionsResponse" },
@@ -238,7 +290,7 @@
         },
         "responses": {
           "200": {
-            "description": "Answers accepted.",
+            "description": "Answers accepted. Response shape is not documented; the example below is a best-effort acknowledgment.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GenericOk" },
@@ -269,7 +321,7 @@
         },
         "responses": {
           "200": {
-            "description": "Invite resent.",
+            "description": "Invite resent. Response shape is not documented; the example below is a best-effort acknowledgment.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GenericOk" },
@@ -446,7 +498,7 @@
       "post": {
         "tags": ["Webhook"],
         "summary": "Inbound webhook from Qualiphy",
-        "description": "Qualiphy POSTs lifecycle events to the `webhook_url` you supplied to `/exam_invite`. Dispatch on the `event` integer: 1 = Consultation Complete, 2 = Prescription Confirmed (Rx only), 3 = Prescription Tracking (partner pharmacy shipping). Respond 200 immediately and process asynchronously. Treat each event as a distinct payload shape.",
+        "description": "Qualiphy POSTs lifecycle events to the `webhook_url` you supplied to `/exam_invite`. Always dispatch on the `event` integer — treating the webhook as a single payload type is the most common integration mistake:\n- `1` = Consultation Complete. Fires for every exam (GFE, Rx, Urgent Care) when the provider finishes the consultation. Carries the verdict in `exam_status` (Approved, Rejected, Deferred to Medical Director, NA, Missed) and the screening Q&A.\n- `2` = Prescription Confirmed. Fires only for Rx exams, after event 1, when the treatment order is written and confirmed at the pharmacy. Carries the full `prescription[]` array.\n- `3` = Prescription Tracking. Fires only for **partner-pharmacy** Rx shipments when the package ships. Custom-pharmacy / urgent-care exams do NOT receive event 3 — the retail pharmacy is the source of truth for fulfillment.\n\nRespond 200 immediately (under 100ms) and process asynchronously. Treat `patient_exam_id` as the idempotency key. Webhook source verification is not yet available — IP-allowlist if possible and ensure HTTPS.",
         "requestBody": {
           "required": true,
           "content": {
@@ -515,6 +567,9 @@
                         ],
                         "created_at": "2025-03-19T18:42:27.000Z"
                       }
+                    ],
+                    "questions_answers": [
+                      { "no": 1, "question": "How are you feeling?", "answer": "Good." }
                     ]
                   }
                 },
@@ -563,11 +618,11 @@
         "type": "object",
         "properties": {
           "id": { "type": "integer", "description": "Exam ID. Pass this to `/exam_invite` in the `exams` array." },
-          "title": { "type": "string" },
-          "rx_type": { "type": "integer", "description": "1 = non-Rx (GFE). 2 = Rx (including QualiphyRx Packages, Urgent Care, Choose-Your-Own-Pharmacy)." },
-          "price": { "type": "string", "nullable": true, "description": "Preset price as a decimal string (e.g. \"27.99\") or null." },
-          "attachments_required": { "type": "integer", "description": "Files patient must upload before consultation. Always at least 1." },
-          "attachments": { "type": "array", "items": { "type": "string" }, "description": "Names of required attachments beyond the default ID upload." }
+          "title": { "type": "string", "description": "Human-readable exam name as configured in the Qualiphy portal." },
+          "rx_type": { "type": "integer", "description": "1 = non-Rx (GFE). 2 = Rx (covers QualiphyRx Packages, Urgent Care, and Choose-Your-Own-Pharmacy — there is no separate \"urgent\" rx_type; distinguish those by `title`)." },
+          "price": { "type": "string", "nullable": true, "description": "Preset price as a decimal string (e.g. \"27.99\") when one is configured, otherwise null." },
+          "attachments_required": { "type": "integer", "description": "Number of files the patient must upload before the consultation. Always at least 1. (Note: the docs glossary treats this as an inverted flag — 1=not required, 2=required — while the endpoint param table describes it as a count. Treat the value as a count of required files; if you see 1 with an empty `attachments` array, only the standard ID upload is required.)" },
+          "attachments": { "type": "array", "items": { "type": "string" }, "description": "Names of required attachments beyond the default ID upload, e.g. `[\"ID\"]`, `[\"ID\", \"Lab\"]`, or `[\"Picture of hair loss area\"]`. Empty array means only the standard ID is required." }
         }
       },
       "ExamListResponse": {
@@ -589,52 +644,53 @@
           "phone_number",
           "tele_state"
         ],
+        "description": "The `/exam_invite` request body. Required fields are the same across all four scenarios; the optional fields vary:\n- **GFE** (rx_type 1 exam): identity fields only, no pharmacy fields.\n- **Partner Pharmacy**: add `pharmacy_id` and (optionally) `order_set_id`.\n- **Urgent Care / Custom Pharmacy**: add `custom_pharmacy: 1`, `ncpdpid`, and the `pharmacy_*` address fields.\nFor test mode, set both `state` and `tele_state` to `TE`.",
         "properties": {
-          "api_key": { "type": "string" },
-          "exams": { "type": "array", "items": { "type": "integer" }, "description": "Array of exam IDs from `/exam_list`. Stack non-Rx exams freely; only one Rx exam per meeting." },
-          "first_name": { "type": "string" },
-          "last_name": { "type": "string" },
+          "api_key": { "type": "string", "description": "Your account API key." },
+          "exams": { "type": "array", "items": { "type": "integer" }, "description": "Array of exam IDs from `/exam_list`. Stack non-Rx exams freely; only one Rx exam may run per meeting." },
+          "first_name": { "type": "string", "description": "Patient first name. In test mode, use `Test` plus an outcome keyword (`Approve`, `Reject`, `N/A`, `Prescription Approve`, `Prescription Reject`) — the test provider reads the name to decide how to process the exam." },
+          "last_name": { "type": "string", "description": "Patient last name." },
           "email": { "type": "string", "description": "Patient email. Used for invite delivery and as the patient identifier." },
           "dob": { "type": "string", "description": "Date of birth as YYYY-MM-DD.", "example": "1990-06-30" },
-          "phone_number": { "type": "string", "description": "Patient phone. Accepted formats: +15552223232 or 1234567890." },
-          "tele_state": { "type": "string", "description": "Two-letter state abbreviation of the patient (not your clinic). Determines provider matching. Use TE for test mode." },
-          "webhook_url": { "type": "string", "description": "Where to POST the result. Highly recommended." },
-          "additional_data": { "type": "string", "description": "Stringified JSON returned unchanged in the webhook payload." },
-          "redirect_approve": { "type": "string" },
-          "redirect_reject": { "type": "string" },
-          "redirect_na": { "type": "string" },
-          "redirect_missed": { "type": "string", "description": "Fires after a 3-minute provider-availability timeout." },
-          "gender": { "type": "integer", "description": "1=Male, 2=Female, 3=Prefer not to say." },
-          "dmv_license_number": { "type": "string" },
-          "address_line_1": { "type": "string" },
-          "address_line_2": { "type": "string" },
-          "city": { "type": "string" },
-          "state": { "type": "string", "description": "Address state. Set to TE for test mode (along with tele_state)." },
-          "zip_code": { "type": "string" },
-          "shipping_address_line_1": { "type": "string" },
+          "phone_number": { "type": "string", "description": "Patient phone. Two formats accepted: `+15552223232` or `1234567890`." },
+          "tele_state": { "type": "string", "description": "Two-letter UPPERCASE state abbreviation of the **patient** (not your clinic). Determines provider matching and is the most common source of integration bugs. Use `DC` for Washington D.C., or `TE` for test mode." },
+          "webhook_url": { "type": "string", "description": "Where to POST the lifecycle webhook events. Highly recommended — without it, you have no way to know when the exam completes." },
+          "additional_data": { "type": "string", "description": "Stringified JSON. Returned unchanged in the webhook payload. Use it to round-trip your internal IDs (order ID, subscription ID, etc.)." },
+          "redirect_approve": { "type": "string", "description": "URL the patient is sent to after an Approved verdict." },
+          "redirect_reject": { "type": "string", "description": "URL the patient is sent to after a Rejected verdict." },
+          "redirect_na": { "type": "string", "description": "URL the patient is sent to after an NA verdict." },
+          "redirect_missed": { "type": "string", "description": "URL the patient is sent to after a Missed verdict. Fires after a 3-minute provider-availability timeout." },
+          "gender": { "type": "integer", "description": "Integer, not string. 1=Male, 2=Female, 3=Prefer not to say." },
+          "dmv_license_number": { "type": "string", "description": "Patient's DMV license number for ID verification." },
+          "address_line_1": { "type": "string", "description": "Patient's home address line 1." },
+          "address_line_2": { "type": "string", "description": "Patient's home address line 2." },
+          "city": { "type": "string", "description": "Patient's home address city." },
+          "state": { "type": "string", "description": "Patient's home **address** state (two-letter abbreviation). Conceptually different from `tele_state`, which drives provider matching — they are often the same value. Set to `TE` for test mode (along with `tele_state`)." },
+          "zip_code": { "type": "string", "description": "Patient's home ZIP." },
+          "shipping_address_line_1": { "type": "string", "description": "Where to ship Rx treatments. Different from home address when shipping to clinic, P.O. box, or alternate location." },
           "shipping_address_line_2": { "type": "string" },
           "shipping_city": { "type": "string" },
           "shipping_state": { "type": "string" },
           "shipping_zip_code": { "type": "string" },
-          "pharmacy_id": { "type": "integer", "description": "Partner pharmacy ID from `/partner_pharmacy_list`." },
-          "order_set_id": { "type": "string", "description": "Preselect a drug + dosage package from `/partner_pharmacy_treatment_packages`." },
-          "exam_pos_id": { "type": "integer", "description": "Legacy alias for order_set_id, still accepted." },
-          "custom_pharmacy": { "type": "integer", "description": "1=Custom Pharmacy, 2=Partner Pharmacy. Counter-intuitive — do not invert." },
-          "ncpdpid": { "type": "string", "description": "Custom pharmacy NCPDPID from `/custom_pharmacy_search`." },
-          "pharmacy_name": { "type": "string" },
-          "pharmacy_address_line_1": { "type": "string" },
-          "pharmacy_address_line_2": { "type": "string" },
-          "pharmacy_city": { "type": "string" },
-          "pharmacy_state": { "type": "string" },
-          "pharmacy_zip_code": { "type": "string" },
-          "pharmacy_phone": { "type": "string" },
-          "pharmacy_type": { "type": "string" },
-          "provider_pos_selection": { "type": "integer", "description": "1=Provider does not choose. 2=Provider picks order set only. 3=Provider picks pharmacy and order set." },
-          "custom_pharmacy_patient_choice": { "type": "integer", "description": "1=Custom pharmacy preselected. 2=Patient chooses at the meeting." },
-          "skip_pharmacy_confirmation": { "type": "integer", "description": "1=Show confirmation. 2=Skip (only when all pharmacy fields are present)." },
-          "custom_pharmacy_patient_billing": { "type": "integer", "description": "1=Clinic is billed. 2=Patient is billed." },
-          "custom_pharmacy_clinic_billing": { "type": "string", "description": "Clinic identifier for pharmacy billing. Required when custom_pharmacy_patient_billing=1." },
-          "custom_pharmacy_delivery_method": { "type": "integer", "description": "1=Patient pickup. 2=Ship to patient or clinic." }
+          "pharmacy_id": { "type": "integer", "description": "Partner pharmacy ID from `/partner_pharmacy_list`. Used for the QualiphyRx Packages (Partner Pharmacy) scenario." },
+          "order_set_id": { "type": "string", "description": "Preselect a specific drug + dosage package from `/partner_pharmacy_treatment_packages`. Optional even on partner-pharmacy invites; omit to let the provider choose." },
+          "exam_pos_id": { "type": "integer", "description": "Legacy alias for `order_set_id`. Still accepted as a fallback for older integrations." },
+          "custom_pharmacy": { "type": "integer", "description": "Counter-intuitive mapping — easy to invert. 1=Custom Pharmacy (retail like CVS, Walgreens). 2=Partner Pharmacy (Qualiphy's compounding network). Used to flag the Urgent Care / Choose Your Own Pharmacy scenarios." },
+          "ncpdpid": { "type": "string", "description": "Custom pharmacy's NCPDPID from `/custom_pharmacy_search`. Required when `custom_pharmacy: 1`." },
+          "pharmacy_name": { "type": "string", "description": "Custom pharmacy name. Used with `custom_pharmacy: 1`." },
+          "pharmacy_address_line_1": { "type": "string", "description": "Custom pharmacy street address line 1." },
+          "pharmacy_address_line_2": { "type": "string", "description": "Custom pharmacy street address line 2." },
+          "pharmacy_city": { "type": "string", "description": "Custom pharmacy city." },
+          "pharmacy_state": { "type": "string", "description": "Custom pharmacy state (two-letter)." },
+          "pharmacy_zip_code": { "type": "string", "description": "Custom pharmacy ZIP." },
+          "pharmacy_phone": { "type": "string", "description": "Custom pharmacy phone." },
+          "pharmacy_type": { "type": "string", "description": "Custom pharmacy type label, when applicable." },
+          "provider_pos_selection": { "type": "integer", "description": "\"POS\" = Pharmacy / Order Set. 1=Provider does not choose (you've fully specified both). 2=Provider picks order set only (you specified pharmacy). 3=Provider picks both pharmacy and order set (most flexible)." },
+          "custom_pharmacy_patient_choice": { "type": "integer", "description": "1=Custom pharmacy is preselected by you in this request. 2=Patient picks their own custom pharmacy during the meeting." },
+          "skip_pharmacy_confirmation": { "type": "integer", "description": "1=Show pharmacy confirmation screen. 2=Skip it. Only actually skips when all pharmacy fields are present in the payload." },
+          "custom_pharmacy_patient_billing": { "type": "integer", "description": "1=Clinic is billed by the pharmacy. 2=Patient is billed." },
+          "custom_pharmacy_clinic_billing": { "type": "string", "description": "Clinic identifier for pharmacy billing. Required when `custom_pharmacy_patient_billing: 1`." },
+          "custom_pharmacy_delivery_method": { "type": "integer", "description": "1=Patient picks up at pharmacy. 2=Ship to patient or clinic." }
         }
       },
       "ExamInviteResponse": {
@@ -659,13 +715,13 @@
       "ExamUploadAttachmentRequest": {
         "type": "object",
         "required": ["api_key", "patient_exam_id"],
-        "description": "The docs section for this endpoint does not enumerate request fields. The shape below is a best-effort reconstruction; confirm with Qualiphy before going live.",
+        "description": "The public docs section for `/api/exam_upload_attachment` does not enumerate request fields. The shape below is a best-effort reconstruction (api_key + patient_exam_id + file payload). Confirm exact field names with Qualiphy before going live.",
         "properties": {
           "api_key": { "type": "string" },
-          "patient_exam_id": { "type": "integer" },
-          "file_name": { "type": "string" },
-          "file_type": { "type": "string", "description": "Attachment kind, e.g. ID, Lab." },
-          "file_base64": { "type": "string", "description": "Base64-encoded file contents." }
+          "patient_exam_id": { "type": "integer", "description": "From the `patient_exams[]` array in the original `/exam_invite` response." },
+          "file_name": { "type": "string", "description": "Original filename including extension, e.g. `id-front.jpg`." },
+          "file_type": { "type": "string", "description": "Attachment kind. Match the strings shown in `/exam_list` `attachments[]` for the exam, e.g. `ID`, `Lab`." },
+          "file_base64": { "type": "string", "description": "Base64-encoded file contents. (Most likely encoding; the rest of the API is JSON-only.)" }
         }
       },
       "ExamQuestionsRequest": {
@@ -841,50 +897,53 @@
       },
       "WebhookEvent1ConsultationComplete": {
         "type": "object",
+        "description": "Fires for every exam (GFE, Rx, Urgent Care) when the provider finishes the consultation. Carries the verdict and the patient's Q&A.",
         "properties": {
           "event": { "type": "integer", "enum": [1] },
-          "reason": { "type": "string" },
-          "exam_id": { "type": "string" },
-          "exam_url": { "type": "string", "nullable": true, "description": "CloudFront-hosted PDF with signed-expiration; mirror to your own storage if needed." },
+          "reason": { "type": "string", "description": "Free-text reason from the provider. For Approved: typically a generic completion note. For Rejected/NA/Missed: usually describes why." },
+          "exam_id": { "type": "string", "description": "Catalog exam identifier as a string in this payload." },
+          "exam_url": { "type": "string", "nullable": true, "description": "CloudFront-hosted PDF of the consultation record. URLs include a signed-expiration query param — mirror the file to your own storage if you need long-term access. May be `null` for NA / Missed outcomes." },
           "exam_name": { "type": "string" },
           "exam_status": { "type": "string", "enum": ["Approved", "Rejected", "Deferred to Medical Director", "NA", "Missed"] },
-          "rx_status": { "type": "string", "nullable": true },
+          "rx_status": { "type": "string", "nullable": true, "description": "Prescription status when applicable, e.g. `Pharmacy Confirmed`. `null` for non-Rx exams or non-Approved outcomes." },
           "clinic_name": { "type": "string" },
           "patient_email": { "type": "string" },
           "patient_phone_number": { "type": "string" },
-          "patient_exam_id": { "type": "string" },
-          "provider_name": { "type": "string", "nullable": true },
-          "additional_data": { "type": "string", "description": "Echoed unchanged from `/exam_invite`." },
-          "questions_answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" } }
+          "patient_exam_id": { "type": "string", "description": "Per-patient instance ID. Use as the idempotency key." },
+          "provider_name": { "type": "string", "nullable": true, "description": "Provider who handled the exam. `null` for NA / Missed outcomes where no provider acted." },
+          "additional_data": { "type": "string", "description": "Echoed unchanged from `/exam_invite` (stringified JSON)." },
+          "questions_answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" }, "description": "Screening Q&A. Empty array for Missed outcomes where the patient never started." }
         }
       },
       "WebhookEvent2PrescriptionConfirmed": {
         "type": "object",
+        "description": "Fires only for Rx exams, after event 1, when the treatment order has been written and confirmed at the pharmacy. `prescription` is an array — an exam can include multiple treatment items (e.g. HRT often returns 2+).",
         "properties": {
           "event": { "type": "integer", "enum": [2] },
-          "exam_id": { "type": "integer" },
+          "exam_id": { "type": "integer", "description": "Catalog exam identifier. Returned as an integer on event 2 (unlike event 1's string)." },
           "exam_name": { "type": "string" },
           "exam_status": { "type": "string" },
-          "exam_url": { "type": "string" },
+          "exam_url": { "type": "string", "description": "CloudFront-hosted PDF of the consultation record." },
           "rx_status": { "type": "string" },
           "clinic_name": { "type": "string" },
           "patient_email": { "type": "string" },
           "patient_phone_number": { "type": "string" },
-          "patient_exam_id": { "type": "integer" },
+          "patient_exam_id": { "type": "integer", "description": "Returned as an integer on event 2." },
           "provider_name": { "type": "string" },
-          "prescribed_os_id": { "type": "integer" },
-          "prescription": { "type": "array", "items": { "$ref": "#/components/schemas/PrescriptionItem" } },
-          "questions_answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" } }
+          "prescribed_os_id": { "type": "integer", "description": "Order set ID the provider prescribed." },
+          "prescription": { "type": "array", "items": { "$ref": "#/components/schemas/PrescriptionItem" }, "description": "One entry per drug. May include controlled substances (`schedule_code` set, e.g. `C3`) — storage of these fields is regulated." },
+          "questions_answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" }, "description": "Same Q&A shape as event 1." }
         }
       },
       "WebhookEvent3PrescriptionTracking": {
         "type": "object",
+        "description": "Fires when the partner pharmacy ships the treatment. Does NOT fire for custom-pharmacy / urgent-care exams — those pharmacies handle their own tracking outside Qualiphy.",
         "properties": {
           "event": { "type": "integer", "enum": [3] },
           "patient_exam_id": { "type": "string" },
-          "prescription_id": { "type": "string" },
+          "prescription_id": { "type": "string", "description": "Matches a `prescription[].prescription_id` from event 2." },
           "tracking_number": { "type": "string" },
-          "delivery_service": { "type": "string" },
+          "delivery_service": { "type": "string", "description": "e.g. `Overnight`, `Standard`." },
           "pharmacy_location": { "type": "string" },
           "order_id": { "type": "string" }
         }
