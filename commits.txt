@@ -1,6 +1,42 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Dashboard: hide QS panels on Main Docs tab + PDF upload debug
+              Two follow-ups from Brent.
+
+              DASHBOARD CLEANUP (dashboard/index.html):
+                * Main Docs scope now hides every Quick Start panel
+                  (planIntentPanel, planRow1, planRow2, planStatesPanel)
+                  regardless of data — QS info lives on the Quick Start
+                  tab and the All tab only. The Code Language Preference
+                  panel rides along since it's in planRow2; if we want
+                  it on Main Docs later it can be promoted to its own
+                  row.
+                * Done with a two-step gate: render() force-hides when
+                  scope=docs, and renderPlanIntent early-returns under
+                  the same condition so it can't un-hide on the next
+                  pass.
+
+              PDF DEBUG (Apps Script + page-side):
+                * Apps Script: errors during the Drive write are now
+                  written to the PDF Drive URL cell as "ERROR: <msg>"
+                  instead of being silently swallowed. If you see
+                  "ERROR: ScriptError: ..." in the cell, that tells you
+                  exactly why (almost always the DriveApp OAuth scope
+                  wasn't granted at redeploy time).
+                * Page-side: base64 extraction switched from split-on-
+                  comma to indexOf(';base64,') for robustness. Added
+                  console.log diagnostics that show base64 length and
+                  dispatch confirmation, so opening DevTools while
+                  clicking Download shows exactly whether the upload
+                  is firing.
+                * Page-side: the button now reads "Uploading copy…"
+                  for 2.2 seconds before flipping to "✓ Downloaded".
+                  fetch without keepalive is cancelled if the page
+                  closes mid-flight, so the visual hold encourages the
+                  user to keep the tab open long enough for the upload
+                  to complete.
+
 2026-05-13 — Telemetry v3 audit + robustness pass
               Brent reported that after deploying v3, some of the new
               columns were filling but others were not. Did a top-to-

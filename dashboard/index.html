@@ -822,6 +822,17 @@ function render(){
   // it's a docs-flow funnel and would just show near-zeros for QS rows.
   const docsFunnelPanel = $('docsFunnelPanel');
   if (docsFunnelPanel) docsFunnelPanel.style.display = state.scope === 'qs' ? 'none' : '';
+  // Inverse: hide every Quick Start panel when scope is Main Docs. All the
+  // QS info belongs on the Quick Start tab and the All tab; the Main Docs
+  // tab should stay raw docs-funnel metrics only.
+  const hideQS = state.scope === 'docs';
+  ['planIntentPanel','planRow1','planRow2','planStatesPanel'].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    if (hideQS) el.style.display = 'none';
+    // When not hiding for scope, renderPlanIntent below decides visibility
+    // based on whether any plan data exists in the filtered rows.
+  });
   renderAlerts(rows);
   renderStats(rows);
   renderChart(rows);
@@ -1252,6 +1263,11 @@ function planLabel(group, value){
 }
 
 function renderPlanIntent(rows){
+  // When scope is Main Docs, all Quick Start panels stay hidden regardless
+  // of what data exists — QS info belongs on the Quick Start tab and the
+  // All tab only. render() already hid them above; bail here so we don't
+  // un-hide them when scanning rows below.
+  if (state.scope === 'docs') return;
   // Detect whether ANY session in the window has plan data; if not, hide
   // the whole plan section so the dashboard still looks clean for clinics
   // that aren't running the quick-start yet.

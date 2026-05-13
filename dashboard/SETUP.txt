@@ -407,7 +407,11 @@ function doPost(e) {
       else if (f === 'webhook') cur['Webhook URL Value'] = v;
       else if (f === 'examIds') cur['Exam IDs Value']    = v;
     }
-    /* v3 - generated PDF: decode base64 + write to Drive, store URL only */
+    /* v3 - generated PDF: decode base64 + write to Drive, store URL only.
+     * Errors are written to the PDF Drive URL cell (instead of being
+     * silently swallowed) so you can see WHY a PDF didn't land — the
+     * most common cause is the DriveApp OAuth scope not being authorized.
+     */
     else if (ev === 'qs_pdf_generated' && data.pdf_b64) {
       try {
         const bytes = Utilities.base64Decode(String(data.pdf_b64));
@@ -418,7 +422,8 @@ function doPost(e) {
         cur['PDF Drive URL']    = file.getUrl();
         cur['PDF Generated At'] = body.timestamp || new Date().toISOString();
       } catch (e) {
-        // Best-effort: don't fail the whole event if Drive write throws.
+        cur['PDF Drive URL']    = 'ERROR: ' + String(e && e.message ? e.message : e).slice(0, 300);
+        cur['PDF Generated At'] = body.timestamp || new Date().toISOString();
       }
     }
     else if (ev === 'qs_restart') {
