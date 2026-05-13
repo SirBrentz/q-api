@@ -365,6 +365,8 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .btn-outline:hover{border-color:var(--indigo);color:var(--indigo);background:#fff}
 .btn-ghost{background:transparent;color:var(--text-mid)}
 .btn-ghost:hover{color:var(--ink);background:rgba(77,61,113,.05)}
+.btn-postman-tailored{background:#FF6C37;color:#fff;border:none;box-shadow:0 1px 3px rgba(255,108,55,.3)}
+.btn-postman-tailored:hover{background:#E55A24;transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,108,55,.28);color:#fff}
 .btn-sm{padding:8px 14px;font-size:13px}
 .btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 
@@ -1604,6 +1606,10 @@ function buildResult(){
  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M5 8l5 5 5-5M3 17h14"/></svg>
  Download as PDF
  </button>
+ <button class="btn btn-postman-tailored" onclick="downloadPostmanTailored()" id="postman-btn">
+ <svg width="14" height="14" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#FF6C37"/><path d="M21.6 10.4c-1.6-1.6-4.1-1.6-5.7 0l-5.6 5.6c-.4.4-.4 1 0 1.4l4.3 4.3c.4.4 1 .4 1.4 0l5.6-5.6c1.6-1.6 1.6-4.1 0-5.7zm-1.4 4.3l-4.9 4.9-2.9-2.9 4.9-4.9c.8-.8 2.1-.8 2.9 0s.8 2.1 0 2.9z" fill="#fff"/></svg>
+ Postman collection (tailored)
+ </button>
  <button class="btn btn-outline" onclick="copyPlan()">Copy full plan</button>
  <a href="../" class="btn btn-ghost">Browse full docs</a>
  </div>
@@ -2422,6 +2428,164 @@ function downloadPdf(){
  btn.innerHTML = orig;
  btn.disabled = false;
  alert('Sorry, something went wrong generating the PDF. Try the "Copy full plan" option instead.');
+ }
+}
+
+/* ============ TAILORED POSTMAN COLLECTION ============
+ * Builds a per-clinic Postman 2.1 collection from the user's Quick Start
+ * answers. Includes only the endpoints relevant to their use cases, pre-fills
+ * variables (exam_id, webhook_url) from their inputs, and ships a placeholder
+ * api_key the user fills in from their Qualiphy Settings page.
+ */
+function buildTailoredCollection(){
+ const pharm = getPharmacy();
+ const examIds = getExamIds();
+ const webhookUrl = (($('f-wh') && $('f-wh').value) || '').trim();
+ const co = (($('f-co') && $('f-co').value) || '').trim();
+ const today = new Date().toISOString().slice(0,10);
+
+ function req(name, path, body, desc){
+  return {
+   name: name,
+   request: {
+    method: 'POST',
+    header: [{ key: 'Content-Type', value: 'application/json' }],
+    url: { raw: '{{base_url}}' + path, host: ['{{base_url}}'], path: path.replace(/^\//,'').split('/') },
+    body: { mode: 'raw', raw: JSON.stringify(body, null, 2), options: { raw: { language: 'json' } } },
+    description: desc
+   },
+   response: []
+  };
+ }
+
+ const examplePatient = {
+  first_name: 'Jane', last_name: 'Doe', email: 'jane.doe@example.com',
+  phone: '+15551234567', dob: '1985-04-12', gender: 'Female',
+  address: '123 Main St', city: 'Austin', state: 'TX', zip: '78701',
+  tele_state: 'TX'
+ };
+
+ const examFolder = { name: 'Exam', item: [] };
+ examFolder.item.push(req('exam_list', '/api/exam_list',
+  { api_key: '{{api_key}}' },
+  'List every exam configured on your account, including its ID, title, rx_type, and required attachments.'));
+
+ const invitePayload = Object.assign({ api_key: '{{api_key}}', exam_id: '{{exam_id}}' }, examplePatient);
+ if (webhookUrl) invitePayload.webhook_url = '{{webhook_url}}';
+ if (providerOverride === 'yes') invitePayload.provider_pos_selection = 3;
+ if (opts.additionalData) invitePayload.additional_data = '{"your_order_id":"42"}';
+ examFolder.item.push(req('exam_invite', '/api/exam_invite', invitePayload,
+  'Create a patient screening (Good Faith Exam, Rx consult, or Urgent Care visit) and invite the patient. Returns a meeting URL.'));
+
+ if (opts.prefill){
+  examFolder.item.push(req('exam_questions', '/api/exam_questions',
+   { api_key: '{{api_key}}', exam_id: '{{exam_id}}' },
+   'Fetch the question list for an exam so you can pre-fill patient answers before they join the consultation.'));
+  examFolder.item.push(req('exam_submit_answers', '/api/exam_submit_answers',
+   { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE', answers: [{ question_id: 1, answer: 'Yes' }] },
+   'Submit pre-filled patient answers tied to an invite. Skips the questionnaire screen for the patient.'));
+ }
+ if (opts.attach){
+  examFolder.item.push(req('exam_upload_attachment', '/api/exam_upload_attachment',
+   { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE', file_url: 'https://example.com/lab.pdf', filename: 'lab-results.pdf' },
+   'Upload supporting documents (lab results, ID, prior records) to an active exam invite.'));
+ }
+
+ examFolder.item.push(req('exam_invite_resend', '/api/exam_invite_resend',
+  { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE' },
+  'Resend the invite to a patient who hasn\'t started their consultation.'));
+ examFolder.item.push(req('exam_invite_cancel', '/api/exam_invite_cancel',
+  { api_key: '{{api_key}}', exam_invite_id: 'PASTE_FROM_INVITE_RESPONSE' },
+  'Cancel an unstarted exam invite.'));
+
+ const folders = [examFolder];
+
+ if (pharm.size > 0){
+  const pharmFolder = { name: 'Pharmacy', item: [] };
+  if (pharm.has('partner')){
+   pharmFolder.item.push(req('partner_pharmacy_list', '/api/partner_pharmacy_list',
+    { api_key: '{{api_key}}' },
+    'List Qualiphy-partner compounding pharmacies available for fulfillment.'));
+   pharmFolder.item.push(req('partner_pharmacy_treatment_packages', '/api/partner_pharmacy_treatment_packages',
+    { api_key: '{{api_key}}', partner_pharmacy_id: 1 },
+    'List treatment packages (dosage, fill count, price) offered by a specific partner pharmacy.'));
+  }
+  if (pharm.has('custom')){
+   pharmFolder.item.push(req('custom_pharmacy_search', '/api/custom_pharmacy_search',
+    { api_key: '{{api_key}}', zip: '78701' },
+    'Search retail pharmacies (CVS, Walgreens, etc.) by ZIP. Returns NCPDPID, address, phone — drop these onto /exam_invite.'));
+  }
+  folders.push(pharmFolder);
+ }
+
+ // Webhook reference (non-callable; documents the inbound payload shape)
+ folders.push({
+  name: 'Webhook (reference)',
+  description: 'Qualiphy POSTs to your webhook URL when a consultation completes. This entry documents the inbound payload — you cannot fire it from Postman.',
+  item: [{
+   name: 'Inbound: exam result',
+   request: {
+    method: 'POST',
+    header: [{ key: 'Content-Type', value: 'application/json' }],
+    url: { raw: '{{webhook_url}}', host: ['{{webhook_url}}'], path: [] },
+    body: { mode: 'raw', raw: JSON.stringify({
+     exam_invite_id: 12345, exam_id: 4226, status: 'approved',
+     patient: { first_name: 'Jane', last_name: 'Doe', email: 'jane.doe@example.com' },
+     provider: { name: 'Dr. Example', npi: '1234567890' },
+     meeting_url: 'https://app.qualiphy.me/meeting/abc',
+     completed_at: '2026-05-13T18:32:00Z',
+     additional_data: '{"your_order_id":"42"}'
+    }, null, 2), options: { raw: { language: 'json' } } },
+    description: 'Reference payload Qualiphy sends to your webhook URL after each consultation. Status values: approved, rejected, na.'
+   },
+   response: []
+  }]
+ });
+
+ const ucList = Array.from(useCases).join(', ');
+ const phList = pharm.size ? Array.from(pharm).join(', ') : 'n/a';
+
+ return {
+  info: {
+   name: 'Qualiphy API · ' + (co ? co + ' (tailored)' : 'tailored'),
+   _postman_id: 'qualiphy-tailored-' + Date.now(),
+   description: 'Tailored Postman collection generated from your Quick Start answers on ' + today + '.\n\n'
+    + '• Auth: every request body includes `api_key`. Fill it in the collection variables panel (find your key in app.qualiphy.me → Settings).\n'
+    + '• Use cases: ' + ucList + '\n'
+    + '• Pharmacy: ' + phList + '\n'
+    + '• Generated by api-docs.qualiphy.me/quick-start/',
+   schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
+  },
+  item: folders,
+  variable: [
+   { key: 'base_url', value: 'https://api.qualiphy.me', type: 'string' },
+   { key: 'api_key', value: '', type: 'string' },
+   { key: 'exam_id', value: examIds[0] || '', type: 'string' },
+   { key: 'webhook_url', value: webhookUrl || '', type: 'string' }
+  ]
+ };
+}
+
+function downloadPostmanTailored(){
+ const btn = document.getElementById('postman-btn');
+ if (!btn) return;
+ const orig = btn.innerHTML;
+ try {
+  const c = buildTailoredCollection();
+  const blob = new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'qualiphy-api-tailored-' + new Date().toISOString().slice(0,10) + '.postman_collection.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  try { if (window.qtrack) window.qtrack('postman_download', { kind: 'postman', source: 'quick_start', tailored: true }); } catch(e){}
+  btn.innerHTML = '✓ Downloaded';
+  setTimeout(() => { btn.innerHTML = orig; }, 2200);
+ } catch (err){
+  console.error('Postman collection generation failed:', err);
+  btn.innerHTML = orig;
+  alert('Sorry, something went wrong generating the Postman collection.');
  }
 }
 

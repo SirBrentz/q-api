@@ -1,0 +1,904 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Qualiphy API",
+    "version": "1.0.0",
+    "description": "Qualiphy telemedicine API for Good Faith Exams, Rx prescriptions (partner pharmacy and custom pharmacy), and exam lifecycle management.\n\nAuthentication: every request body MUST include an `api_key` field. There is no header-based auth, no query-param auth, and no OAuth. The `api_key` is a JSON property in the POST body, alongside the other fields. This holds for every endpoint in this spec.\n\nAll endpoints are POST with `Content-Type: application/json`. Base URL: `https://api.qualiphy.me`."
+  },
+  "servers": [
+    {
+      "url": "https://api.qualiphy.me"
+    }
+  ],
+  "tags": [
+    { "name": "Exam", "description": "Patient exam invites and lifecycle." },
+    { "name": "Pharmacy", "description": "Partner and custom pharmacy discovery." },
+    { "name": "Webhook", "description": "Inbound webhooks Qualiphy posts to your endpoint." }
+  ],
+  "paths": {
+    "/api/exam_list": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "List all exams configured on your clinic",
+        "description": "Returns every exam configured on your clinic. Use this to discover the `id` values you pass to `/exam_invite`. Each exam record tells you whether it is a GFE or an Rx (`rx_type`), what attachments the patient must upload, and any preset price.",
+        "operationId": "examList",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApiKeyOnlyRequest" },
+              "example": { "api_key": "YOUR_API_KEY" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "List of exams.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExamListResponse" },
+                "example": {
+                  "clinic_id": 1234,
+                  "exams": [
+                    {
+                      "id": 2228,
+                      "title": "Embrace Aging GFE (Dermal Fillers, Botox, PDO, Microneedling PRP)",
+                      "rx_type": 1,
+                      "price": null,
+                      "attachments_required": 1,
+                      "attachments": []
+                    },
+                    {
+                      "id": 1822,
+                      "title": "Clinical Evaluation for Injectables & Lifting",
+                      "rx_type": 1,
+                      "price": "27.99",
+                      "attachments_required": 1,
+                      "attachments": []
+                    },
+                    {
+                      "id": 2769,
+                      "title": "3 Month Supply: Semaglutide with Medication Shipping (No Labwork Required)",
+                      "rx_type": 2,
+                      "price": null,
+                      "attachments_required": 2,
+                      "attachments": ["ID"]
+                    },
+                    {
+                      "id": 3702,
+                      "title": "3 Month Supply: Semaglutide with Medication Shipping (With Lab-work Upload)",
+                      "rx_type": 2,
+                      "price": null,
+                      "attachments_required": 2,
+                      "attachments": ["ID", "Lab"]
+                    },
+                    {
+                      "id": 1486,
+                      "title": "Urgent Care - Acne (Doxycycline, Clindamycin, Benzoyl Peroxide) Treatment",
+                      "rx_type": 2,
+                      "price": null,
+                      "attachments_required": 2,
+                      "attachments": ["ID"]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exam_invite": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "Create a patient exam invite",
+        "description": "The core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. Supports four scenarios via parameter combinations: Good Faith Exam, QualiphyRx Packages (partner pharmacy), Urgent Care Visit, and Choose Your Own Pharmacy (custom pharmacy). Watch the `custom_pharmacy` mapping: 1 means custom, 2 means partner.",
+        "operationId": "examInvite",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExamInviteRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "exams": [4226],
+                "first_name": "Test",
+                "last_name": "Approve",
+                "email": "test@example.com",
+                "dob": "1990-06-30",
+                "phone_number": "+15555550100",
+                "state": "TE",
+                "tele_state": "TE",
+                "webhook_url": "https://your-app.com/webhooks/qualiphy"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExamInviteResponse" },
+                "example": {
+                  "http_code": 200,
+                  "meeting_url": "https://app.qualiphy.me/meeting/...",
+                  "meeting_uuid": "abc-123-def-456",
+                  "patient_exams": [
+                    {
+                      "patient_exam_id": 4844,
+                      "exam_title": "GFE Aesthetic",
+                      "exam_id": 4226
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Possible messages: `Unauthorized access.`, `Need to add Patient Care Provider via Qualiphy Portal!`, `You need to signed docusign and signed rx`, `Need to sign Prescriptive Services Contract via Qualiphy Portal!`."
+          }
+        }
+      }
+    },
+    "/api/exam_upload_attachment": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "Upload an attachment to a patient exam",
+        "description": "Attach a document to a patient exam (ID photos, lab results, prior records). The provider sees attachments during the screening. Note: the public docs section for this endpoint does not enumerate parameters or example payload; the fields below reflect the conventional request shape (api_key + patient_exam_id + file payload). Confirm exact field names with Qualiphy before going live.",
+        "operationId": "examUploadAttachment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExamUploadAttachmentRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "patient_exam_id": 4844,
+                "file_name": "id-front.jpg",
+                "file_type": "ID",
+                "file_base64": "<base64-encoded-bytes>"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attachment received.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GenericOk" },
+                "example": { "http_code": 200, "status": "ok" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exam_questions": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "Get the screening question schema for an exam",
+        "description": "Returns the screening question schema for a given exam ID. Use to build pre-fill UI on your own intake form, or to map your existing intake fields onto the Qualiphy question set.",
+        "operationId": "examQuestions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExamQuestionsRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "exam_id": 4226
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Question schema for the requested exam.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExamQuestionsResponse" },
+                "example": {
+                  "exam_id": 4226,
+                  "questions": [
+                    { "no": 1, "question": "Are you currently taking any medications?" },
+                    { "no": 2, "question": "Have you had any reactions to anesthesia?" },
+                    { "no": 3, "question": "Are you pregnant or breastfeeding?" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exam_submit_answers": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "Submit screening answers on behalf of the patient",
+        "description": "Submits answers on behalf of the patient. Pair with `/exam_questions` to pre-fill the screening from your own intake data so patients are not answering the same questions twice. Submit answers for every question to skip the questionnaire entirely.",
+        "operationId": "examSubmitAnswers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExamSubmitAnswersRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "patient_exam_id": 149784,
+                "answers": [
+                  { "no": 1, "question": "Are you currently taking any medications?", "answer": "No." },
+                  { "no": 2, "question": "Have you had any reactions to anesthesia?", "answer": "No." },
+                  { "no": 3, "question": "Are you pregnant or breastfeeding?", "answer": "No." }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answers accepted.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GenericOk" },
+                "example": { "http_code": 200, "status": "ok" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exam_invite_resend": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "Resend invite email and SMS",
+        "description": "Re-sends the invite email and SMS to the patient. Use when a patient says they did not receive their original invite.",
+        "operationId": "examInviteResend",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PatientExamIdRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "patient_exam_id": 4844
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite resent.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GenericOk" },
+                "example": { "http_code": 200, "status": "ok" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exam_invite_cancel": {
+      "post": {
+        "tags": ["Exam"],
+        "summary": "Cancel a patient exam invite",
+        "description": "Cancel a previously created patient exam invite. Useful when a patient cancels their order or you need to clean up a duplicate invite. Cancellation is only valid before the provider has acted on the exam. Pass `patient_exam_id` (not `exam_id`).",
+        "operationId": "examInviteCancel",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PatientExamIdRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "patient_exam_id": 4844
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancelled.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExamCancelResponse" },
+                "example": {
+                  "http_code": 200,
+                  "patient_exam_id": 55322,
+                  "status": "cancelled",
+                  "cancelled_at": "2026-04-22T19:08:29.680Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot cancel. Possible messages: `Exam status is already approved.`, `Exam status is already rejected.`, `Exam status is already Deferred to Medical Director.`. Idempotency: calling cancel twice on a cancelled exam returns 400 with the relevant status — treat as success."
+          }
+        }
+      }
+    },
+    "/api/partner_pharmacy_list": {
+      "post": {
+        "tags": ["Pharmacy"],
+        "summary": "List partner compounding pharmacies",
+        "description": "Lists Qualiphy's partner compounding pharmacies available for your account. Returns each pharmacy's `pharmacy_id`, which you pass into `/exam_invite` for Rx programs.",
+        "operationId": "partnerPharmacyList",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApiKeyOnlyRequest" },
+              "example": { "api_key": "YOUR_API_KEY" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Available partner pharmacies.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PartnerPharmacyListResponse" },
+                "example": {
+                  "pharmacies": [
+                    { "pharmacy_id": 17, "name": "Empower Pharmacy", "type": "compounding" },
+                    { "pharmacy_id": 22, "name": "Strive Pharmacy", "type": "compounding" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/partner_pharmacy_treatment_packages": {
+      "post": {
+        "tags": ["Pharmacy"],
+        "summary": "List treatment packages for a partner pharmacy",
+        "description": "Lists treatment packages (drug + dosage combinations + pricing) available at a specific partner pharmacy. Returns `order_set_id` values for use with `/exam_invite`. Legacy `exam_pos_id` is still returned for older integrations.",
+        "operationId": "partnerPharmacyTreatmentPackages",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerPharmacyPackagesRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "pharmacy_id": 17,
+                "exam_id": 1292
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Treatment packages.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PartnerPharmacyPackagesResponse" },
+                "example": {
+                  "treatment_packages": [
+                    {
+                      "order_set_id": "OS-2104",
+                      "exam_pos_id": 4861,
+                      "drug_name": "Semaglutide",
+                      "strength": "2mg",
+                      "size": "2mL",
+                      "duration_days": 30,
+                      "price": 29900
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/custom_pharmacy_search": {
+      "post": {
+        "tags": ["Pharmacy"],
+        "summary": "Search any U.S. pharmacy",
+        "description": "Look up any U.S. pharmacy by name, location, or NCPDPID. Returns full address and identifier fields needed for `/exam_invite` when using custom pharmacy routing.",
+        "operationId": "customPharmacySearch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CustomPharmacySearchRequest" },
+              "example": {
+                "api_key": "YOUR_API_KEY",
+                "search": "CVS",
+                "zip_code": "10001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching pharmacies.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CustomPharmacySearchResponse" },
+                "example": {
+                  "pharmacies": [
+                    {
+                      "ncpdpid": "3318547",
+                      "name": "CVS Pharmacy #4382",
+                      "address_line_1": "342 W 23rd St",
+                      "city": "New York",
+                      "state": "NY",
+                      "zip_code": "10011",
+                      "phone": "2127757582"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "examLifecycleWebhook": {
+      "post": {
+        "tags": ["Webhook"],
+        "summary": "Inbound webhook from Qualiphy",
+        "description": "Qualiphy POSTs lifecycle events to the `webhook_url` you supplied to `/exam_invite`. Dispatch on the `event` integer: 1 = Consultation Complete, 2 = Prescription Confirmed (Rx only), 3 = Prescription Tracking (partner pharmacy shipping). Respond 200 immediately and process asynchronously. Treat each event as a distinct payload shape.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WebhookEvent" },
+              "examples": {
+                "event1Approved": {
+                  "summary": "Event 1 - Consultation Complete (Approved)",
+                  "value": {
+                    "event": 1,
+                    "reason": "Initial consultation complete",
+                    "exam_id": "exam-001",
+                    "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+                    "exam_name": "General Health Check",
+                    "exam_status": "Approved",
+                    "rx_status": "Pharmacy Confirmed",
+                    "clinic_name": "Downtown Medical Center",
+                    "patient_email": "patient@example.com",
+                    "patient_phone_number": "5551234567",
+                    "patient_exam_id": "patient-exam-789",
+                    "provider_name": "NP Liza",
+                    "additional_data": "{\"order_id\":\"WC-12847\"}",
+                    "questions_answers": [
+                      { "no": 1, "question": "How are you feeling?", "answer": "Good." }
+                    ]
+                  }
+                },
+                "event2Prescription": {
+                  "summary": "Event 2 - Prescription Confirmed",
+                  "value": {
+                    "event": 2,
+                    "exam_id": 1292,
+                    "exam_name": "GLP-1 Weight Loss",
+                    "exam_status": "Approved",
+                    "exam_url": "https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...",
+                    "rx_status": "Pharmacy Confirmed",
+                    "clinic_name": "Downtown Medical Center",
+                    "patient_email": "patient@example.com",
+                    "patient_phone_number": "5551234567",
+                    "patient_exam_id": 149784,
+                    "provider_name": "NP Liza",
+                    "prescribed_os_id": 486,
+                    "prescription": [
+                      {
+                        "prescription_id": 3320,
+                        "drug_name": "Semaglutide",
+                        "dosage_form_type": "Inj",
+                        "strength": "2mg",
+                        "size": "2mL",
+                        "quantity": "2",
+                        "quantity_units": "",
+                        "directions": "Inject 0.25mg subcutaneously weekly.",
+                        "duration_days": 30,
+                        "refill_amount": 2,
+                        "ndc_number": "",
+                        "gpi_number": "",
+                        "schedule_code": "",
+                        "active_ingredient": "",
+                        "inactive_ingredient": "",
+                        "pharmacy_name": "Choose Your Pharmacy",
+                        "pharmacy_contacts": [
+                          { "full_name": null, "email": null, "phone_number": null, "role": null }
+                        ],
+                        "prescription_tracking": [
+                          { "rx_number": null, "tracking_number": null, "ship_carrier": null, "delivery_service": null, "pharmacy_location": null }
+                        ],
+                        "created_at": "2025-03-19T18:42:27.000Z"
+                      }
+                    ]
+                  }
+                },
+                "event3Tracking": {
+                  "summary": "Event 3 - Prescription Tracking",
+                  "value": {
+                    "event": 3,
+                    "patient_exam_id": "patient-exam-789",
+                    "prescription_id": "12345",
+                    "tracking_number": "123ABC456DEF",
+                    "delivery_service": "Overnight",
+                    "pharmacy_location": "Main Street Location",
+                    "order_id": "1234567890"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledge receipt. Respond 200 fast; process the payload asynchronously."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiKeyOnlyRequest": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": { "type": "string", "description": "Your account API key." }
+        }
+      },
+      "PatientExamIdRequest": {
+        "type": "object",
+        "required": ["api_key", "patient_exam_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "patient_exam_id": { "type": "integer", "description": "From the `patient_exams[]` array in the original `/exam_invite` response. Not the `exam_id`." }
+        }
+      },
+      "Exam": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "Exam ID. Pass this to `/exam_invite` in the `exams` array." },
+          "title": { "type": "string" },
+          "rx_type": { "type": "integer", "description": "1 = non-Rx (GFE). 2 = Rx (including QualiphyRx Packages, Urgent Care, Choose-Your-Own-Pharmacy)." },
+          "price": { "type": "string", "nullable": true, "description": "Preset price as a decimal string (e.g. \"27.99\") or null." },
+          "attachments_required": { "type": "integer", "description": "Files patient must upload before consultation. Always at least 1." },
+          "attachments": { "type": "array", "items": { "type": "string" }, "description": "Names of required attachments beyond the default ID upload." }
+        }
+      },
+      "ExamListResponse": {
+        "type": "object",
+        "properties": {
+          "clinic_id": { "type": "integer" },
+          "exams": { "type": "array", "items": { "$ref": "#/components/schemas/Exam" } }
+        }
+      },
+      "ExamInviteRequest": {
+        "type": "object",
+        "required": [
+          "api_key",
+          "exams",
+          "first_name",
+          "last_name",
+          "email",
+          "dob",
+          "phone_number",
+          "tele_state"
+        ],
+        "properties": {
+          "api_key": { "type": "string" },
+          "exams": { "type": "array", "items": { "type": "integer" }, "description": "Array of exam IDs from `/exam_list`. Stack non-Rx exams freely; only one Rx exam per meeting." },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email": { "type": "string", "description": "Patient email. Used for invite delivery and as the patient identifier." },
+          "dob": { "type": "string", "description": "Date of birth as YYYY-MM-DD.", "example": "1990-06-30" },
+          "phone_number": { "type": "string", "description": "Patient phone. Accepted formats: +15552223232 or 1234567890." },
+          "tele_state": { "type": "string", "description": "Two-letter state abbreviation of the patient (not your clinic). Determines provider matching. Use TE for test mode." },
+          "webhook_url": { "type": "string", "description": "Where to POST the result. Highly recommended." },
+          "additional_data": { "type": "string", "description": "Stringified JSON returned unchanged in the webhook payload." },
+          "redirect_approve": { "type": "string" },
+          "redirect_reject": { "type": "string" },
+          "redirect_na": { "type": "string" },
+          "redirect_missed": { "type": "string", "description": "Fires after a 3-minute provider-availability timeout." },
+          "gender": { "type": "integer", "description": "1=Male, 2=Female, 3=Prefer not to say." },
+          "dmv_license_number": { "type": "string" },
+          "address_line_1": { "type": "string" },
+          "address_line_2": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string", "description": "Address state. Set to TE for test mode (along with tele_state)." },
+          "zip_code": { "type": "string" },
+          "shipping_address_line_1": { "type": "string" },
+          "shipping_address_line_2": { "type": "string" },
+          "shipping_city": { "type": "string" },
+          "shipping_state": { "type": "string" },
+          "shipping_zip_code": { "type": "string" },
+          "pharmacy_id": { "type": "integer", "description": "Partner pharmacy ID from `/partner_pharmacy_list`." },
+          "order_set_id": { "type": "string", "description": "Preselect a drug + dosage package from `/partner_pharmacy_treatment_packages`." },
+          "exam_pos_id": { "type": "integer", "description": "Legacy alias for order_set_id, still accepted." },
+          "custom_pharmacy": { "type": "integer", "description": "1=Custom Pharmacy, 2=Partner Pharmacy. Counter-intuitive — do not invert." },
+          "ncpdpid": { "type": "string", "description": "Custom pharmacy NCPDPID from `/custom_pharmacy_search`." },
+          "pharmacy_name": { "type": "string" },
+          "pharmacy_address_line_1": { "type": "string" },
+          "pharmacy_address_line_2": { "type": "string" },
+          "pharmacy_city": { "type": "string" },
+          "pharmacy_state": { "type": "string" },
+          "pharmacy_zip_code": { "type": "string" },
+          "pharmacy_phone": { "type": "string" },
+          "pharmacy_type": { "type": "string" },
+          "provider_pos_selection": { "type": "integer", "description": "1=Provider does not choose. 2=Provider picks order set only. 3=Provider picks pharmacy and order set." },
+          "custom_pharmacy_patient_choice": { "type": "integer", "description": "1=Custom pharmacy preselected. 2=Patient chooses at the meeting." },
+          "skip_pharmacy_confirmation": { "type": "integer", "description": "1=Show confirmation. 2=Skip (only when all pharmacy fields are present)." },
+          "custom_pharmacy_patient_billing": { "type": "integer", "description": "1=Clinic is billed. 2=Patient is billed." },
+          "custom_pharmacy_clinic_billing": { "type": "string", "description": "Clinic identifier for pharmacy billing. Required when custom_pharmacy_patient_billing=1." },
+          "custom_pharmacy_delivery_method": { "type": "integer", "description": "1=Patient pickup. 2=Ship to patient or clinic." }
+        }
+      },
+      "ExamInviteResponse": {
+        "type": "object",
+        "properties": {
+          "http_code": { "type": "integer" },
+          "meeting_url": { "type": "string" },
+          "meeting_uuid": { "type": "string" },
+          "patient_exams": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "patient_exam_id": { "type": "integer" },
+                "exam_title": { "type": "string" },
+                "exam_id": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "ExamUploadAttachmentRequest": {
+        "type": "object",
+        "required": ["api_key", "patient_exam_id"],
+        "description": "The docs section for this endpoint does not enumerate request fields. The shape below is a best-effort reconstruction; confirm with Qualiphy before going live.",
+        "properties": {
+          "api_key": { "type": "string" },
+          "patient_exam_id": { "type": "integer" },
+          "file_name": { "type": "string" },
+          "file_type": { "type": "string", "description": "Attachment kind, e.g. ID, Lab." },
+          "file_base64": { "type": "string", "description": "Base64-encoded file contents." }
+        }
+      },
+      "ExamQuestionsRequest": {
+        "type": "object",
+        "required": ["api_key", "exam_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "exam_id": { "type": "integer" }
+        }
+      },
+      "ExamQuestionsResponse": {
+        "type": "object",
+        "description": "Schema not fully documented; questions are returned as numbered objects matching the `{ no, question, answer }` shape used by `/exam_submit_answers` and the webhook `questions_answers` array.",
+        "properties": {
+          "exam_id": { "type": "integer" },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "no": { "type": "integer" },
+                "question": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "Answer": {
+        "type": "object",
+        "properties": {
+          "no": { "type": "integer" },
+          "question": { "type": "string" },
+          "answer": { "type": "string" }
+        }
+      },
+      "ExamSubmitAnswersRequest": {
+        "type": "object",
+        "required": ["api_key", "patient_exam_id", "answers"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "patient_exam_id": { "type": "integer" },
+          "answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" } }
+        }
+      },
+      "ExamCancelResponse": {
+        "type": "object",
+        "properties": {
+          "http_code": { "type": "integer" },
+          "patient_exam_id": { "type": "integer" },
+          "status": { "type": "string", "example": "cancelled" },
+          "cancelled_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Pharmacy": {
+        "type": "object",
+        "properties": {
+          "pharmacy_id": { "type": "integer" },
+          "name": { "type": "string" },
+          "type": { "type": "string", "example": "compounding" }
+        }
+      },
+      "PartnerPharmacyListResponse": {
+        "type": "object",
+        "properties": {
+          "pharmacies": { "type": "array", "items": { "$ref": "#/components/schemas/Pharmacy" } }
+        }
+      },
+      "PartnerPharmacyPackagesRequest": {
+        "type": "object",
+        "required": ["api_key", "pharmacy_id", "exam_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "pharmacy_id": { "type": "integer" },
+          "exam_id": { "type": "integer" }
+        }
+      },
+      "TreatmentPackage": {
+        "type": "object",
+        "properties": {
+          "order_set_id": { "type": "string" },
+          "exam_pos_id": { "type": "integer", "description": "Legacy ID for older integrations." },
+          "drug_name": { "type": "string" },
+          "strength": { "type": "string" },
+          "size": { "type": "string" },
+          "duration_days": { "type": "integer" },
+          "price": { "type": "integer", "description": "Price in cents." }
+        }
+      },
+      "PartnerPharmacyPackagesResponse": {
+        "type": "object",
+        "properties": {
+          "treatment_packages": { "type": "array", "items": { "$ref": "#/components/schemas/TreatmentPackage" } }
+        }
+      },
+      "CustomPharmacySearchRequest": {
+        "type": "object",
+        "required": ["api_key"],
+        "description": "At least one of search, zip_code, or ncpdpid should be supplied.",
+        "properties": {
+          "api_key": { "type": "string" },
+          "search": { "type": "string", "description": "Pharmacy name fragment, e.g. \"CVS\"." },
+          "zip_code": { "type": "string", "description": "Five-digit ZIP for proximity filtering." },
+          "ncpdpid": { "type": "string", "description": "Direct NCPDPID lookup." }
+        }
+      },
+      "CustomPharmacy": {
+        "type": "object",
+        "properties": {
+          "ncpdpid": { "type": "string" },
+          "name": { "type": "string" },
+          "address_line_1": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "zip_code": { "type": "string" },
+          "phone": { "type": "string" }
+        }
+      },
+      "CustomPharmacySearchResponse": {
+        "type": "object",
+        "properties": {
+          "pharmacies": { "type": "array", "items": { "$ref": "#/components/schemas/CustomPharmacy" } }
+        }
+      },
+      "GenericOk": {
+        "type": "object",
+        "properties": {
+          "http_code": { "type": "integer" },
+          "status": { "type": "string" }
+        }
+      },
+      "PharmacyContact": {
+        "type": "object",
+        "properties": {
+          "full_name": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true },
+          "phone_number": { "type": "string", "nullable": true },
+          "role": { "type": "string", "nullable": true }
+        }
+      },
+      "PrescriptionTracking": {
+        "type": "object",
+        "properties": {
+          "rx_number": { "type": "string", "nullable": true },
+          "tracking_number": { "type": "string", "nullable": true },
+          "ship_carrier": { "type": "string", "nullable": true },
+          "delivery_service": { "type": "string", "nullable": true },
+          "pharmacy_location": { "type": "string", "nullable": true }
+        }
+      },
+      "PrescriptionItem": {
+        "type": "object",
+        "properties": {
+          "prescription_id": { "type": "integer" },
+          "drug_name": { "type": "string" },
+          "dosage_form_type": { "type": "string" },
+          "strength": { "type": "string" },
+          "size": { "type": "string" },
+          "quantity": { "type": "string" },
+          "quantity_units": { "type": "string" },
+          "directions": { "type": "string" },
+          "duration_days": { "type": "integer" },
+          "refill_amount": { "type": "integer" },
+          "ndc_number": { "type": "string" },
+          "gpi_number": { "type": "string" },
+          "schedule_code": { "type": "string", "description": "DEA controlled-substance schedule when applicable." },
+          "active_ingredient": { "type": "string" },
+          "inactive_ingredient": { "type": "string" },
+          "pharmacy_name": { "type": "string" },
+          "pharmacy_contacts": { "type": "array", "items": { "$ref": "#/components/schemas/PharmacyContact" } },
+          "prescription_tracking": { "type": "array", "items": { "$ref": "#/components/schemas/PrescriptionTracking" } },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhookEvent1ConsultationComplete": {
+        "type": "object",
+        "properties": {
+          "event": { "type": "integer", "enum": [1] },
+          "reason": { "type": "string" },
+          "exam_id": { "type": "string" },
+          "exam_url": { "type": "string", "nullable": true, "description": "CloudFront-hosted PDF with signed-expiration; mirror to your own storage if needed." },
+          "exam_name": { "type": "string" },
+          "exam_status": { "type": "string", "enum": ["Approved", "Rejected", "Deferred to Medical Director", "NA", "Missed"] },
+          "rx_status": { "type": "string", "nullable": true },
+          "clinic_name": { "type": "string" },
+          "patient_email": { "type": "string" },
+          "patient_phone_number": { "type": "string" },
+          "patient_exam_id": { "type": "string" },
+          "provider_name": { "type": "string", "nullable": true },
+          "additional_data": { "type": "string", "description": "Echoed unchanged from `/exam_invite`." },
+          "questions_answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" } }
+        }
+      },
+      "WebhookEvent2PrescriptionConfirmed": {
+        "type": "object",
+        "properties": {
+          "event": { "type": "integer", "enum": [2] },
+          "exam_id": { "type": "integer" },
+          "exam_name": { "type": "string" },
+          "exam_status": { "type": "string" },
+          "exam_url": { "type": "string" },
+          "rx_status": { "type": "string" },
+          "clinic_name": { "type": "string" },
+          "patient_email": { "type": "string" },
+          "patient_phone_number": { "type": "string" },
+          "patient_exam_id": { "type": "integer" },
+          "provider_name": { "type": "string" },
+          "prescribed_os_id": { "type": "integer" },
+          "prescription": { "type": "array", "items": { "$ref": "#/components/schemas/PrescriptionItem" } },
+          "questions_answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" } }
+        }
+      },
+      "WebhookEvent3PrescriptionTracking": {
+        "type": "object",
+        "properties": {
+          "event": { "type": "integer", "enum": [3] },
+          "patient_exam_id": { "type": "string" },
+          "prescription_id": { "type": "string" },
+          "tracking_number": { "type": "string" },
+          "delivery_service": { "type": "string" },
+          "pharmacy_location": { "type": "string" },
+          "order_id": { "type": "string" }
+        }
+      },
+      "WebhookEvent": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/WebhookEvent1ConsultationComplete" },
+          { "$ref": "#/components/schemas/WebhookEvent2PrescriptionConfirmed" },
+          { "$ref": "#/components/schemas/WebhookEvent3PrescriptionTracking" }
+        ],
+        "discriminator": {
+          "propertyName": "event"
+        }
+      }
+    }
+  }
+}

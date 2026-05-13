@@ -394,6 +394,20 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .sidebar-cta-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:7px;background:#fff;color:#4D3D71;font-family:var(--font-h);font-size:12px;font-weight:700}
 .sidebar-cta-btn:hover{background:#F0ECFA;color:#362A52}
 
+/* SIDEBAR POSTMAN CARD - hides on scroll */
+.sidebar-postman{margin-bottom:18px;padding:12px 14px;border-radius:11px;background:linear-gradient(135deg,rgba(255,108,55,.08),rgba(255,108,55,.04));border:1px solid rgba(255,108,55,.22);transition:opacity .22s var(--ease),max-height .3s var(--ease),margin-bottom .3s var(--ease),padding .3s var(--ease),border-color .22s var(--ease);overflow:hidden;max-height:200px}
+.sidebar-postman.is-hidden{opacity:0;max-height:0;margin-bottom:0;padding-top:0;padding-bottom:0;border-color:transparent;pointer-events:none}
+.sidebar-postman-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sidebar-postman-head svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-postman-head-t{font-family:var(--font-h);font-size:12px;font-weight:800;color:#FF6C37;letter-spacing:.02em}
+.sidebar-postman-body{font-family:var(--font-m);font-size:10.5px;color:var(--text-mid);line-height:1.5;margin-bottom:10px}
+.sidebar-postman-row{display:flex;gap:6px}
+.btn-postman,.btn-openapi{flex:1;display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:7px;font-family:var(--font-h);font-size:11.5px;font-weight:700;text-decoration:none;letter-spacing:.02em;transition:all .15s;cursor:pointer}
+.btn-postman{background:#FF6C37;color:#fff}
+.btn-postman:hover{background:#E55A24;color:#fff}
+.btn-openapi{background:var(--paper);color:var(--indigo);border:1px solid var(--border-mid)}
+.btn-openapi:hover{background:var(--lavender-mist);border-color:var(--indigo)}
+
 /* CONTENT */
 .docs-main{padding:48px clamp(1.5rem,4vw,4rem) 120px;max-width:880px}
 
@@ -487,7 +501,8 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .docs-hero-aside{font-size:13px;color:var(--text-lt);margin-top:14px;max-width:62ch;line-height:1.55}
 
 /* SECTION */
-.docs-section{margin-bottom:56px;scroll-margin-top:88px}
+.docs-section{margin-bottom:80px;scroll-margin-top:88px;position:relative}
+.docs-section:not(:last-child)::after{content:"";display:block;width:40%;height:1px;background:var(--border-lt);margin:64px auto 0}
 .docs-section > p,.docs-section ul,.docs-section ol{margin-bottom:14px}
 .docs-section ul,.docs-section ol{padding-left:22px;color:var(--text-mid)}
 .docs-section ul li,.docs-section ol li{margin-bottom:6px;line-height:1.6}
@@ -592,10 +607,9 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
 .recipe-step-body{font-size:13.5px;color:var(--text);line-height:1.55}
 .recipe-step-body code{font-size:.9em}
 
-/* ENDPOINT BLOCK */
-.endpoint{padding-bottom:36px;border-bottom:1px solid var(--border-lt);margin-bottom:36px}
-.endpoint:last-child{border-bottom:none}
-.endpoint-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+/* ENDPOINT BLOCK - contained card so endpoints don't blend together when scrolling */
+.endpoint{background:var(--paper);border:1px solid var(--border-lt);border-radius:14px;padding:28px 32px;margin-bottom:48px;box-shadow:var(--shadow-sm);scroll-margin-top:88px}
+.endpoint-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;padding-left:12px;box-shadow:inset 3px 0 0 #0F7A3D}
 .endpoint-method{font-family:var(--font-m);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase}
 .endpoint-method.post{background:rgba(126,217,87,.16);color:#0F7A3D;border:1px solid rgba(126,217,87,.3)}
 .endpoint-method.get{background:rgba(77,61,113,.1);color:var(--indigo);border:1px solid rgba(77,61,113,.2)}
@@ -689,6 +703,21 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
  <input type="text" id="docsSearch" placeholder="Search docs..." aria-label="Search">
  <span class="sidebar-search-kbd">⌘K</span>
+ </div>
+
+ <div class="sidebar-postman" id="sidebarPostman">
+  <div class="sidebar-postman-head">
+   <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="16" cy="16" r="14" fill="#FF6C37"/>
+    <path d="M21.6 10.4c-1.6-1.6-4.1-1.6-5.7 0l-5.6 5.6c-.4.4-.4 1 0 1.4l4.3 4.3c.4.4 1 .4 1.4 0l5.6-5.6c1.6-1.6 1.6-4.1 0-5.7zm-1.4 4.3l-4.9 4.9-2.9-2.9 4.9-4.9c.8-.8 2.1-.8 2.9 0s.8 2.1 0 2.9z" fill="#fff"/>
+   </svg>
+   <span class="sidebar-postman-head-t">Postman ready</span>
+  </div>
+  <div class="sidebar-postman-body">Import and start firing real requests in 30 seconds.</div>
+  <div class="sidebar-postman-row">
+   <a href="postman/qualiphy-api-collection.json" download class="btn-postman" id="dlPostman">Postman</a>
+   <a href="openapi.json" download class="btn-openapi" id="dlOpenapi" title="OpenAPI 3.0 — for Insomnia, Bruno, AI tools">OpenAPI</a>
+  </div>
  </div>
 
  <div class="sidebar-group">
@@ -3075,6 +3104,25 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
 
  setKeyWarning();
  renderHistory();
+})();
+</script>
+
+<script>
+/* ============ POSTMAN CARD: hide on scroll + telemetry ============ */
+(function(){
+  var card = document.getElementById('sidebarPostman');
+  var sidebar = document.getElementById('sidebar');
+  if (!card || !sidebar) return;
+  var HIDE_PX = 80;
+  function update(){ card.classList.toggle('is-hidden', sidebar.scrollTop > HIDE_PX); }
+  sidebar.addEventListener('scroll', update, { passive: true });
+  update();
+
+  function track(kind){ try { if (window.qtrack) window.qtrack('postman_download', { kind: kind, source: 'main_docs' }); } catch(e){} }
+  var dlP = document.getElementById('dlPostman');
+  var dlO = document.getElementById('dlOpenapi');
+  if (dlP) dlP.addEventListener('click', function(){ track('postman'); });
+  if (dlO) dlO.addEventListener('click', function(){ track('openapi'); });
 })();
 </script>
 

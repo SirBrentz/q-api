@@ -1,0 +1,298 @@
+{
+  "info": {
+    "name": "Qualiphy API",
+    "description": "Qualiphy telemedicine API. Authentication: every request body MUST include an `api_key` field (no headers, no query params). All endpoints are POST with `Content-Type: application/json`. Base URL defaults to https://api.qualiphy.me. Set `api_key` in the collection or environment variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "qualiphy-api-1-0-0"
+  },
+  "item": [
+    {
+      "name": "Exam",
+      "description": "Patient exam invites and lifecycle endpoints.",
+      "item": [
+        {
+          "name": "List exams (/api/exam_list)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_list"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Returns every exam configured on your clinic. Use this to discover the `id` values you pass to `/exam_invite`. Each exam record includes `rx_type` (1=GFE, 2=Rx), `attachments_required`, `attachments`, and a preset `price` if configured."
+          }
+        },
+        {
+          "name": "Create exam invite (/api/exam_invite)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_invite",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_invite"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exams\": [4226],\n  \"first_name\": \"Test\",\n  \"last_name\": \"Approve\",\n  \"email\": \"test@example.com\",\n  \"dob\": \"1990-06-30\",\n  \"phone_number\": \"+15555550100\",\n  \"state\": \"TE\",\n  \"tele_state\": \"TE\",\n  \"webhook_url\": \"{{webhook_url}}\",\n  \"additional_data\": \"{\\\"order_id\\\":\\\"WC-12847\\\"}\",\n  \"redirect_approve\": \"https://yourstore.com/cleared\",\n  \"redirect_reject\": \"https://yourstore.com/needs-followup\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Core endpoint. Creates a patient exam invite, returns a meeting URL, and (by default) emails and texts the patient. This example uses test-mode routing (`state` and `tele_state` set to TE) so it is safe to fire as-is. For Rx flows, add `pharmacy_id` + `order_set_id` (partner pharmacy) or `custom_pharmacy: 1` + `ncpdpid` + custom-pharmacy address fields. Watch the `custom_pharmacy` mapping — 1=Custom, 2=Partner."
+          }
+        },
+        {
+          "name": "Resend invite (/api/exam_invite_resend)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_invite_resend",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_invite_resend"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Re-sends the invite email and SMS to the patient. Use when a patient says they did not receive their original invite. `patient_exam_id` comes from the `patient_exams[]` array of the original `/exam_invite` response."
+          }
+        },
+        {
+          "name": "Cancel invite (/api/exam_invite_cancel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_invite_cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_invite_cancel"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cancel a previously created patient exam invite. Valid only before the provider has acted. Pass `patient_exam_id` (not `exam_id`). Returns 400 with status detail if the exam is already approved, rejected, or deferred — treat duplicate cancellations as success in retry logic."
+          }
+        },
+        {
+          "name": "Get exam questions (/api/exam_questions)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_questions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_questions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exam_id\": {{exam_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Returns the screening question schema for the given exam. Use to build pre-fill UI on your own intake form, or to map your existing intake fields onto the Qualiphy question set."
+          }
+        },
+        {
+          "name": "Submit answers (/api/exam_submit_answers)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_submit_answers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_submit_answers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}},\n  \"answers\": [\n    { \"no\": 1, \"question\": \"Are you currently taking any medications?\", \"answer\": \"No.\" },\n    { \"no\": 2, \"question\": \"Have you had any reactions to anesthesia?\", \"answer\": \"No.\" },\n    { \"no\": 3, \"question\": \"Are you pregnant or breastfeeding?\", \"answer\": \"No.\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Submits answers on behalf of the patient. Pair with `/exam_questions` to pre-fill the screening using your own intake data. If you submit answers for every question, the questionnaire is skipped entirely and the patient goes straight to the provider call."
+          }
+        },
+        {
+          "name": "Upload attachment (/api/exam_upload_attachment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/exam_upload_attachment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "exam_upload_attachment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"patient_exam_id\": {{patient_id}},\n  \"file_name\": \"id-front.jpg\",\n  \"file_type\": \"ID\",\n  \"file_base64\": \"<base64-encoded-bytes>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Attach a document to a patient exam (ID photos, lab results, prior records). The provider sees attachments during the screening. Note: the public docs section for this endpoint does not enumerate parameters; the fields here are a best-effort reconstruction. Confirm exact field names with Qualiphy before going live."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pharmacy",
+      "description": "Partner pharmacy and custom pharmacy discovery endpoints.",
+      "item": [
+        {
+          "name": "List partner pharmacies (/api/partner_pharmacy_list)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/partner_pharmacy_list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "partner_pharmacy_list"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Lists Qualiphy partner compounding pharmacies available for your account. Use the returned `pharmacy_id` with `/exam_invite` and `/partner_pharmacy_treatment_packages`."
+          }
+        },
+        {
+          "name": "List treatment packages (/api/partner_pharmacy_treatment_packages)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/partner_pharmacy_treatment_packages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "partner_pharmacy_treatment_packages"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_id\": 17,\n  \"exam_id\": {{exam_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Lists treatment packages (drug + dosage + pricing) for a specific partner pharmacy and Rx exam. Returns `order_set_id` for use with `/exam_invite`. Legacy `exam_pos_id` is still returned for older integrations."
+          }
+        },
+        {
+          "name": "Search custom pharmacy (/api/custom_pharmacy_search)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/custom_pharmacy_search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "custom_pharmacy_search"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"search\": \"CVS\",\n  \"zip_code\": \"10001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Look up any U.S. pharmacy by name, ZIP, or NCPDPID. Returns the full address and identifier fields needed for `/exam_invite` custom-pharmacy routing. Pass `ncpdpid` alone to fetch a known pharmacy by ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhook (reference)",
+      "description": "Reference-only documentation of the inbound webhook Qualiphy POSTs to your `webhook_url`. These are NOT requests you fire — they document what your handler should expect. Dispatch on the `event` field: 1=Consultation Complete, 2=Prescription Confirmed (Rx only), 3=Prescription Tracking (partner pharmacy shipping).",
+      "item": [
+        {
+          "name": "Inbound webhook payload (reference)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{webhook_url}}",
+              "host": ["{{webhook_url}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": 1,\n  \"reason\": \"Initial consultation complete\",\n  \"exam_id\": \"exam-001\",\n  \"exam_url\": \"https://d29tu1ox8kfrdk.cloudfront.net/pdfs/...\",\n  \"exam_name\": \"General Health Check\",\n  \"exam_status\": \"Approved\",\n  \"rx_status\": \"Pharmacy Confirmed\",\n  \"clinic_name\": \"Downtown Medical Center\",\n  \"patient_email\": \"patient@example.com\",\n  \"patient_phone_number\": \"5551234567\",\n  \"patient_exam_id\": \"patient-exam-789\",\n  \"provider_name\": \"NP Liza\",\n  \"additional_data\": \"{\\\"order_id\\\":\\\"WC-12847\\\"}\",\n  \"questions_answers\": [\n    { \"no\": 1, \"question\": \"How are you feeling?\", \"answer\": \"Good.\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "REFERENCE ONLY — DO NOT SEND.\n\nQualiphy POSTs lifecycle events to your `webhook_url`. Your handler should respond 200 immediately and process asynchronously.\n\nDispatch on `event`:\n\n- event=1 Consultation Complete. Fires for every exam (GFE, Rx, Urgent Care). `exam_status` is one of: Approved, Rejected, Deferred to Medical Director, NA, Missed. `exam_url` is a CloudFront-hosted signed PDF — mirror to your own storage if you need long-term access.\n\n- event=2 Prescription Confirmed. Fires only for Rx exams after event 1. Carries `prescription[]` (each item: drug_name, dosage_form_type, strength, size, quantity, directions, duration_days, refill_amount, ndc_number, schedule_code, pharmacy_name, pharmacy_contacts[], prescription_tracking[], created_at), `prescribed_os_id`, and the full consultation envelope.\n\n- event=3 Prescription Tracking. Fires only when a partner pharmacy ships. Carries `patient_exam_id`, `prescription_id`, `tracking_number`, `delivery_service`, `pharmacy_location`, `order_id`. Custom-pharmacy flows never get event 3.\n\nThis example shows an event=1 Approved payload. Switch the body to event 2 or 3 to model the other shapes."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "https://api.qualiphy.me", "type": "string" },
+    { "key": "api_key", "value": "", "type": "string" },
+    { "key": "exam_id", "value": "", "type": "string" },
+    { "key": "patient_id", "value": "", "type": "string" },
+    { "key": "webhook_url", "value": "", "type": "string" }
+  ]
+}

@@ -1,6 +1,63 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Postman + OpenAPI support, sidebar CTA, section separation
+              Three related shippings in one push:
+
+              (1) DOWNLOADABLE SPECS — new files devs can import directly
+                  into Postman / Insomnia / Bruno / AI codegen tools:
+                    openapi.json                                   (OAS 3.0)
+                    postman/qualiphy-api-collection.json           (Postman 2.1)
+                    postman/qualiphy-api.postman_environment.json  (env vars)
+                  All 11 endpoints covered with realistic example bodies,
+                  base_url=https://api.qualiphy.me, api_key in body
+                  (Qualiphy auth is body-level, not header). Fixes the
+                  long-standing 404 on the link the Quick Start PDF footer
+                  has been pointing to since v1.
+
+              (2) MAIN-DOCS POSTMAN CARD — new sidebar block right under
+                  the search input. Orange Postman branding so it's
+                  instantly recognizable; secondary OpenAPI button for
+                  Insomnia/Bruno/AI folks. Hides on scroll (sidebar's own
+                  scroll listener, 80px threshold, fades + collapses).
+                  qtrack('postman_download', {kind, source:'main_docs'})
+                  fires on click so the dashboard can count downloads.
+
+              (3) QUICK START TAILORED COLLECTION — at the end of the
+                  Quick Start questionnaire, alongside the existing PDF
+                  download, a new "Postman collection (tailored)" button.
+                  buildTailoredCollection() generates a per-clinic .json
+                  on the fly: only includes endpoints relevant to the
+                  user's use cases (gfe / rx / urgent), pharmacy choice
+                  (partner / custom), and optional features (prefill,
+                  attach). Pre-fills exam_id from their exam IDs input,
+                  webhook_url from their webhook input, sets
+                  provider_pos_selection=3 if they picked override=yes,
+                  adds additional_data example if they ticked that opt.
+                  api_key stays a placeholder — they fill from Settings.
+                  Filename: qualiphy-api-tailored-YYYY-MM-DD.postman_
+                  collection.json. qtrack event:
+                  postman_download {kind:'postman', source:'quick_start',
+                  tailored:true}.
+
+              (4) SECTION SEPARATION VISUAL PASS — Brent flagged that
+                  scrolling the main docs page makes all the endpoints
+                  and sections blend together. CSS-only fix (no doc
+                  content changes):
+                    .endpoint  → contained card: paper bg, 1px border,
+                                 14px radius, 28×32 padding, subtle
+                                 shadow, 48px margin between cards,
+                                 scroll-margin-top:88px for clean
+                                 sidebar-link landings
+                    .endpoint-head → 3px green-POST left rail via
+                                 box-shadow:inset so the method is the
+                                 eye's scan anchor
+                    .docs-section → 80px (was 56) margin between
+                                 sections + centered hairline ::after
+                                 divider (40% width)
+                  Touched the inline <style> only. Documentation copy,
+                  examples, ordering — all untouched.
+
 2026-05-13 — Tracker: engaged-time semantics + dashboard scope filter
               Two related fixes after Brent flagged that "Avg Session"
               on the dashboard was wildly higher than reality, and that
