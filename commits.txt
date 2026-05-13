@@ -1,6 +1,69 @@
 Qualiphy API Docs - change log
 ==============================
 
+2026-05-13 — Telemetry v3 audit + robustness pass
+              Brent reported that after deploying v3, some of the new
+              columns were filling but others were not. Did a top-to-
+              bottom audit of every collection point in the Quick Start
+              flow and tightened the page-side capture.
+
+              PAGE-SIDE ROBUSTNESS (quick-start/index.html):
+                * watchField now listens to BOTH `input` (debounced 700
+                  ms) AND `blur`. Previously only blur — which doesn't
+                  fire if a user pastes a value and immediately clicks
+                  Continue, so qs_field_value would be missed.
+                * Same `input`+`blur` doubled-up wiring for the exam-id
+                  list inputs (which were also blur-only).
+                * Added qs:step-flush event dispatched on every goNext
+                  call. The watchField handlers listen to this and
+                  flush every visible text-field value to the sheet
+                  before the step advances. Final safety net: even if
+                  input-debounce AND blur both miss, the step
+                  transition catches it.
+                * Pulled the per-field lastValByField map up one scope
+                  so all flush paths (input, blur, step-flush) share
+                  the same dedup state — no duplicate sends.
+
+              APPS SCRIPT BUG FIX (dashboard/SETUP.txt):
+                * Pharmacy was being stored as a SINGLE value but the
+                  page allows users to pick BOTH partner AND custom
+                  (it's a true multi-select with `.oc oc-multi` and
+                  pickMulti, not pickSingle). Each click was
+                  OVERWRITING the previous Pharmacy Choice value
+                  instead of accumulating. Switched to csvAdd_ for
+                  option_selected and csvRemove_ for option_deselected
+                  — same pattern as Use Cases and Optional Features.
+
+              DASHBOARD (dashboard/index.html):
+                * renderPlanIntent's pharmacy block now splits the csv
+                  before counting frequencies, matching the new
+                  Apps Script behavior. Partner and custom each count
+                  as their own data point on the chart.
+
+              SETUP.txt:
+                * Added a prominent callout about the DriveApp OAuth
+                  scope. v3 uses DriveApp (for PDF upload) but v2
+                  didn't, so existing deployments need explicit
+                  re-authorization. The script's try/catch around the
+                  Drive write SILENTLY swallows auth errors, so PDF
+                  Drive URL stays empty if the user redeployed without
+                  granting the new scope — and there's no error in the
+                  sheet to tell you why. Step-by-step instructions
+                  added under PDF STORAGE.
+
+              VERIFIED WIRED CORRECTLY (no changes needed):
+                * Use Cases (gfe/rx/urgent) — option_selected /
+                  option_deselected with group='useCase'
+                * Provider Override — option_selected single-choice
+                * Invite Method — option_selected single-choice
+                * Optional Features csv + 8 per-feature Yes/No flags
+                  (Opt: Prefill, Attach Docs, Custom Redirect,
+                  Additional Data, Skip Pharmacy Confirm, Clinic
+                  Billed, Ship To Patient, Skip Address Confirm)
+                * States Selected count + States List csv
+                * Quick Start Step + Quick Start Completed
+                * qs_restart wipes PII + opt flags
+
 2026-05-13 — Telemetry v3: PII capture + PDF storage (sheet-only)
               Brent asked to capture more of what Quick Start visitors
               actually fill in (email, company, contact name, webhook

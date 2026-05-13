@@ -359,7 +359,9 @@ function doPost(e) {
     else if (ev === 'option_selected') {
       const g = String(data.group || ''), v = String(data.value || '');
       if (g === 'useCase')               cur['Use Cases']         = csvAdd_(cur['Use Cases'], v);
-      else if (g === 'pharmacy')         cur['Pharmacy Choice']   = v;
+      // Pharmacy is multi-select on the page (user can pick both partner AND
+      // custom). Treat as csv so the second pick doesn't overwrite the first.
+      else if (g === 'pharmacy')         cur['Pharmacy Choice']   = csvAdd_(cur['Pharmacy Choice'], v);
       else if (g === 'providerOverride') cur['Provider Override'] = v;
       else if (g === 'invite')           cur['Invite Method']     = v;
       else if (g === 'optionalFeature') {
@@ -370,11 +372,12 @@ function doPost(e) {
     else if (ev === 'option_deselected') {
       const g = String(data.group || ''), v = String(data.value || '');
       if (g === 'useCase')               cur['Use Cases']         = csvRemove_(cur['Use Cases'], v);
+      else if (g === 'pharmacy')         cur['Pharmacy Choice']   = csvRemove_(cur['Pharmacy Choice'], v);
       else if (g === 'optionalFeature') {
         cur['Optional Features'] = csvRemove_(cur['Optional Features'], v);
         if (OPT_FEATURE_COLS[v]) cur[OPT_FEATURE_COLS[v]] = '';
       }
-      // pharmacy / providerOverride / invite are single-choice, not deselected
+      // providerOverride / invite are single-choice, not deselected
     }
     else if (ev === 'qs_states_changed') {
       cur['States Selected'] = Number(data.count) || 0;
@@ -622,6 +625,25 @@ PDF is base64-encoded and posted to this Apps Script. The script:
 The script runs AS YOU (the deployer), so the folder + files are owned by
 your Google account. Files are not shared publicly — only people you grant
 Drive access to (you, plus anyone you explicitly share with) can read them.
+
+** IMPORTANT: Drive permission re-authorization **
+v3 uses DriveApp, which is a NEW OAuth scope vs v2. After pasting the v3
+code, you MUST grant the new Drive permission, otherwise PDF uploads will
+silently fail (the try/catch around the Drive write swallows the auth
+error so the row still saves the other fields).
+
+To grant the Drive scope:
+  1. In the Apps Script editor with v3 pasted in, click the function picker
+     above the code and select "getPdfFolder_".
+  2. Click Run.
+  3. A modal will appear asking you to authorize. Click "Review permissions".
+  4. Sign in with the same Google account that owns the sheet.
+  5. Click "Advanced" → "Go to (script name) (unsafe)" → "Allow".
+  6. If the function completes without error, Drive is wired up.
+  7. NOW redeploy via Deploy → Manage deployments → New version.
+
+If you ever see PDF Drive URL stay empty in the sheet even though a user
+clicked Download, the most likely cause is that this auth step was skipped.
 
 PII FILTER ON doGet
 -------------------

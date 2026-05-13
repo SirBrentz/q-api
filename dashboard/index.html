@@ -1273,11 +1273,14 @@ function renderPlanIntent(rows){
   });
   renderBreakdown('planUseCases', useCases, 'cyan', null);
 
-  // Pharmacy choice (single)
+  // Pharmacy choice (multi - users can pick both partner AND custom)
   const pharmacy = {};
   rows.forEach(r => { if (!r.pharmacyChoice) return;
-    const k = planLabel('pharmacy', r.pharmacyChoice);
-    pharmacy[k] = (pharmacy[k] || 0) + 1;
+    String(r.pharmacyChoice).split(',').forEach(v => {
+      const t = v.trim(); if (!t) return;
+      const k = planLabel('pharmacy', t);
+      pharmacy[k] = (pharmacy[k] || 0) + 1;
+    });
   });
   renderBreakdown('planPharmacy', pharmacy, 'green', null);
 

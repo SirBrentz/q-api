@@ -278,23 +278,33 @@ window.QAPI_TRACK_CONFIG = {
     // for the boolean "qs_field_filled" flag (drives dashboard's Has Webhook
     // URL / Has Exam IDs aggregates), and separately fire "qs_field_value"
     // on each meaningful change so the actual value lands in the sheet for
-    // manual reference. qs_field_value is PII and is filtered out of the
-    // dashboard JSON by the Apps Script.
+    // manual reference. Listens to BOTH `input` (debounced, catches users
+    // who don't blur cleanly before clicking Continue) AND `blur` (catches
+    // tab-away / click-elsewhere). qs_field_value is PII and is filtered
+    // out of the dashboard JSON by the Apps Script.
+    var lastValByField = {};
+    function flushField(name, el){
+      var v = String(el.value || '').trim();
+      if (v.length > 0 && !qsState.fieldsFilled[name]){
+        qsState.fieldsFilled[name] = 1;
+        send('qs_field_filled', { field: name });
+      }
+      if (v !== (lastValByField[name] || '')){
+        lastValByField[name] = v;
+        send('qs_field_value', { field: name, value: v.slice(0, 500) });
+      }
+    }
     function watchField(id, name){
       var el = document.getElementById(id);
       if (!el) return;
-      var lastSent = '';
+      var debounceT = null;
+      el.addEventListener('input', function(){
+        clearTimeout(debounceT);
+        debounceT = setTimeout(function(){ flushField(name, el); }, 700);
+      });
       el.addEventListener('blur', function(){
-        var v = String(el.value || '').trim();
-        if (v.length > 0 && !qsState.fieldsFilled[name]){
-          qsState.fieldsFilled[name] = 1;
-          send('qs_field_filled', { field: name });
-        }
-        // Send the actual value (PII) — sheet-only, not surfaced on dashboard
-        if (v !== lastSent){
-          lastSent = v;
-          send('qs_field_value', { field: name, value: v.slice(0, 500) });
-        }
+        clearTimeout(debounceT);
+        flushField(name, el);
       });
     }
     watchField('f-co', 'company');
@@ -302,13 +312,11 @@ window.QAPI_TRACK_CONFIG = {
     watchField('f-em', 'email');
     watchField('f-wh', 'webhook');
 
-    // Exam ID list is dynamic - delegate on the list. Fire "qs_field_filled"
-    // once on first non-empty input, and send the full csv of current exam IDs
-    // on every blur so the sheet has the live list.
-    document.addEventListener('blur', function(e){
-      var el = e.target;
-      if (!el || !el.closest) return;
-      if (!el.closest('#exam-list')) return;
+    // Exam ID list is dynamic - delegate on the list. Fire on every input
+    // (debounced) AND on blur so we capture the current csv even if the user
+    // never blurs before advancing the step.
+    var examDebounceT = null;
+    function flushExamIds(){
       var hasAny = false;
       var ids = [];
       document.querySelectorAll('#exam-list input').forEach(function(inp){
@@ -319,8 +327,40 @@ window.QAPI_TRACK_CONFIG = {
         qsState.fieldsFilled['examIds'] = 1;
         send('qs_field_filled', { field: 'examIds' });
       }
-      send('qs_field_value', { field: 'examIds', value: ids.join(',').slice(0, 500) });
+      var csv = ids.join(',');
+      if (csv !== (lastValByField['examIds'] || '')){
+        lastValByField['examIds'] = csv;
+        send('qs_field_value', { field: 'examIds', value: csv.slice(0, 500) });
+      }
+    }
+    document.addEventListener('input', function(e){
+      var el = e.target;
+      if (!el || !el.closest) return;
+      if (!el.closest('#exam-list')) return;
+      clearTimeout(examDebounceT);
+      examDebounceT = setTimeout(flushExamIds, 700);
+    });
+    document.addEventListener('blur', function(e){
+      var el = e.target;
+      if (!el || !el.closest) return;
+      if (!el.closest('#exam-list')) return;
+      clearTimeout(examDebounceT);
+      flushExamIds();
     }, true);
+
+    // Safety net: on every step advance, flush the visible fields for the
+    // step the user is leaving. This catches the edge case where a user
+    // pastes a value and clicks Continue so fast that neither input-debounce
+    // nor blur fires in time.
+    window.addEventListener('qs:step-flush', function(){
+      ['f-co','f-nm','f-em','f-wh'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (!el) return;
+        var nameMap = { 'f-co':'company','f-nm':'name','f-em':'email','f-wh':'webhook' };
+        flushField(nameMap[id], el);
+      });
+      flushExamIds();
+    });
   }
   if (document.readyState !== 'loading') attachQS();
   else document.addEventListener('DOMContentLoaded', attachQS);
@@ -1217,6 +1257,9 @@ function goNext(){
  // On step 0, validate email format here (not on blur) so the error only
  // surfaces when the user actually tries to continue with bad input.
  if(step===0 && !checkStep0Email()) return;
+ // Flush all text-field values before advancing so the sheet captures them
+ // even if input-debounce + blur both missed (e.g., paste + immediate click).
+ try { window.dispatchEvent(new Event('qs:step-flush')); } catch(e){}
  step++;showStep();
 }
 function goPrev(){if(step>0){step--;showStep();}}
