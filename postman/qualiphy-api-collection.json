@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Qualiphy API",
-    "description": "Qualiphy telemedicine API.\n\n## Getting started in 30 seconds\n\n1. Click the collection name above → **Variables** tab → paste your `api_key` value (find it in your Qualiphy dashboard → Settings).\n2. Hit **Save**.\n3. Open **Exam → List exams** and click **Send**. You should get a 200 with your exam list.\n4. Now run **Create exam invite** — it auto-pulls an `exam_id` from the previous response and fires a test-mode invite.\n5. Subsequent requests (resend, cancel, submit answers, upload attachment) auto-pull the `patient_exam_id` from the invite response.\n\n## Auth\n\nEvery request body **MUST** include an `api_key` field (no headers, no query params). All endpoints are POST with `Content-Type: application/json`. Base URL defaults to `https://api.qualiphy.me`.\n\n## Auto-chaining\n\nThe Tests script on each request captures useful response IDs into collection variables, so you do not need to copy-paste between requests:\n\n- `/exam_list` → sets `{{exam_id}}` from `exams[0].id`\n- `/exam_invite` → sets `{{patient_id}}` from `patient_exams[0].patient_exam_id` and `{{meeting_uuid}}` from `meeting_uuid`\n- `/partner_pharmacy_list` → sets `{{pharmacy_id}}` from `pharmacies[0].pharmacy_id`\n- `/partner_pharmacy_treatment_packages` → sets `{{order_set_id}}` from `treatment_packages[0].order_set_id`\n- `/custom_pharmacy_search` → sets `{{ncpdpid}}` from `pharmacies[0].ncpdpid`\n\nCheck the Postman console (View → Show Postman Console) after firing any request to see which variables it set.\n\n## Field-name gotchas\n\n- `patient_exam_id` (per-patient) vs `exam_id` (exam type) — they are different. Resend / cancel / upload use `patient_exam_id`.\n- `custom_pharmacy`: 1 = Custom, 2 = Partner. Inverted from what you would expect.\n- `phone_number` not `phone`.\n- Legacy `exam_pos_id` is still returned alongside `order_set_id` for older integrations.",
+    "description": "Qualiphy telemedicine API.\n\n## Getting started in 30 seconds\n\n1. Click the collection name above → **Variables** tab → paste your `api_key` value (find it in your Qualiphy dashboard → Settings).\n2. Hit **Save**.\n3. Open **Exam → List exams** and click **Send**. You should get a 200 with your exam list.\n4. Now run **Create exam invite** — it auto-pulls an `exam_id` from the previous response and fires a test-mode invite.\n5. Subsequent requests (resend, cancel, submit answers, upload attachment) auto-pull the `patient_exam_id` from the invite response.\n\n## Auth\n\nEvery request body **MUST** include an `api_key` field (no headers, no query params). All endpoints are POST with `Content-Type: application/json`. Base URL defaults to `https://api.qualiphy.me`.\n\n## Auto-chaining\n\nThe Tests script on each request captures useful response IDs into collection variables, so you do not need to copy-paste between requests:\n\n- `/exam_list` → sets `{{exam_id}}` from `exams[0].id`\n- `/exam_invite` → sets `{{patient_id}}` from `patient_exams[0].patient_exam_id` and `{{meeting_uuid}}` from `meeting_uuid`\n- `/partner_pharmacy_list` → sets `{{pharmacy_id}}` from `[0].pharmacy_id` (response is a bare array)\n- `/partner_pharmacy_treatment_packages` → sets `{{order_set_id}}` from `[0].order_set_id` (response is a bare array)\n- `/custom_pharmacy_search` → sets `{{ncpdpid}}` from `pharmacies[0].ncpdpid`\n\nCheck the Postman console (View → Show Postman Console) after firing any request to see which variables it set.\n\n## Field-name gotchas\n\n- `patient_exam_id` (per-patient) vs `exam_id` (exam type) — they are different. Resend / cancel / upload use `patient_exam_id`.\n- `custom_pharmacy`: 1 = Custom, 2 = Partner. Inverted from what you would expect.\n- `phone_number` not `phone`.\n- Legacy `exam_pos_id` is still returned alongside `order_set_id` for older integrations.\n- `/partner_pharmacy_treatment_packages` takes `pharmacy_ids` (plural, int or array) — `pharmacy_id` is silently ignored and returns `[]`.\n- Both pharmacy endpoints require `exam_ids` (array) + `patient_state`; omitting `exam_ids` on `/partner_pharmacy_list` returns 400 `\"Cannot convert undefined or null to object\"`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_postman_id": "qualiphy-api-1-0-0"
   },
@@ -405,9 +405,11 @@
                   "if (pm.response.code === 200) {",
                   "  try {",
                   "    const j = pm.response.json();",
-                  "    if (j && Array.isArray(j.pharmacies) && j.pharmacies.length > 0 && j.pharmacies[0].pharmacy_id != null) {",
-                  "      pm.collectionVariables.set('pharmacy_id', String(j.pharmacies[0].pharmacy_id));",
-                  "      console.log('[auto-chain] pharmacy_id =', j.pharmacies[0].pharmacy_id);",
+                  "    if (Array.isArray(j) && j.length > 0 && j[0].pharmacy_id != null) {",
+                  "      pm.collectionVariables.set('pharmacy_id', String(j[0].pharmacy_id));",
+                  "      console.log('[auto-chain] pharmacy_id =', j[0].pharmacy_id);",
+                  "    } else if (Array.isArray(j) && j.length === 0) {",
+                  "      console.warn('[auto-chain] partner_pharmacy_list returned [] — check exam_ids/patient_state, or no partner pharmacy is attached to those exams yet.');",
                   "    }",
                   "  } catch (e) { console.warn('[auto-chain] partner_pharmacy_list parse failed:', e); }",
                   "}"
@@ -427,10 +429,10 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exam_ids\": [{{exam_id}}],\n  \"patient_state\": \"{{patient_state}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Lists Qualiphy partner compounding pharmacies available for your account. Use the returned `pharmacy_id` with `/exam_invite` and `/partner_pharmacy_treatment_packages`.\n\n**Auto-chain**: captures `pharmacies[0].pharmacy_id` into `{{pharmacy_id}}`."
+            "description": "Lists the partner compounding pharmacies that can fulfill the given Rx exam(s) for a patient in the given state. Use the returned `pharmacy_id` with `/exam_invite` and `/partner_pharmacy_treatment_packages`.\n\n`exam_ids` (array) and `patient_state` are required — omitting `exam_ids` returns 400 `\"Cannot convert undefined or null to object\"`; omitting `patient_state` returns `[]`. An empty array usually means no partner pharmacy / order sets are attached to those exams yet.\n\n**Auto-chain**: captures `[0].pharmacy_id` into `{{pharmacy_id}}`."
           },
           "response": [
             {
@@ -445,7 +447,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"api_key\": \"{{api_key}}\"\n}",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"exam_ids\": [4279],\n  \"patient_state\": \"NY\"\n}",
                   "options": { "raw": { "language": "json" } }
                 }
               },
@@ -454,7 +456,7 @@
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
               "cookie": [],
-              "body": "{\n  \"pharmacies\": [\n    { \"pharmacy_id\": 17, \"name\": \"Empower Pharmacy\", \"type\": \"compounding\" },\n    { \"pharmacy_id\": 22, \"name\": \"Strive Pharmacy\", \"type\": \"compounding\" }\n  ]\n}"
+              "body": "[\n  { \"pharmacy_id\": 16, \"pharmacy_name\": \"Greenwich Pharmacy\" }\n]"
             }
           ]
         },
@@ -469,9 +471,11 @@
                   "if (pm.response.code === 200) {",
                   "  try {",
                   "    const j = pm.response.json();",
-                  "    if (j && Array.isArray(j.treatment_packages) && j.treatment_packages.length > 0 && j.treatment_packages[0].order_set_id != null) {",
-                  "      pm.collectionVariables.set('order_set_id', String(j.treatment_packages[0].order_set_id));",
-                  "      console.log('[auto-chain] order_set_id =', j.treatment_packages[0].order_set_id);",
+                  "    if (Array.isArray(j) && j.length > 0 && j[0].order_set_id != null) {",
+                  "      pm.collectionVariables.set('order_set_id', String(j[0].order_set_id));",
+                  "      console.log('[auto-chain] order_set_id =', j[0].order_set_id);",
+                  "    } else if (Array.isArray(j) && j.length === 0) {",
+                  "      console.warn('[auto-chain] treatment_packages returned [] — check that you used pharmacy_ids (plural), and that order sets are attached to those exams.');",
                   "    }",
                   "  } catch (e) { console.warn('[auto-chain] treatment_packages parse failed:', e); }",
                   "}"
@@ -491,10 +495,10 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_id\": {{pharmacy_id}},\n  \"exam_id\": {{exam_id}}\n}",
+              "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_ids\": [{{pharmacy_id}}],\n  \"exam_ids\": [{{exam_id}}],\n  \"patient_state\": \"{{patient_state}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Lists treatment packages (drug + dosage + pricing) for a specific partner pharmacy and Rx exam. Returns `order_set_id` for use with `/exam_invite`. Legacy `exam_pos_id` is still returned for older integrations.\n\n**Auto-chain**: captures `treatment_packages[0].order_set_id` into `{{order_set_id}}`."
+            "description": "Lists treatment packages (drug + dosage + pricing) at the given partner pharmacies for the given Rx exam(s). Returns `order_set_id` for use with `/exam_invite`. Legacy `exam_pos_id` is still returned for older integrations.\n\nAll four fields are required. **The key is `pharmacy_ids` (plural)** — accepts a single integer or an array; passing `pharmacy_id` returns `[]`, not an error.\n\n**Auto-chain**: captures `[0].order_set_id` into `{{order_set_id}}`."
           },
           "response": [
             {
@@ -509,7 +513,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_id\": 17,\n  \"exam_id\": 1292\n}",
+                  "raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"pharmacy_ids\": [16],\n  \"exam_ids\": [4279],\n  \"patient_state\": \"NY\"\n}",
                   "options": { "raw": { "language": "json" } }
                 }
               },
@@ -518,7 +522,7 @@
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
               "cookie": [],
-              "body": "{\n  \"treatment_packages\": [\n    {\n      \"order_set_id\": \"OS-2104\",\n      \"exam_pos_id\": 4861,\n      \"drug_name\": \"Semaglutide\",\n      \"strength\": \"2mg\",\n      \"size\": \"2mL\",\n      \"duration_days\": 30,\n      \"price\": 29900\n    }\n  ]\n}"
+              "body": "[\n  {\n    \"exam_pos_id\": 27708,\n    \"order_set_id\": 610,\n    \"title\": \"Semaglutide + B12 + Zofran (add-on) - Injection - Dose 1: 0.25mg/weekly - 1mg/05mg Total - 30 Days Supply\",\n    \"pharmacy_id\": 16,\n    \"turnaround_time\": \"3-4\",\n    \"pharmacy_name\": \"Greenwich Pharmacy\",\n    \"integration_partner\": 8,\n    \"qualiphy_total_price\": \"125.00\"\n  }\n]"
             }
           ]
         },
@@ -666,7 +670,8 @@
     { "key": "api_key", "value": "", "type": "string", "description": "Your Qualiphy API key. Find it at app.qualiphy.me → Settings → API. Keep this secret." },
     { "key": "exam_id", "value": "", "type": "string", "description": "Auto-set by /exam_list. Or paste a specific exam id." },
     { "key": "patient_id", "value": "", "type": "string", "description": "Auto-set by /exam_invite (from patient_exams[0].patient_exam_id). Used by resend / cancel / submit_answers / upload_attachment." },
-    { "key": "pharmacy_id", "value": "", "type": "string", "description": "Auto-set by /partner_pharmacy_list. Used by /partner_pharmacy_treatment_packages." },
+    { "key": "patient_state", "value": "NY", "type": "string", "description": "Two-letter state code used by /partner_pharmacy_list and /partner_pharmacy_treatment_packages. Set to your patient's state." },
+    { "key": "pharmacy_id", "value": "", "type": "string", "description": "Auto-set by /partner_pharmacy_list. Used by /partner_pharmacy_treatment_packages (as pharmacy_ids)." },
     { "key": "order_set_id", "value": "", "type": "string", "description": "Auto-set by /partner_pharmacy_treatment_packages. Pass to /exam_invite for Rx partner-pharmacy invites." },
     { "key": "ncpdpid", "value": "", "type": "string", "description": "Auto-set by /custom_pharmacy_search. Pass to /exam_invite for custom-pharmacy invites." },
     { "key": "meeting_uuid", "value": "", "type": "string", "description": "Auto-set by /exam_invite." },

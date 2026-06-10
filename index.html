@@ -1622,11 +1622,13 @@ return {"ok": True}
  <span class="endpoint-method post">POST</span>
  <span class="endpoint-path">/api/partner_pharmacy_list</span>
  </div>
- <p>Lists Qualiphy's partner compounding pharmacies available for your account. Returns each pharmacy's <code>pharmacy_id</code>, which you'll pass into <code>/exam_invite</code> for Rx programs.</p>
+ <p>Lists the partner compounding pharmacies that can fulfill the given Rx exam(s) for a patient in the given state. Returns each pharmacy's <code>pharmacy_id</code>, which you'll pass into <code>/exam_invite</code> and <code>/partner_pharmacy_treatment_packages</code>.</p>
 
  <h4>Parameters</h4>
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>exam_ids</code><div class="param-meta"><span class="param-type">integer[]</span><span class="param-req">Required</span></div></div><div class="param-desc">Array of Rx exam IDs from <a href="#ep-exam-list"><code>/exam_list</code></a> (<code>rx_type: 2</code>).</div></div>
+ <div class="param-row"><div class="param-name"><code>patient_state</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Two-letter state code (e.g. <code>"NY"</code>). Filters to pharmacies that can ship to the patient's state. Omitting it returns an empty array.</div></div>
  </div>
 
  <h4>Sample request</h4>
@@ -1634,18 +1636,20 @@ return {"ok": True}
  <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/partner_pharmacy_list</span></div><button class="copy-btn" onclick="copyCode(this,'pl-req')">Copy</button></div>
  <div class="codeblock-pane active" id="pl-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/partner_pharmacy_list \
   -H "Content-Type: application/json" \
-  -d '{"api_key":"YOUR_API_KEY"}'</div></div>
+  -d '{"api_key":"YOUR_API_KEY","exam_ids":[4279],"patient_state":"NY"}'</div></div>
  </div>
 
  <h4>Sample response</h4>
  <div class="codeblock">
  <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">200 OK</span></div><button class="copy-btn" onclick="copyCode(this,'pl-resp')">Copy</button></div>
- <div class="codeblock-pane active" id="pl-resp"><div class="codeblock-body">{
-  "pharmacies": [
-    { "pharmacy_id": 17, "name": "Empower Pharmacy", "type": "compounding" },
-    { "pharmacy_id": 22, "name": "Strive Pharmacy", "type": "compounding" }
-  ]
-}</div></div>
+ <div class="codeblock-pane active" id="pl-resp"><div class="codeblock-body">[
+  { "pharmacy_id": 16, "pharmacy_name": "Greenwich Pharmacy" }
+]</div></div>
+ </div>
+
+ <div class="cb cb-tip">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Gotcha:</strong> omitting <code>exam_ids</code> returns <code>400</code> with <code>"Cannot convert undefined or null to object"</code> — not a missing-parameter message. An empty array (<code>[]</code>) response usually means no partner pharmacy / order sets are attached to those exams yet, or the <code>patient_state</code> isn't covered — contact your Qualiphy representative to get the pharmacy configured.</div>
  </div>
 </section>
 
@@ -1654,13 +1658,14 @@ return {"ok": True}
  <span class="endpoint-method post">POST</span>
  <span class="endpoint-path">/api/partner_pharmacy_treatment_packages</span>
  </div>
- <p>Lists treatment packages (drug + dosage combinations + pricing) available at a specific partner pharmacy. Returns <code>order_set_id</code> values for use with <code>/exam_invite</code>. <span style="color:var(--text-lt)">Legacy <code>exam_pos_id</code> is still returned alongside for older integrations.</span></p>
+ <p>Lists treatment packages (drug + dosage combinations + pricing) available at the given partner pharmacies for the given Rx exam(s). Returns <code>order_set_id</code> values for use with <code>/exam_invite</code>. <span style="color:var(--text-lt)">Legacy <code>exam_pos_id</code> is still returned alongside for older integrations.</span></p>
 
  <h4>Parameters</h4>
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
- <div class="param-row"><div class="param-name"><code>pharmacy_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">From <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a>.</div></div>
- <div class="param-row"><div class="param-name"><code>exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">The Rx exam from <a href="#ep-exam-list"><code>/exam_list</code></a> you want packages for.</div></div>
+ <div class="param-row"><div class="param-name"><code>pharmacy_ids</code><div class="param-meta"><span class="param-type">integer | integer[]</span><span class="param-req">Required</span></div></div><div class="param-desc">Pharmacy ID(s) from <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a>. Accepts a single integer or an array.</div></div>
+ <div class="param-row"><div class="param-name"><code>exam_ids</code><div class="param-meta"><span class="param-type">integer[]</span><span class="param-req">Required</span></div></div><div class="param-desc">Array of Rx exam IDs from <a href="#ep-exam-list"><code>/exam_list</code></a> you want packages for.</div></div>
+ <div class="param-row"><div class="param-name"><code>patient_state</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Two-letter state code (e.g. <code>"NY"</code>). Omitting it returns an empty array.</div></div>
  </div>
 
  <h4>Sample request</h4>
@@ -1668,25 +1673,29 @@ return {"ok": True}
  <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/partner_pharmacy_treatment_packages</span></div><button class="copy-btn" onclick="copyCode(this,'pp-req')">Copy</button></div>
  <div class="codeblock-pane active" id="pp-req"><div class="codeblock-body">curl -X POST https://api.qualiphy.me/api/partner_pharmacy_treatment_packages \
   -H "Content-Type: application/json" \
-  -d '{"api_key":"YOUR_API_KEY","pharmacy_id":17,"exam_id":1292}'</div></div>
+  -d '{"api_key":"YOUR_API_KEY","pharmacy_ids":[16],"exam_ids":[4279],"patient_state":"NY"}'</div></div>
  </div>
 
  <h4>Sample response</h4>
  <div class="codeblock">
  <div class="codeblock-head"><div class="codeblock-head-meta"><span style="color:rgba(255,255,255,.7)">200 OK</span></div><button class="copy-btn" onclick="copyCode(this,'pp-resp')">Copy</button></div>
- <div class="codeblock-pane active" id="pp-resp"><div class="codeblock-body">{
-  "treatment_packages": [
-    {
-      "order_set_id": "OS-2104",
-      "exam_pos_id": 4861,
-      "drug_name": "Semaglutide",
-      "strength": "2mg",
-      "size": "2mL",
-      "duration_days": 30,
-      "price": 29900
-    }
-  ]
-}</div></div>
+ <div class="codeblock-pane active" id="pp-resp"><div class="codeblock-body">[
+  {
+    "exam_pos_id": 27708,
+    "order_set_id": 610,
+    "title": "Semaglutide + B12 + Zofran (add-on) - Injection - Dose 1: 0.25mg/weekly - 1mg/05mg Total - 30 Days Supply",
+    "pharmacy_id": 16,
+    "turnaround_time": "3-4",
+    "pharmacy_name": "Greenwich Pharmacy",
+    "integration_partner": 8,
+    "qualiphy_total_price": "125.00"
+  }
+]</div></div>
+ </div>
+
+ <div class="cb cb-tip">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Gotcha:</strong> the parameter is <code>pharmacy_ids</code> (plural) — passing <code>pharmacy_id</code> returns an empty array, not an error. An empty array with correct parameters means no order sets are attached to those exams for those pharmacies yet — contact your Qualiphy representative.</div>
  </div>
 </section>
 
@@ -1804,8 +1813,8 @@ return {"ok": True}
  <div class="recipe-body">
  <div class="recipe-steps">
  <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Once at setup: call <a href="#ep-exam-list"><code>/exam_list</code></a> to grab the medication exam ID(s) you'll be sending patients through.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to discover available pharmacies. Store the <code>pharmacy_id</code> values you want to use. <em>Skip this step if you don't have a preferred pharmacy and want the prescriber to choose the cheapest option every time.</em></div></div>
- <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with each pharmacy ID to get the available dosages. Store the <code>order_set_id</code> values. <em>Skip this step if you don't care which dosage is prescribed and trust the physician to make the right decision per patient.</em></div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> with your Rx <code>exam_ids</code> and a <code>patient_state</code> to discover the pharmacies that can fulfill them. Store the <code>pharmacy_id</code> values you want to use. <em>Skip this step if you don't have a preferred pharmacy and want the prescriber to choose the cheapest option every time.</em></div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Once at setup: call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with your <code>pharmacy_ids</code>, <code>exam_ids</code>, and <code>patient_state</code> to get the available packages. Store the <code>order_set_id</code> values. <em>Skip this step if you don't care which dosage is prescribed and trust the physician to make the right decision per patient.</em></div></div>
  <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body">Per patient: call <a href="#ep-exam-invite"><code>/exam_invite</code></a> with the medication exam ID, the patient details, and the optional <code>pharmacy_id</code> + <code>order_set_id</code> if you preselected them.</div></div>
  <div class="recipe-step"><div class="recipe-step-n">5</div><div class="recipe-step-body">Qualiphy emails and texts the patient a meeting link <em>only if you want Qualiphy to contact your patient</em>. Otherwise the <code>meeting_url</code> in the response is yours to deliver - see <a href="#recipe-custom-invite">Patient Notification Settings</a> to disable.</div></div>
  <div class="recipe-step"><div class="recipe-step-n">6</div><div class="recipe-step-body">Webhook event 1 fires when the consultation completes. Webhook event 2 fires once the prescription is confirmed at the partner pharmacy, and event 3 fires when the package ships - tracking number included.</div></div>
@@ -1836,8 +1845,8 @@ return {"ok": True}
   "phone_number": "+15555550100",
   "state": "TE",
   "tele_state": "TE",
-  "pharmacy_id": 47,
-  "order_set_id": "OS-2104",
+  "pharmacy_id": 16,
+  "order_set_id": 610,
   "webhook_url": "https://yourapp.com/webhooks/qualiphy",
   "additional_data": "{\"subscription_id\":\"SUB-9912\"}"
 }</div></div>
@@ -2087,7 +2096,7 @@ return {"ok": True}
 
  <h3>Partner pharmacy (recommended for Rx programs)</h3>
  <p>Use Qualiphy's pre-vetted compounding pharmacy network. Bundled, all-inclusive pricing. Qualiphy handles fulfillment and ships directly to the patient. Best for GLP-1, peptide, and other recurring Rx programs.</p>
- <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> to get an <code>order_set_id</code> for a specific dosage. Pass both into your <code>/exam_invite</code> payload.</p>
+ <p>Workflow: call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> with your Rx <code>exam_ids</code> + <code>patient_state</code> to see available pharmacies and their <code>pharmacy_id</code>, then optionally call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> (same parameters plus <code>pharmacy_ids</code>) to get an <code>order_set_id</code> for a specific package. Pass <code>pharmacy_id</code> + <code>order_set_id</code> into your <code>/exam_invite</code> payload.</p>
 
  <h3>Custom pharmacy</h3>
  <p>Send the treatment order to a specific retail or compounding pharmacy. Required for Urgent Care exams (the patient picks a pharmacy near them). Best when the patient already has a preferred pharmacy.</p>

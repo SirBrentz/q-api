@@ -817,3 +817,39 @@ Qualiphy API Docs - change log
                 generated PDF text) to api-docs.qualiphy.me
               · README.txt rewritten as a handover doc — DNS record, hosting notes, and a
                 pre-deploy checklist (delete README.txt, sample-plan.pdf, dashboard/SETUP.txt)
+
+2026-06-10 — Fix /partner_pharmacy_list + /partner_pharmacy_treatment_packages
+              request/response contracts (verified against the live API)
+              The documented sample requests were wrong on both endpoints —
+              following them returns 400 "Cannot convert undefined or null
+              to object" (list) or an empty array (packages). Verified the
+              real contract with live calls + Brianna's working payloads.
+
+              ACTUAL CONTRACT:
+                * /partner_pharmacy_list requires api_key + exam_ids
+                  (array) + patient_state. Response is a bare array of
+                  { pharmacy_id, pharmacy_name }.
+                * /partner_pharmacy_treatment_packages requires api_key +
+                  pharmacy_ids (PLURAL — int or array; pharmacy_id is
+                  silently ignored) + exam_ids (array) + patient_state.
+                  Response is a bare array of { exam_pos_id, order_set_id
+                  (integer), title, pharmacy_id, turnaround_time,
+                  pharmacy_name, integration_partner,
+                  qualiphy_total_price }.
+
+              UPDATED:
+                * index.html — both endpoint sections (params, samples,
+                  new gotcha callouts), QualiphyRx recipe steps 2-3,
+                  pharmacy workflow note, exam_invite sample order_set_id
+                  string → integer.
+                * openapi.json — both paths, new PartnerPharmacyListRequest
+                  schema, rewrote Pharmacy / PackagesRequest /
+                  TreatmentPackage / response schemas, exam_invite
+                  order_set_id type string → integer.
+                * postman collection — request bodies, auto-chain scripts
+                  (bare-array parsing + empty-array warnings), saved
+                  responses, collection-level gotchas, new patient_state
+                  variable.
+                * quick-start/index.html — ENDPOINT_SAMPLES, step prose,
+                  PDF-plan prose, generated-Postman-collection bodies and
+                  auto-chain scripts.

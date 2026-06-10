@@ -1061,33 +1061,29 @@ const ENDPOINT_SAMPLES = {
  anchor: 'ep-pharmacy-list',
  request: `curl -X POST https://api.qualiphy.me/api/partner_pharmacy_list \\
  -H "Content-Type: application/json" \\
- -d '{"api_key":"YOUR_API_KEY"}'`,
- response: `{
- "pharmacies": [
- { "pharmacy_id": 17, "name": "Empower Pharmacy", "type": "compounding" },
- { "pharmacy_id": 22, "name": "Strive Pharmacy", "type": "compounding" }
- ]
-}`
+ -d '{"api_key":"YOUR_API_KEY","exam_ids":[4279],"patient_state":"NY"}'`,
+ response: `[
+ { "pharmacy_id": 16, "pharmacy_name": "Greenwich Pharmacy" }
+]`
  },
  partner_pharmacy_treatment_packages: {
  path: '/api/partner_pharmacy_treatment_packages',
  anchor: 'ep-pharmacy-packages',
  request: `curl -X POST https://api.qualiphy.me/api/partner_pharmacy_treatment_packages \\
  -H "Content-Type: application/json" \\
- -d '{"api_key":"YOUR_API_KEY","pharmacy_id":17,"exam_id":1292}'`,
- response: `{
- "treatment_packages": [
+ -d '{"api_key":"YOUR_API_KEY","pharmacy_ids":[16],"exam_ids":[4279],"patient_state":"NY"}'`,
+ response: `[
  {
- "order_set_id": "OS-2104",
- "exam_pos_id": 4861,
- "drug_name": "Semaglutide",
- "strength": "2mg",
- "size": "2mL",
- "duration_days": 30,
- "price": 29900
+ "exam_pos_id": 27708,
+ "order_set_id": 610,
+ "title": "Semaglutide + B12 + Zofran (add-on) - Injection - Dose 1: 0.25mg/weekly - 1mg/05mg Total - 30 Days Supply",
+ "pharmacy_id": 16,
+ "turnaround_time": "3-4",
+ "pharmacy_name": "Greenwich Pharmacy",
+ "integration_partner": 8,
+ "qualiphy_total_price": "125.00"
  }
- ]
-}`
+]`
  },
  custom_pharmacy_search: {
  path: '/api/custom_pharmacy_search',
@@ -1714,14 +1710,14 @@ function buildResult(){
  ${showPartnerList?`
  <div class="rs">
  <div class="rs-h"><div class="rs-num">${pharmacyListN}</div><h3 class="rs-t">Find your pharmacy IDs</h3></div>
- <p class="rs-d">Call <code>/partner_pharmacy_list</code> to list every pharmacy your account can route to.${needPartnerListForPartner?' Pick the <code>pharmacy_id</code> values you want to use for partner-pharmacy invites.':''}${needPartnerListForCustom?' Grab the <code>pharmacy_id</code> for the <strong>"Choose Your Own Pharmacy"</strong> entry — that\'s the one you\'ll pass on custom-pharmacy invites where you preselect the pharmacy on your end.':''} <em>Skip this step if Qualiphy has already given you the IDs you need.</em></p>
+ <p class="rs-d">Call <code>/partner_pharmacy_list</code> with your Rx <code>exam_ids</code> (array) and a <code>patient_state</code> to list the pharmacies that can fulfill those exams.${needPartnerListForPartner?' Pick the <code>pharmacy_id</code> values you want to use for partner-pharmacy invites.':''}${needPartnerListForCustom?' Grab the <code>pharmacy_id</code> for the <strong>"Choose Your Own Pharmacy"</strong> entry — that\'s the one you\'ll pass on custom-pharmacy invites where you preselect the pharmacy on your end.':''} <em>Skip this step if Qualiphy has already given you the IDs you need.</em></p>
  ${renderSamplePair('partner_pharmacy_list')}
  </div>`:''}
 
  ${showPartnerPackages?`
  <div class="rs">
  <div class="rs-h"><div class="rs-num">${packagesN}</div><h3 class="rs-t">Find your <code>order_set_id</code> for treatment packages</h3></div>
- <p class="rs-d">Call <code>/partner_pharmacy_treatment_packages</code> with the <code>pharmacy_id</code> from the previous step and the <code>exam_id</code> from <code>/exam_list</code>. The <code>order_set_id</code> values returned correspond to specific drug + dosage packages.</p>
+ <p class="rs-d">Call <code>/partner_pharmacy_treatment_packages</code> with <code>pharmacy_ids</code> (plural — single integer or array) from the previous step, your <code>exam_ids</code> from <code>/exam_list</code>, and the <code>patient_state</code>. The <code>order_set_id</code> values returned correspond to specific drug + dosage packages.</p>
  ${renderSamplePair('partner_pharmacy_treatment_packages')}
  </div>`:''}
 
@@ -2306,7 +2302,7 @@ function downloadPdf(){
  // ===== Optional: pharmacy-list discovery section =====
  if (showPartnerList) {
  sectionHeader('Find your pharmacy IDs', pharmacyListN);
- let listDesc = 'Call /partner_pharmacy_list to list every pharmacy your account can route to.';
+ let listDesc = 'Call /partner_pharmacy_list with your Rx exam_ids (array) and a patient_state to list the pharmacies that can fulfill those exams.';
  if (needPartnerListForPartner) listDesc += ' Pick the pharmacy_id values you want to use for partner-pharmacy invites.';
  if (needPartnerListForCustom) listDesc += ' Grab the pharmacy_id for the "Choose Your Own Pharmacy" entry — that\'s the one you\'ll pass on custom-pharmacy invites where you preselect the pharmacy on your end.';
  listDesc += ' Skip this step if Qualiphy has already given you the IDs you need.';
@@ -2319,7 +2315,7 @@ function downloadPdf(){
  // ===== Optional: order-set discovery section =====
  if (showPartnerPackages) {
  sectionHeader('Find your order_set_ids for treatment packages', packagesN);
- text('Call /partner_pharmacy_treatment_packages with the pharmacy_id and exam_id from the previous steps. order_set_id maps to a specific drug + dosage package.', { size: 10, color: C.mid });
+ text('Call /partner_pharmacy_treatment_packages with pharmacy_ids (plural — single integer or array), your exam_ids, and the patient_state from the previous steps. order_set_id maps to a specific drug + dosage package.', { size: 10, color: C.mid });
  space(4);
  codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_treatment_packages.request, 'POST /api/partner_pharmacy_treatment_packages');
  codeBlock(ENDPOINT_SAMPLES.partner_pharmacy_treatment_packages.response, 'sample response');
@@ -2620,29 +2616,29 @@ function buildTailoredCollection(){
   const pharmFolder = { name: 'Pharmacy', item: [] };
   if (pharm.has('partner')){
    pharmFolder.item.push(req('partner_pharmacy_list', '/api/partner_pharmacy_list',
-    { api_key: '{{api_key}}' },
-    'List Qualiphy partner compounding pharmacies. Auto-sets {{pharmacy_id}} from pharmacies[0].pharmacy_id.',
+    { api_key: '{{api_key}}', exam_ids: ['{{exam_id}}'], patient_state: 'NY' },
+    'List the partner compounding pharmacies that can fulfill the given Rx exam_ids for a patient in patient_state. Both fields required — omitting exam_ids returns 400 "Cannot convert undefined or null to object". Response is a bare array. Auto-sets {{pharmacy_id}} from [0].pharmacy_id.',
     [
      "if (pm.response.code === 200) {",
      "  try {",
      "    const j = pm.response.json();",
-     "    if (j && Array.isArray(j.pharmacies) && j.pharmacies.length > 0 && j.pharmacies[0].pharmacy_id != null) {",
-     "      pm.collectionVariables.set('pharmacy_id', String(j.pharmacies[0].pharmacy_id));",
-     "      console.log('[auto-chain] pharmacy_id =', j.pharmacies[0].pharmacy_id);",
+     "    if (Array.isArray(j) && j.length > 0 && j[0].pharmacy_id != null) {",
+     "      pm.collectionVariables.set('pharmacy_id', String(j[0].pharmacy_id));",
+     "      console.log('[auto-chain] pharmacy_id =', j[0].pharmacy_id);",
      "    }",
      "  } catch (e) { console.warn(e); }",
      "}"
     ]));
    pharmFolder.item.push(req('partner_pharmacy_treatment_packages', '/api/partner_pharmacy_treatment_packages',
-    { api_key: '{{api_key}}', pharmacy_id: '{{pharmacy_id}}', exam_id: '{{exam_id}}' },
-    'Treatment packages (drug + dosage + price) for a partner pharmacy and Rx exam. Returns order_set_id. Auto-sets {{order_set_id}}.',
+    { api_key: '{{api_key}}', pharmacy_ids: ['{{pharmacy_id}}'], exam_ids: ['{{exam_id}}'], patient_state: 'NY' },
+    'Treatment packages (drug + dosage + price) at the given partner pharmacies for the given Rx exams. Note pharmacy_ids is plural — pharmacy_id is silently ignored and returns []. Response is a bare array. Auto-sets {{order_set_id}}.',
     [
      "if (pm.response.code === 200) {",
      "  try {",
      "    const j = pm.response.json();",
-     "    if (j && Array.isArray(j.treatment_packages) && j.treatment_packages.length > 0 && j.treatment_packages[0].order_set_id != null) {",
-     "      pm.collectionVariables.set('order_set_id', String(j.treatment_packages[0].order_set_id));",
-     "      console.log('[auto-chain] order_set_id =', j.treatment_packages[0].order_set_id);",
+     "    if (Array.isArray(j) && j.length > 0 && j[0].order_set_id != null) {",
+     "      pm.collectionVariables.set('order_set_id', String(j[0].order_set_id));",
+     "      console.log('[auto-chain] order_set_id =', j[0].order_set_id);",
      "    }",
      "  } catch (e) { console.warn(e); }",
      "}"
