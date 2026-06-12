@@ -1269,7 +1269,7 @@ const exams = await res.json();</div></div>
   "questions_answers": []
 }</div></div>
  </div>
- <p style="margin-top:10px"><strong>Status values:</strong> <code>Approved</code>, <code>Rejected</code>, <code>Deferred to Medical Director</code>, <code>NA</code>, <code>Missed</code>. The <code>exam_url</code> is a CloudFront-hosted PDF of the consultation record. URLs include a signed-expiration query param - mirror the file to your own storage if you need long-term access.</p>
+ <p style="margin-top:10px"><strong>Status values:</strong> <code>Approved</code>, <code>Rejected</code>, <code>Deferred to Medical Director</code>, <code>NA</code>, <code>Missed</code>. The <code>exam_url</code> is a CloudFront-hosted PDF of the consultation record. <strong>The signed URL expires 24 hours after the webhook fires</strong> - download and mirror the file to your own storage when you receive the event if you need long-term access.</p>
 
  <h4 style="margin-top:24px">Event 2 - Prescription Confirmed</h4>
  <p>Fires only for Rx exams, after Event 1, when the treatment order has been written and confirmed at the pharmacy. Carries the full schema below.</p>

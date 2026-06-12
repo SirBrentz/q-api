@@ -853,3 +853,11 @@ Qualiphy API Docs - change log
                 * quick-start/index.html — ENDPOINT_SAMPLES, step prose,
                   PDF-plan prose, generated-Postman-collection bodies and
                   auto-chain scripts.
+
+2026-06-12 — Document exam_url 24-hour expiration
+              The webhook exam_url (CloudFront-signed consultation PDF)
+              expires 24 hours after the webhook fires — confirmed by Lior
+              2026-06-12, surfaced in the Podium EMR scoping call. Docs
+              previously said "signed expiration" without a timeframe.
+              Updated index.html webhook section, openapi.json (both
+              exam_url descriptions), and the Postman webhook reference.
