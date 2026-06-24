@@ -861,3 +861,28 @@ Qualiphy API Docs - change log
               previously said "signed expiration" without a timeframe.
               Updated index.html webhook section, openapi.json (both
               exam_url descriptions), and the Postman webhook reference.
+
+2026-06-24 — Correct exam_submit_answers request shape (meeting_uuid + by-ID answers)
+              QA Engineering (Asad) confirmed the real request contract,
+              which the docs had wrong: the body requires BOTH meeting_uuid
+              and patient_exam_id. Omitting meeting_uuid returns 400
+              "Invalid meeting id" (the failure a partner integration hit). Answers
+              are submitted by ID, not just free text: each answer takes
+              question_id + answer, plus exam_question_response_id for
+              single-select and multi-select (repeat the same question_id
+              once per selection on multi-select), and answer_text for
+              options with a free-text box. Prior docs showed only the
+              free-text { no, question, answer } shape and omitted
+              meeting_uuid entirely.
+
+              UPDATED:
+                * index.html — exam_submit_answers params (added required
+                  meeting_uuid, rewrote answers description), both request
+                  samples (endpoint + pre-fill recipe), recipe step 2
+                  (capture meeting_uuid too).
+                * openapi.json — Answer schema (question_id, answer,
+                  exam_question_response_id, answer_text, height_inches),
+                  ExamSubmitAnswersRequest (meeting_uuid now required),
+                  path summary + description, request example.
+              Webhook / exam_questions { no, question, answer } samples
+              left as-is (correct for those endpoints).

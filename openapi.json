@@ -268,8 +268,8 @@
     "/api/exam_submit_answers": {
       "post": {
         "tags": ["Exam"],
-        "summary": "Submit screening answers on behalf of the patient",
-        "description": "Submits answers on behalf of the patient. Pair with `/exam_questions` to pre-fill the screening from your own intake data so patients are not answering the same questions twice. Submit answers for every question to skip the questionnaire entirely.",
+        "summary": "Submit answers on behalf of the patient",
+        "description": "Submits answers on behalf of the patient. Send both `meeting_uuid` and `patient_exam_id` from the `/exam_invite` response; omitting `meeting_uuid` returns 400 \"Invalid meeting id\". Works for all question types: free-text answers send `answer` only, while single-select and multi-select answers send `exam_question_response_id` (repeat the same `question_id` once per selection for multi-select). Pair with `/exam_questions` to pre-fill the screening from your own intake data so patients are not answering the same questions twice. Submit answers for every question to skip the questionnaire entirely.",
         "operationId": "examSubmitAnswers",
         "requestBody": {
           "required": true,
@@ -278,11 +278,13 @@
               "schema": { "$ref": "#/components/schemas/ExamSubmitAnswersRequest" },
               "example": {
                 "api_key": "YOUR_API_KEY",
+                "meeting_uuid": "MEETING_UUID_FROM_EXAM_INVITE",
                 "patient_exam_id": 149784,
                 "answers": [
-                  { "no": 1, "question": "Are you currently taking any medications?", "answer": "No." },
-                  { "no": 2, "question": "Have you had any reactions to anesthesia?", "answer": "No." },
-                  { "no": 3, "question": "Are you pregnant or breastfeeding?", "answer": "No." }
+                  { "question_id": 4457, "answer": "No previous complications", "height_inches": 0 },
+                  { "question_id": 4458, "answer": "Yes", "exam_question_response_id": 5011, "answer_text": "Occasionally", "height_inches": 0 },
+                  { "question_id": 4459, "answer": "Heart issues", "exam_question_response_id": 5013, "height_inches": 0 },
+                  { "question_id": 4459, "answer": "Memory Loss", "exam_question_response_id": 5014, "height_inches": 0 }
                 ]
               }
             }
@@ -748,18 +750,23 @@
       },
       "Answer": {
         "type": "object",
+        "description": "One answer. `answer` (the response label/text) is required. For single-select and multi-select questions also send `exam_question_response_id`; for multi-select, repeat the same `question_id` once per selected response. Use `answer_text` for the supplemental free text on options that include a text box.",
+        "required": ["question_id", "answer"],
         "properties": {
-          "no": { "type": "integer" },
-          "question": { "type": "string" },
-          "answer": { "type": "string" }
+          "question_id": { "type": "integer", "description": "From /exam_questions for this exam." },
+          "answer": { "type": "string", "description": "The response label/text (e.g. \"Yes\", or the option text)." },
+          "exam_question_response_id": { "type": "integer", "description": "Required for single-select and multi-select questions; the chosen response option's ID." },
+          "answer_text": { "type": "string", "description": "Supplemental free text for options that include a text box." },
+          "height_inches": { "type": "integer", "description": "Defaults to 0; used by height questions." }
         }
       },
       "ExamSubmitAnswersRequest": {
         "type": "object",
-        "required": ["api_key", "patient_exam_id", "answers"],
+        "required": ["api_key", "meeting_uuid", "patient_exam_id", "answers"],
         "properties": {
           "api_key": { "type": "string" },
-          "patient_exam_id": { "type": "integer" },
+          "meeting_uuid": { "type": "string", "description": "Required. From the /exam_invite response. Omitting it returns 400 \"Invalid meeting id\"." },
+          "patient_exam_id": { "type": "integer", "description": "From the /exam_invite response." },
           "answers": { "type": "array", "items": { "$ref": "#/components/schemas/Answer" } }
         }
       },

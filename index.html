@@ -751,6 +751,7 @@ code{font-family:var(--font-m);font-size:.86em;background:var(--lavender-mist);c
  <a href="#recipe-gfe" class="s-link" data-search="gfe good faith exam aesthetic medspa botox recipe">GFE for Aesthetic Treatment</a>
  <a href="#recipe-glp1" class="s-link" data-search="partner pharmacy medication shipping glp-1 weight loss prescription rx semaglutide tirzepatide hormone replacement peptides">Partner Pharmacy Medication Shipping</a>
  <a href="#recipe-urgent" class="s-link" data-search="urgent care custom pharmacy retail cvs walgreens prescription uti pink eye acne local">Urgent Care Visit &amp; Custom Pharmacies</a>
+ <a href="#recipe-exam-config" class="s-link" data-search="exam config configuration questions order sets pharmacies attached read-only discover formulary machine readable transcription">Pull Your Full Exam Configuration</a>
  <a href="#recipe-prefill" class="s-link" data-search="prefill answers screening questions intake form custom">Pre-fill Patient Answers</a>
  <a href="#recipe-custom-invite" class="s-link" data-search="patient notification settings invite white label send your own email sms meeting url disable provider contact glp-1 follow-up">Patient Notification Settings</a>
  </div>
@@ -1530,8 +1531,9 @@ return {"ok": True}
  <h4>Parameters</h4>
  <div class="param-table">
  <div class="param-row"><div class="param-name"><code>api_key</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">Your account API key.</div></div>
+ <div class="param-row"><div class="param-name"><code>meeting_uuid</code><div class="param-meta"><span class="param-type">string</span><span class="param-req">Required</span></div></div><div class="param-desc">From the original <a href="#ep-exam-invite"><code>/exam_invite</code></a> response. Omitting it returns <code>400 "Invalid meeting id"</code>.</div></div>
  <div class="param-row"><div class="param-name"><code>patient_exam_id</code><div class="param-meta"><span class="param-type">integer</span><span class="param-req">Required</span></div></div><div class="param-desc">From the <code>patient_exams[]</code> array in the original <a href="#ep-exam-invite"><code>/exam_invite</code></a> response.</div></div>
- <div class="param-row"><div class="param-name"><code>answers</code><div class="param-meta"><span class="param-type">array</span><span class="param-req">Required</span></div></div><div class="param-desc">Array of <code>{ no, question, answer }</code> objects. Numbering should match what <a href="#ep-exam-questions"><code>/exam_questions</code></a> returns for the same exam.</div></div>
+ <div class="param-row"><div class="param-name"><code>answers</code><div class="param-meta"><span class="param-type">array</span><span class="param-req">Required</span></div></div><div class="param-desc">Array of answer objects. Each takes <code>question_id</code> and <code>answer</code>. For single-select and multi-select questions also send <code>exam_question_response_id</code> (for multi-select, repeat the same <code>question_id</code> once per selection); use <code>answer_text</code> for options with a free-text box. Get IDs from <a href="#ep-exam-questions"><code>/exam_questions</code></a>.</div></div>
  </div>
 
  <h4>Sample request</h4>
@@ -1539,11 +1541,13 @@ return {"ok": True}
  <div class="codeblock-head"><div class="codeblock-head-meta"><span class="method-pill method-post">POST</span><span>/api/exam_submit_answers</span></div><button class="copy-btn" onclick="copyCode(this,'submit-req')">Copy</button></div>
  <div class="codeblock-pane active" id="submit-req"><div class="codeblock-body">{
   "api_key": "YOUR_API_KEY",
+  "meeting_uuid": "MEETING_UUID_FROM_EXAM_INVITE",
   "patient_exam_id": 149784,
   "answers": [
-    { "no": 1, "question": "Are you currently taking any medications?", "answer": "No." },
-    { "no": 2, "question": "Have you had any reactions to anesthesia?", "answer": "No." },
-    { "no": 3, "question": "Are you pregnant or breastfeeding?", "answer": "No." }
+    { "question_id": 4457, "answer": "No previous complications", "height_inches": 0 },
+    { "question_id": 4458, "answer": "Yes", "exam_question_response_id": 5011, "answer_text": "Occasionally", "height_inches": 0 },
+    { "question_id": 4459, "answer": "Heart issues", "exam_question_response_id": 5013, "height_inches": 0 },
+    { "question_id": 4459, "answer": "Memory Loss", "exam_question_response_id": 5014, "height_inches": 0 }
   ]
 }</div></div>
  </div>
@@ -1915,6 +1919,55 @@ return {"ok": True}
  </div>
 </section>
 
+<section class="docs-section" id="recipe-exam-config">
+ <h2>Recipe: Pull Your Full Exam Configuration</h2>
+ <p>You want an exam's full setup - its screening questions and the order sets and pharmacies attached to it - in machine-readable form, without transcribing it by hand or asking us to confirm what's attached. This recipe assembles the read-only endpoints you already have into one configuration view, so your integration can discover an exam's config on its own.</p>
+
+ <div class="recipe">
+ <div class="recipe-head">
+ <div class="recipe-icon">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+ </div>
+ <div>
+ <h3 class="recipe-h">Discover an exam's questions, order sets &amp; pharmacies</h3>
+ <div class="recipe-sub">~20 min implementation · up to 4 read-only endpoints · no webhook</div>
+ </div>
+ </div>
+ <div class="recipe-body">
+ <div class="recipe-steps">
+ <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Call <a href="#ep-exam-list"><code>/exam_list</code></a> to get every exam on your account with its <code>id</code>, <code>title</code>, and type. Pick the exam IDs you're integrating.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">For each exam, call <a href="#ep-exam-questions"><code>/exam_questions</code></a> with the <code>exam_id</code> to get its screening question schema - the curated questions patients answer, keyed by <code>no</code>.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body"><em>Rx exams only:</em> call <a href="#ep-pharmacy-list"><code>/partner_pharmacy_list</code></a> with your <code>exam_ids</code> and a <code>patient_state</code> to find the partner pharmacies attached to the exam. Store the <code>pharmacy_id</code> values.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">4</div><div class="recipe-step-body"><em>Rx exams only:</em> call <a href="#ep-pharmacy-packages"><code>/partner_pharmacy_treatment_packages</code></a> with those <code>pharmacy_ids</code>, your <code>exam_ids</code>, and <code>patient_state</code> to get the attached order sets - each with its <code>order_set_id</code>, <code>exam_pos_id</code>, <code>title</code>, pricing, and <code>pharmacy_name</code>.</div></div>
+ </div>
+ </div>
+ </div>
+
+ <div class="cb cb-tip">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>What you get:</strong> the exam's questions plus its attached order sets and pharmacies, pulled programmatically - no manual transcription and no asking us to confirm what's attached. A <a href="#exam-types">GFE / clearance exam</a> has no pharmacy or order sets attached, so steps 3-4 return nothing for those - the question schema is the whole config.</div>
+ </div>
+
+ <div class="cb cb-warn">
+ <div class="cb-icon">!</div>
+ <div class="cb-body"><strong>Answer-level IDs:</strong> <a href="#ep-exam-questions"><code>/exam_questions</code></a> returns each question by its <code>no</code> and text, not individual answer-choice IDs. When you submit answers back, match on <code>no</code> + <code>question</code> (see <a href="#recipe-prefill">Pre-fill Patient Answers</a>). Re-pull the schema after an exam is edited rather than caching it long-term.</div>
+ </div>
+
+ <div class="codeblock">
+ <div class="codeblock-head">
+ <div class="codeblock-head-meta">
+ <span class="method-pill method-post">POST</span>
+ <span>/api/exam_questions</span>
+ </div>
+ <button class="copy-btn" onclick="copyCode(this,'rec-examconfig')">Copy</button>
+ </div>
+ <div class="codeblock-pane active" id="rec-examconfig"><div class="codeblock-body">{
+  "api_key": "YOUR_API_KEY",
+  "exam_id": 4226
+}</div></div>
+ </div>
+</section>
+
 <section class="docs-section" id="recipe-prefill">
  <h2>Recipe: Pre-fill Patient Answers</h2>
  <p>You already collect health screening info on your own intake form, and you don't want patients to re-answer the same questions during the Qualiphy screening. Or you want full control over the wording of every question and you'll display the form on your end - not Qualiphy's.</p>
@@ -1932,7 +1985,7 @@ return {"ok": True}
  <div class="recipe-body">
  <div class="recipe-steps">
  <div class="recipe-step"><div class="recipe-step-n">1</div><div class="recipe-step-body">Call <a href="#ep-exam-questions"><code>/exam_questions</code></a> to get the question schema for the exam. Map each question to the matching field on your intake form.</div></div>
- <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> as usual. Capture the returned <code>patient_exam_id</code>.</div></div>
+ <div class="recipe-step"><div class="recipe-step-n">2</div><div class="recipe-step-body">Call <a href="#ep-exam-invite"><code>/exam_invite</code></a> as usual. Capture the returned <code>patient_exam_id</code> <strong>and</strong> <code>meeting_uuid</code> — both are required on the submit.</div></div>
  <div class="recipe-step"><div class="recipe-step-n">3</div><div class="recipe-step-body">Immediately call <a href="#ep-exam-submit"><code>/exam_submit_answers</code></a> with the patient's pre-collected answers. <strong>Every question you submit appears pre-filled on the Qualiphy side.</strong> If you submit answers for every question, the questionnaire is skipped entirely and the patient goes straight to the provider call. Submit a subset and the patient only sees the unanswered questions, with their existing answers shown alongside.</div></div>
  </div>
  </div>
@@ -1948,11 +2001,13 @@ return {"ok": True}
  </div>
  <div class="codeblock-pane active" id="rec-prefill"><div class="codeblock-body">{
   "api_key": "YOUR_API_KEY",
+  "meeting_uuid": "MEETING_UUID_FROM_EXAM_INVITE",
   "patient_exam_id": 149784,
   "answers": [
-    { "no": 1, "question": "Are you currently taking any medications?", "answer": "No." },
-    { "no": 2, "question": "Have you had any reactions to anesthesia?", "answer": "No." },
-    { "no": 3, "question": "Are you pregnant or breastfeeding?", "answer": "No." }
+    { "question_id": 4457, "answer": "No previous complications", "height_inches": 0 },
+    { "question_id": 4458, "answer": "Yes", "exam_question_response_id": 5011, "answer_text": "Occasionally", "height_inches": 0 },
+    { "question_id": 4459, "answer": "Heart issues", "exam_question_response_id": 5013, "height_inches": 0 },
+    { "question_id": 4459, "answer": "Memory Loss", "exam_question_response_id": 5014, "height_inches": 0 }
   ]
 }</div></div>
  </div>
